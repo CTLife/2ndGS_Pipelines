@@ -5,7 +5,9 @@ CISDA: ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and 
                                                                   
 MESDA: MethylC-Seq Data Analyzer    
                        
-RASDA: RNA-Seq Data Analyzer                   
+RASDA: RNA-Seq Data Analyzer  
+                                       
+HISDA: Hi-C  Data Analyzer            
                                                                
                                                                
   All the scripts have been fully tested and passed my quality inspection on Linux Mint, Ubuntu and CentOS.                  
