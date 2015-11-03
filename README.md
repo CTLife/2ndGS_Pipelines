@@ -33,4 +33,5 @@ RASDA: RNA-Seq Data Analyzer
 17. DANPOS, http://code.google.com/p/danpos/                
 
 
-
+---------------------------------------------------------------------------------
+#License: The GNU General Public License v3.0
