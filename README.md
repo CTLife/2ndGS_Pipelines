@@ -34,7 +34,8 @@ HISDA: Hi-C  Data Analyzer
 16. HOMER, http://homer.salk.edu/homer/                
 17. DANPOS, http://code.google.com/p/danpos/                
 
-
+                                                                                           
+                                                                                                        
 ---------------------------------------------------------------------------------
 ##License: The GNU General Public License v3.0                    
                                                                          
