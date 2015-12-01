@@ -1,8 +1,8 @@
-In order to realize automatic NGS data processing, 
+##In order to realize automatic NGS data processing, 
 the format of file names used by the pipeline must be in fixed format for ease parsing. 
 
 
-    Rules for NGS pipeline CISDA:
+    ##Rules for NGS pipeline CISDA:
 
     0. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
@@ -65,37 +65,37 @@ the format of file names used by the pipeline must be in fixed format for ease p
 
 
 
-Usage:
-     Step 1  by using CISDA-1.pl, more details by "perl  CISDA-1.pl  -h".
-     Step 2  by using CISDA-2.pl, more details by "perl  CISDA-2.pl  -h".
-     ......
+##Usage:                              
+     Step 1  by using CISDA-1.pl, more details by "perl  CISDA-1.pl  -h".                       
+     Step 2  by using CISDA-2.pl, more details by "perl  CISDA-2.pl  -h".                               
+     ......                                        
 
 
 
 
-Suggesting Names of Folder (Optional):
-        1-rawReads, 
-        2-FASTQ, 
-        3-Filtered, 
-        4-Mapping,       
-        5-SortMapped,    
-        6-FinalBAM,      
-        7-OtherForamts,  
-        8-MACS14,        
-        9-MACS2,
-        10-Q,         
-        11-HOMER,        
-        12-DANPOS,        
-        13-DiffPeaks,     
-        14-BedTools,     
-        15-BEDOPS,          
-        16-DeepTools,    
-        17-HTSeq,         
-        18-featureCount, 
-        19-GO,           
-        20-PathWay,      
+Suggesting Names of Folder (Optional):                      
+        1-rawReads,                     
+        2-FASTQ,                     
+        3-Filtered,                     
+        4-Mapping,                           
+        5-SortMapped,                        
+        6-FinalBAM,                          
+        7-OtherForamts,                      
+        8-MACS14,                            
+        9-MACS2,                    
+        10-Q,                             
+        11-HOMER,                            
+        12-DANPOS,                            
+        13-DiffPeaks,                         
+        14-BedTools,                         
+        15-BEDOPS,                              
+        16-DeepTools,                        
+        17-HTSeq,                             
+        18-featureCount,                     
+        19-GO,                               
+        20-PathWay,                          
         21-SeqFeature,     ##split fragment k-mer, GC-skew, GC-profile, DNA-flexibility, PSSM, site convervative index vectors, etc.
-        22-GeneList,
-        23-Conservation 
+        22-GeneList,                    
+        23-Conservation                     
 
 
