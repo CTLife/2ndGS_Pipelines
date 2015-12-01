@@ -1,8 +1,7 @@
-##In order to realize automatic NGS data processing, 
-the format of file names used by the pipeline must be in fixed format for ease parsing. 
-
-
-    ##Rules for NGS pipeline CISDA:
+##In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
+                                  
+                                       
+##Rules for NGS pipeline CISDA:                                         
 
     0. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
@@ -73,7 +72,7 @@ the format of file names used by the pipeline must be in fixed format for ease p
 
 
 
-Suggesting Names of Folder (Optional):                      
+###Suggesting Names of Folder (Optional):                      
         1-rawReads,                     
         2-FASTQ,                     
         3-Filtered,                     
