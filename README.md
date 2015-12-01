@@ -14,7 +14,7 @@ HISDA: Hi-C  Data Analyzer
                                                
                                                              
 ---------------------------------------------------------------------------------------------                                                                     
-## The recent versions of these softwares must be available in your Linux OS: 
+## To use the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS: 
 0. Perl, https://www.perl.org/                 
 1. NCBI SRA Toolkit, http://www.ncbi.nlm.nih.gov/Traces/sra/                                
 2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
@@ -32,7 +32,11 @@ HISDA: Hi-C  Data Analyzer
 14. MACS1.4, http://liulab.dfci.harvard.edu/MACS/         
 15. MACS2, https://github.com/taoliu/MACS/                
 16. HOMER, http://homer.salk.edu/homer/                
-17. DANPOS, http://code.google.com/p/danpos/                
+17. DANPOS, http://code.google.com/p/danpos/      
+18. Peak Caller Q: http://charite.github.io/Q/                           
+19. bamUtil:  http://ngsutils.org/modules/bamutils/        
+20. HISAT2: http://ccb.jhu.edu/software/hisat2
+21. R: https://www.r-project.org/
 
                                                                                            
                                                                                                         
