@@ -57,6 +57,11 @@
     6. For techniche replicates, only "(_Lane[1-2])" is different.
 
     7. For Paired end files, only "(_[1-2])" is different.
+    
+    8. For input files, "Target" must be "Input".                            
+
+    9. For biological replicats and techniche replicates, all "Number" must be same.        
+                                                                 
 
 
 
