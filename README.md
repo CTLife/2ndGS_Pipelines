@@ -37,6 +37,8 @@ HISDA: Hi-C  Data Analyzer
 19. bamUtil:  http://ngsutils.org/modules/bamutils/        
 20. HISAT2: http://ccb.jhu.edu/software/hisat2
 21. R: https://www.r-project.org/
+22. Picard: http://broadinstitute.github.io/picard/                                
+23. Qualimap 2: http://qualimap.bioinfo.cipf.es/    (Optional)
 
                                                                                            
                                                                                                         
