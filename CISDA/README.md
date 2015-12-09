@@ -1,3 +1,5 @@
+##You should run the scripts step by step or run one of them for a specific purpose. Please run "perl CISDA-N.pl -h" to know that what dose the N-th script can do.                 
+
 ##In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
                                   
                                        
