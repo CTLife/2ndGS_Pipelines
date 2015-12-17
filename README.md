@@ -38,7 +38,10 @@ HISDA: Hi-C  Data Analyzer
 20. HISAT2: http://ccb.jhu.edu/software/hisat2
 21. R: https://www.r-project.org/
 22. Picard: http://broadinstitute.github.io/picard/                                
-23. Qualimap 2: http://qualimap.bioinfo.cipf.es/    (Optional)
+23. Qualimap 2: http://qualimap.bioinfo.cipf.es/
+24. STAR: https://github.com/alexdobin/STAR/releases                                                                      
+25. SAMStat: http://samstat.sourceforge.net/                                                          
+26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing                        
 
                                                                                            
                                                                                                         
