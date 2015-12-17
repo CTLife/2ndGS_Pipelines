@@ -6,12 +6,8 @@ Please run `perl CISDA-N.pl -h` to know that what can the N-th script do.
 __________________________________________________________________________________________________________________      
                                                        
 
-In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
-                                  
-                                       
+In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                         
 ###Rules for NGS pipeline CISDA:                                         
-
-
     0. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
                     SRA file:  [01-99]_Target_Treat_Space_Time_Other_Rep[1-9].sra
