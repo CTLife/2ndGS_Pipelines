@@ -1,11 +1,11 @@
-###You can run the scripts step by step or run one of them for a specific purpose. Please run "perl CISDA-N.pl -h" to know that what can the N-th script do.
+#####You can run the scripts step by step or run one of them for a specific purpose. Please run "perl CISDA-N.pl -h" to know that what can the N-th script do.
 __________________________________________________________________________________________________________________      
                                                        
 
-###In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
+#####In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
                                   
                                        
-###Rules for NGS pipeline CISDA:                                         
+#####Rules for NGS pipeline CISDA:                                         
 
     0. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
@@ -59,7 +59,7 @@ ________________________________________________________________________________
 
 
                                                            
-###Usage:                                           
+#####Usage:                                           
      Step 1  by using RASDA-1.pl, more details by "perl  RASDA-1.pl  -h".                
      Step 2  by using RASDA-2.pl, more details by "perl  RASDA-2.pl  -h".                            
      ......                                               
