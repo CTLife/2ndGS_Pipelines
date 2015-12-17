@@ -12,7 +12,7 @@ ________________________________________________________________________________
                                        
 #####Rules for NGS pipeline CISDA:                                         
 
-    0. Only SRA format and compressed FASTQ files can be used as input files. 
+    1. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
                     SRA file:  [01-99]_Target_Treat_Space_Time_Other_Rep[1-9].sra
 
