@@ -10,7 +10,7 @@ RASDA: RNA-Seq Data Analyzer
 HISDA: Hi-C  Data Analyzer            
                                                                
                                                                
-  All the scripts have been fully tested and passed my quality inspection on Ubuntu Linux.                  
+  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
                                                
                                                              
 ---------------------------------------------------------------------------------------------                                                                     
