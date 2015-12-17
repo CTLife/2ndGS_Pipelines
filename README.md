@@ -46,5 +46,5 @@ HISDA: Hi-C  Data Analyzer
                                                                                            
                                                                                                         
 ---------------------------------------------------------------------------------
-##License: The GNU General Public License v3.0                    
+###License: The GNU General Public License v3.0                    
                                                                          
