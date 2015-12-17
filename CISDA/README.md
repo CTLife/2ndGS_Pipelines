@@ -79,7 +79,7 @@ ________________________________________________________________________________
      Step 2  by using CISDA-2.pl, more details by "perl  CISDA-2.pl  -h".                  
      ......
                                            
-                                                
-###To use pipeline CISDA, the recent versions of these softwares must be available in your Linux OS:
+                                                                 
+________________________________________________________________________________________________________________              ###To use pipeline CISDA, the recent versions of these softwares must be available in your Linux OS:
 
 
