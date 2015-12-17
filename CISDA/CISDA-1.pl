@@ -1,6 +1,7 @@
 #!/usr/bin/env perl5
 use  strict;
 use  warnings;
+use  v5.20;
 
 
 
@@ -12,18 +13,18 @@ use  warnings;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.51, 2016-01-01.    
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.62, 2016-01-13.    
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 1: Decompress all compressed FASTQ files, or convert SRA to FASTQ using SRA_Toolkit,  
+        Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ by using SRA_Toolkit,  
                 and merge the two lanes of the same sample (merge technical replicates), 
-                and quality statistics by using FastQC, NGS_QC_Toolkit and FASTX-Toolkit.
+                and check the quality of reads by using FastQC, NGS_QC_Toolkit and FASTX-Toolkit.
         Usage: 
                perl  CISDA-1.pl    [-v]    [-h]    [-i inputDir]    [-o outDir]  
         For instance: 
                      perl  CISDA-1.pl    -i 1-rawReads          -o 2-FASTQ           
                      perl  CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ    
-                     perl  CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> 1-runLog.txt  2>&1
+                     perl  CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> CISDA-1.runLog  2>&1
  
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -44,14 +45,14 @@ my $HELP_g = '
         please see the web site: https://github.com/CTLife/2ndGS_Pipelines
 
         Yong Peng @ He lab, yongp@outlook.com, Academy for Advanced Interdisciplinary Studies 
-        and Center for Life Sciences (CLS), Peking University, China.  
+        and Peking-Tsinghua Center for Life Sciences (CLS), Peking University, China.  
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------   
 ';
 
 
 ########## Version Infromation ##########
-my $version_g = "    The First Step of CISDA (ChIP-Seq Data Analyzer) , version 0.51, 2016-01-01.";
+my $version_g = "    The First Step of CISDA (ChIP-Seq Data Analyzer) , version 0.62, 2016-01-13.";
 
 
 ########## Keys and Values ##########
@@ -109,7 +110,11 @@ print  "\n\n
 
 print "\n\n\n\n\n##################################################################################################\n";
 print   "\nRunning......\n";
-if ( !(-e $output_g))   { mkdir $output_g    ||  die; }
+my $input2_g  = "$input_g/Results";
+my $output2_g = "$output_g/Results";
+if ( !(-e $input2_g) )   { mkdir $input2_g    ||  die; }
+if ( !(-e $output_g) )   { mkdir $output_g    ||  die; }
+if ( !(-e $output2_g))   { mkdir $output2_g   ||  die; }
 opendir(my $DH_input, $input_g)  ||  die;     
 my @inputFiles = readdir($DH_input);
 my $pattern = "[-.0-9A-Za-z]+";
@@ -121,29 +126,29 @@ my $pattern = "[-.0-9A-Za-z]+";
 print "\n\n\n\n\n##################################################################################################\n";
 print("\nChecking all the necessary softwares in this step......\n");
 my $IlluQC_PRLL = "/home/yongp/MyProgramFiles/6-2G-HTS/2-NGSquality/NGSQCToolkit_v2.3.3/QC/IlluQC_PRLL.pl";
-system("fastq-dump  -h           >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastq-dump  -h           >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastqc    -v             >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastqc    -v             >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("perl  $IlluQC_PRLL  -h   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("perl  $IlluQC_PRLL  -h   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastx_quality_stats  -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastx_quality_stats  -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastq_quality_boxplot_graph.sh   -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'               >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastq_quality_boxplot_graph.sh   -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'               >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastx_nucleotide_distribution_graph.sh  -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'                      >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastx_nucleotide_distribution_graph.sh  -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'                      >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
 
 
@@ -155,8 +160,10 @@ my $fileNameBool = 1;
 for ( my $i=0; $i<=$#inputFiles; $i++ ) {     
         next unless $inputFiles[$i] !~ m/^[.]/;
         next unless $inputFiles[$i] !~ m/[~]$/;
+        next unless $inputFiles[$i] !~ m/^Results$/;
+        print("$inputFiles[$i] ......\n"); 
         my $temp = $inputFiles[$i]; 
-        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])/   or  die  "wrong-1: ## $temp ##";
+        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])/            or  die   "wrong-1: ## $temp ##";
         $temp =~ m/_(Rep[1-9])\.sra$/  or  $temp =~ m/_(Rep[1-9])_?([1-2]?)(_Lane[1-2])?\.fastq\.(\S+)$/  or  die   "wrong-2: ## $temp ##";
         if($temp !~ m/^((\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]))(_[1-2])?(_Lane[1-2])?(\.fastq)?\.(\S+)$/) {
              $fileNameBool = 0;
@@ -169,14 +176,16 @@ if($fileNameBool == 1)  {print("    All the file names are passed.\n");}
 
 
 print "\n\n\n\n\n##################################################################################################\n";
-print "\n\nConverting SRA files into FASTQ files or Decompressing the compressed fastq files ......\n";
+print "\n\nConverting SRA files into FASTQ files or Extracting the compressed fastq files ......\n";
 for ( my $i=0; $i<=$#inputFiles; $i++ ) {     
         next unless $inputFiles[$i] !~ m/^[.]/;
         next unless $inputFiles[$i] !~ m/[~]$/;
+        next unless $inputFiles[$i] !~ m/^Results$/;
+        print("$inputFiles[$i] ......\n");   
         my $temp = $inputFiles[$i]; 
         if ($temp =~ m/\.sra$/) {
                 $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.sra$/   or  die;
-                system("fastq-dump   --split-3   --dumpbase   $input_g/$temp  --outdir $input_g   >> $input_g/$temp.runLog  2>&1");
+                system("fastq-dump   --split-3   --dumpbase   $input_g/$temp  --outdir $input_g   >> $input2_g/$temp.runLog  2>&1");
         }else{
                 $temp =~ m/^((\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])_?([1-2]?)(_Lane[1-2])?\.fastq)\.(\S+)$/   or  die;
                 my  $tempFastq = $1;
@@ -189,7 +198,7 @@ for ( my $i=0; $i<=$#inputFiles; $i++ ) {
                 if($suffix1 eq "rar"    )  { $tempBool++;  system("unrar    e          $input_g/$temp      $input_g");             }  
                 if($suffix1 eq "xz"     )  { $tempBool++;  system("xz      -cd         $input_g/$temp   >  $input_g/$tempFastq");  }  
                 if($suffix1 eq "zip"    )  { $tempBool++;  system("unzip   -np         $input_g/$temp   >  $input_g/$tempFastq");  }
-                if($tempBool  != 1) { print("$temp is wrong!!");  die; } 
+                if($tempBool  != 1)        { print("$temp is wrong!!");  die; } 
         }
 }
 
@@ -198,12 +207,13 @@ for ( my $i=0; $i<=$#inputFiles; $i++ ) {
 
 
 print "\n\n\n\n\n##################################################################################################\n";
-print "\nMerging the two lanes of the same sample or copy files ......\n";
-my $FastQCdir1       = "$input_g/FastQC";
+print "\nMerge the two lanes of the same sample or copy files ......\n";
+my $FastQCdir1       = "$input2_g/FastQC";
 if ( !( -e $FastQCdir1))   { mkdir $FastQCdir1  ||  die; }
 opendir($DH_input, $input_g) || die;
 my @twoLanes = readdir($DH_input);
 for (my $i=0; $i<=$#twoLanes; $i++) {
+    next unless $twoLanes[$i] !~ m/^Results$/;
     next unless $twoLanes[$i] =~ m/\.fastq$/; 
     next unless $twoLanes[$i] !~ m/^[.]/;
     next unless $twoLanes[$i] !~ m/[~]$/; 
@@ -212,7 +222,7 @@ for (my $i=0; $i<=$#twoLanes; $i++) {
     if( $twoLanes[$i] =~ m/^(\S+)_Lane1.fastq$/ ) {
         my $temp = $1;   
         $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])_?([1-2]?)$/   or  die;
-        open(tempFH, ">>", "$output_g/merge-two-lanes.log.txt")  or  die;
+        open(tempFH, ">>", "$output2_g/z-merge-two-lanes.log.txt")  or  die;
         my $lane1 = $temp."_Lane1.fastq";
         my $lane2 = $temp."_Lane2.fastq";
         system(       "cat  $input_g/$lane1  $input_g/$lane2   > $output_g/$temp.fastq" ); 
@@ -235,12 +245,13 @@ opendir(my $DH_output, $output_g) || die;
 my @outputFiles = readdir($DH_output);
 my @singleEnd = ();
 my @pairedEnd = ();
-open(seqFiles_FH, ">", "$output_g/singleEnd-pairedEnd-Files.txt")  or  die; 
+open(seqFiles_FH, ">", "$output2_g/z-singleEnd-pairedEnd-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#outputFiles; $i++ ) {     
     next unless $outputFiles[$i] =~ m/\.fastq$/;
     next unless $outputFiles[$i] !~ m/^[.]/;
     next unless $outputFiles[$i] !~ m/[~]$/;
     next unless $outputFiles[$i] !~ m/^unpaired/; 
+    next unless $outputFiles[$i] !~ m/^Results$/; 
     $outputFiles[$i] =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])_?([1-2]?)(_Lane[1-2])?\.fastq$/   or  die;
     if ($outputFiles[$i] =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.fastq$/) {   ## sinlge end sequencing files.
         $outputFiles[$i] =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.fastq$/  or  die;  
@@ -280,11 +291,11 @@ print     "\n\n        There are $numPaired paired-end sequencing files.\n";
 
 
 
-my $FastQCdir       = "$output_g/FastQC";
-my $FastQCdir_10mer = "$output_g/FastQC_10mer";
-my $NGSQCToolkit    = "$output_g/NGSQCToolkit";
-my $NGSQCToolPaired = "$output_g/NGSQCToolkit_PairedEnd";
-my $FASTXtoolkit    = "$output_g/FASTXtoolkit";
+my $FastQCdir       = "$output2_g/FastQC";
+my $FastQCdir_10mer = "$output2_g/FastQC_10mer";
+my $NGSQCToolkit    = "$output2_g/NGSQCToolkit";
+my $NGSQCToolPaired = "$output2_g/NGSQCToolkit_PairedEnd";
+my $FASTXtoolkit    = "$output2_g/FASTXtoolkit";
 if ( !( -e $FastQCdir)       )   { mkdir $FastQCdir        ||  die; }
 if ( !( -e $FastQCdir_10mer) )   { mkdir $FastQCdir_10mer  ||  die; }
 if ( !( -e $NGSQCToolkit)    )   { mkdir $NGSQCToolkit     ||  die; }
