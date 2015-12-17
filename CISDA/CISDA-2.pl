@@ -1,6 +1,7 @@
 #!/usr/bin/env perl5
 use  strict;
 use  warnings;
+use  v5.20;
 
 
 
@@ -12,8 +13,8 @@ use  warnings;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-seq Data Analyzer), version 0.51, 2016-01-01.      
-        CISDA is a Pipeline for Single-end and Paired-end ChIP-seq Data Analysis by Integrating Lots of Softwares.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.62, 2016-01-13.      
+        CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 2: Remove adaptors and PCR primers, trim and filter the raw reads by using Trimmomatic,  
                 and  assess the quality of the raw reads to identify possible sequencing errors 
@@ -23,7 +24,7 @@ my $HELP_g = '
         For instance: 
                      perl  CISDA-2.pl    -i 2-FASTQ          -o 3-Filtered           
                      perl  CISDA-2.pl    --input 2-FASTQ     --output 3-Filtered    
-                     perl  CISDA-2.pl    --input 2-FASTQ     --output 3-Filtered    >> 2-runLog.txt  2>&1
+                     perl  CISDA-2.pl    --input 2-FASTQ     --output 3-Filtered    >> CISDA-2.runLog  2>&1
      
         -------------------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -43,14 +44,14 @@ my $HELP_g = '
         please see the web site: https://github.com/CTLife/2ndGS_Pipelines
 
         Yong Peng @ He lab, yongp@outlook.com, Academy for Advanced Interdisciplinary Studies 
-        and Center for Life Sciences (CLS), Peking University, China.    
+        and Peking-Tsinghua Center for Life Sciences (CLS), Peking University, China.    
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------  
 ';
 
 
 ########## Version Infromation ##########
-my $version_g = "  The Second Step of CISDA (ChIP-seq Data Analyzer), version 0.51, 2016-01-01.";
+my $version_g = "  The Second Step of CISDA (ChIP-Seq Data Analyzer), version 0.62, 2016-01-13.";
 
 
 ########## Keys and Values ##########
@@ -108,7 +109,11 @@ print  "\n\n
 
 print "\n\n\n\n\n##################################################################################################\n";
 print   "\nRunning......\n";
-if ( !(-e $output_g))   { mkdir $output_g    ||  die; }
+my $input2_g  = "$input_g/Results";
+my $output2_g = "$output_g/Results";
+if ( !(-e $input2_g) )   { mkdir $input2_g    ||  die; }
+if ( !(-e $output_g) )   { mkdir $output_g    ||  die; }
+if ( !(-e $output2_g))   { mkdir $output2_g   ||  die; }
 opendir(my $DH_input, $input_g)  ||  die;     
 my @inputFiles = readdir($DH_input);
 my $pattern = "[-.0-9A-Za-z]+";
@@ -121,33 +126,33 @@ print "\n\n\n\n\n###############################################################
 print("\nChecking all the necessary softwares in this step......\n");
 my $Trimmomatic = "/home/yongp/MyProgramFiles/6-2G-HTS/2-NGSquality/Trimmomatic-0.35/trimmomatic-0.35.jar";
 my $IlluQC_PRLL = "/home/yongp/MyProgramFiles/6-2G-HTS/2-NGSquality/NGSQCToolkit_v2.3.3/QC/IlluQC_PRLL.pl";
-system("java  -jar    $Trimmomatic    PE      >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'                >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("java  -jar    $Trimmomatic    PE      >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'                >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("java  -jar    $Trimmomatic    SE     >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'               >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("java  -jar    $Trimmomatic    SE     >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'               >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastqc    -v             >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastqc    -v             >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("perl  $IlluQC_PRLL  -h   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("perl  $IlluQC_PRLL  -h   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastx_quality_stats  -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'   >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastx_quality_stats  -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'   >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastq_quality_boxplot_graph.sh   -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'               >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastq_quality_boxplot_graph.sh   -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'               >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
-system("fastx_nucleotide_distribution_graph.sh  -h  >> $output_g/version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'                      >> $output_g/version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output_g/version_softwares.txt   2>&1");
+system("fastx_nucleotide_distribution_graph.sh  -h  >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '\n\n\n\n\n\n'                      >> $output2_g/z-version_softwares.txt   2>&1");
+system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
 
 
@@ -161,8 +166,9 @@ for ( my $i=0; $i<=$#inputFiles; $i++ ) {
         next unless $inputFiles[$i] !~ m/^[.]/;
         next unless $inputFiles[$i] !~ m/[~]$/;
         next unless $inputFiles[$i] !~ m/^unpaired/;
+        print("$inputFiles[$i] ......\n");
         my $temp = $inputFiles[$i]; 
-        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])/   or  die  "wrong-1: ## $temp ##";
+        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])/   or  die   "wrong-1: ## $temp ##";
         $temp =~ m/_(Rep[1-9])\.fastq$/  or  $temp =~ m/_(Rep[1-9])_?([1-2]?)\.fastq$/           or  die   "wrong-2: ## $temp ##";
         if($temp !~ m/^((\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]))(_[1-2])?\.fastq$/) {
              $fileNameBool = 0;
@@ -178,7 +184,7 @@ print "\n\n\n\n\n###############################################################
 print "\nDetecting single-end and paired-end FASTQ files in input folder......\n";
 my @singleEnd = ();
 my @pairedEnd = ();
-open(seqFiles_FH, ">", "$output_g/singleEnd-pairedEnd-Files.txt")  or  die; 
+open(seqFiles_FH, ">", "$output2_g/z-singleEnd-pairedEnd-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#inputFiles; $i++ ) {     
     next unless $inputFiles[$i] =~ m/\.fastq$/;
     next unless $inputFiles[$i] !~ m/^[.]/;
@@ -224,27 +230,30 @@ print     "\n\n        There are $numPaired paired-end sequencing files.\n";
 
 print "\n\n\n\n\n##################################################################################################\n";
 print "\nFiltering the reads by using Trimmomatic ......\n";
-my $readsNumFile = "$output_g/1and2-readsNumber.txt";
+my $readsNumFile = "$output2_g/z-2and3-readsNumber.txt";
 system("echo  FASTQ files in Folder $input_g. Need to be divided by 4:              >> $readsNumFile  2>&1");
 for (my $i=0; $i<=$#pairedEnd; $i=$i+2) {
+        print("$pairedEnd[$i] ......\n");
+        print("$pairedEnd[$i+1] ......\n");
         $pairedEnd[$i] =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])_1\.fastq$/   or  die;
         $pairedEnd[$i] =~ m/^(\S+)_1.fastq$/ or die;
         my $temp = $1;   
         my $end1 = $temp."_1.fastq";
         my $end2 = $temp."_2.fastq";
         ($end2 eq $pairedEnd[$i+1])  or  die;
-        open(tempFH, ">>", "$output_g/paired-end-files.txt")  or  die;
+        open(tempFH, ">>", "$output2_g/z-paired-end-files.txt")  or  die;
         print  tempFH  "$end1,  $end2\n";
-        system("java  -jar  $Trimmomatic  PE   -threads 16     $input_g/$end1  $input_g/$end2    $output_g/$end1  $output_g/unpaired-$end1    $output_g/$end2  $output_g/unpaired-$end2      ILLUMINACLIP:0-Other/TruSeqAdapter/All.fasta:2:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30   TOPHRED33    >>$output_g/$temp.runLog  2>&1");                       
+        system("java  -jar  $Trimmomatic  PE   -threads 16     $input_g/$end1  $input_g/$end2    $output_g/$end1  $output_g/unpaired-$end1    $output_g/$end2  $output_g/unpaired-$end2      ILLUMINACLIP:0-Other/TruSeqAdapter.fasta:2:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30   TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                       
         system("wc  -l   $input_g/$end1     >> $readsNumFile  2>&1");
         system("wc  -l   $input_g/$end2     >> $readsNumFile  2>&1");
         ##system("rm   $input_g/$end1");  
         ##system("rm   $input_g/$end2");          
 }
 for (my $i=0; $i<=$#singleEnd; $i++) {   
+        print("$singleEnd[$i] ......\n");
         $singleEnd[$i] =~ m/^((\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]))\.fastq$/   or  die; 
         my $temp = $1; 
-        system("java  -jar  $Trimmomatic  SE   -threads 16     $input_g/$temp.fastq  $output_g/$temp.fastq    ILLUMINACLIP:0-Other/TruSeqAdapter/All.fasta:2:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30    TOPHRED33    >>$output_g/$temp.runLog  2>&1");                    
+        system("java  -jar  $Trimmomatic  SE   -threads 16     $input_g/$temp.fastq  $output_g/$temp.fastq    ILLUMINACLIP:0-Other/TruSeqAdapter.fasta:2:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30    TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                    
         system("wc  -l   $input_g/$temp.fastq   >> $readsNumFile  2>&1");
         ##system("rm   $input_g/$temp.fastq");  
 }
@@ -260,7 +269,7 @@ opendir(my $DH_output, $output_g) || die;
 my @outputFiles = readdir($DH_output);
 @singleEnd = ();
 @pairedEnd = ();
-open(seqFiles_FH, ">", "$output_g/singleEnd-pairedEnd-Files-thisFolder.txt")  or  die; 
+open(seqFiles_FH, ">", "$output2_g/z-singleEnd-pairedEnd-Files-thisFolder.txt")  or  die; 
 for ( my $i=0; $i<=$#outputFiles; $i++ ) {     
     next unless $outputFiles[$i] =~ m/\.fastq$/;
     next unless $outputFiles[$i] !~ m/^[.]/;
@@ -304,11 +313,11 @@ print     "\n\n        There are $numPaired paired-end sequencing files.\n";
 
 
 
-my $FastQCdir       = "$output_g/FastQC";
-my $FastQCdir_10mer = "$output_g/FastQC_10mer";
-my $NGSQCToolkit    = "$output_g/NGSQCToolkit";
-my $NGSQCToolPaired = "$output_g/NGSQCToolkit_PairedEnd";
-my $FASTXtoolkit    = "$output_g/FASTXtoolkit";
+my $FastQCdir       = "$output2_g/FastQC";
+my $FastQCdir_10mer = "$output2_g/FastQC_10mer";
+my $NGSQCToolkit    = "$output2_g/NGSQCToolkit";
+my $NGSQCToolPaired = "$output2_g/NGSQCToolkit_PairedEnd";
+my $FASTXtoolkit    = "$output2_g/FASTXtoolkit";
 if ( !( -e $FastQCdir)       )   { mkdir $FastQCdir        ||  die; }
 if ( !( -e $FastQCdir_10mer) )   { mkdir $FastQCdir_10mer  ||  die; }
 if ( !( -e $NGSQCToolkit)    )   { mkdir $NGSQCToolkit     ||  die; }
