@@ -1,8 +1,6 @@
-#CISDA:                                                   
-###ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and all ChIPseq-like data.)         
+###CISDA: ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and all ChIPseq-like data.)         
 
-#####You can run the scripts step by step or run one of them for a specific purpose.                  
-#####Please run "perl CISDA-N.pl -h" to know that what can the N-th script do.
+#####You can run the scripts step by step or run one of them for a specific purpose. Please run "perl CISDA-N.pl -h" to know that what can the N-th script do.
 __________________________________________________________________________________________________________________      
                                                        
 
@@ -69,6 +67,6 @@ ________________________________________________________________________________
      ......                                               
 
 
-
+###To use pipeline CISDA, the recent versions of these softwares must be available in your Linux OS:
 
 
