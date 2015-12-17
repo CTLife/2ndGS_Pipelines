@@ -14,7 +14,7 @@ HISDA: Hi-C  Data Analyzer
                                                
                                                              
 ---------------------------------------------------------------------------------------------                                                                     
-### To use the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS: 
+### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS: 
 0. Perl, https://www.perl.org/                 
 1. NCBI SRA Toolkit, http://www.ncbi.nlm.nih.gov/Traces/sra/                                
 2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
