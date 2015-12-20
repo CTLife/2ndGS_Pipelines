@@ -10,7 +10,7 @@ ________________________________________________________________________________
 In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing. 
 
 
-    Rules for NGS pipeline RASDA:
+###Rules for NGS pipeline RASDA:
 
     1. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
@@ -69,7 +69,9 @@ In order to realize automatic NGS data processing, the format of file names used
      Step 2  by using RASDA-2.pl, more details by "perl  RASDA-2.pl  -h".
      ......
 
-
+                                                  
+___________________________________________________________________________________________________________________
+###To use pipeline RASDA, the recent versions of these softwares must be available in your Linux OS:
 
 
 
