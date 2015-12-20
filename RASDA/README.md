@@ -2,8 +2,8 @@
 #RASDA
 ###RNA-Seq Data Analyzer.
 
-You can run the scripts step by step or run one of them for a specific purpose.
-Please run perl RASDA-N.pl -h to know that what can the N-th script do. 
+You can run the scripts step by step or run one of them for a specific purpose.                  
+Please run `perl RASDA-N.pl -h` to know that what can the N-th script do.                         
 
 
 _____________________________________________________________________________________________________________________________
