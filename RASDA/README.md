@@ -1,11 +1,16 @@
-###You can run the scripts step by step or run one of them for a specific purpose. Please run "perl RASDA-N.pl -h" to know that what can the N-th script do.
-__________________________________________________________________________________________________________________      
-                                                       
 
-##In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing.                 
-                                  
-                                       
-##Rules for NGS pipeline RASDA:                                         
+#RASDA
+###RNA-Seq Data Analyzer.
+
+You can run the scripts step by step or run one of them for a specific purpose.
+Please run perl RASDA-N.pl -h to know that what can the N-th script do. 
+
+
+_____________________________________________________________________________________________________________________________
+In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing. 
+
+
+    Rules for NGS pipeline RASDA:
 
     1. Only SRA format and compressed FASTQ files can be used as input files. 
        And the format of file name must be fixed, such as:
@@ -24,13 +29,13 @@ ________________________________________________________________________________
        Number_Target_Treat_Space_Time_Other_RepNum(_[1-2]).xxx
       [01-99]_Target_Treat_Space_Time_Other_Rep[1-9]_[1-2]_Lane[1-2].xxx.xxx 
 
-       Number: order of samples, 01~99. (It is same for biological or technical replicates.)
-       Target: such as H3K27ac, RNA_Pol_2, mRNA. 
-       Treat:  such as sham, banding, normal, EEDKO.  You also can use "NA" or "NULL".
-       Space: organ, tissue or cell type.
-       Time: such as  adult, E12.5.
-       Other: other informations of this sample, You also can use "NA" or "NULL".
-       RepNum: Rep[1-9], biological replicates.
+       Number: order of samples, 01~99.                                                       (It is same for biological or technical replicates.)
+       Target: such as H3K27ac, RNA_Pol_2, mRNA.                                              (It is same for biological or technical replicates.)
+       Treat:  such as sham, banding, normal, EEDKO.  You also can use "NA" or "NULL".        (It is same for biological or technical replicates.)
+       Space: organ, tissue or cell type.                                                     (It is same for biological or technical replicates.)
+       Time: such as  adult, E12.5.                                                           (It is same for biological or technical replicates.)
+       Other: other informations of this sample, You also can use "NA" or "NULL".             (It is same for biological or technical replicates.)
+       RepNum: Rep[1-9], biological replicates.                                               (It is same for technical replicates.)
        [1-2]: only for paired-end sequencing. (Optional)   
        Lane[1-2]: Technical replicates. (Optional)
 
@@ -50,26 +55,21 @@ ________________________________________________________________________________
 
     4. Quality statistics: first by FastQC, after it finished, then run other  quality statistic softwares.
 
-    5. For biological replicats, "Number_Target_Treat_Space_Time_Other" are same, only "_Rep[1-9]" is different.
+    5. For biological replicats, only "_Rep[1-9]"    is different, others are same.
 
-    6. For techniche replicates, only "(_Lane[1-2])" is different.
+    6. For techniche replicates, only "(_Lane[1-2])" is different, others are same.
 
-    7. For Paired end files, only "(_[1-2])" is different.
-
-    8. For biological replicats and techniche replicates, all "Number" must be same.
-                                                                       
+    7. For Paired end files,     only "(_[1-2])"     is different, others are same.
 
 
 
 
+###Usage:
+     Step 1  by using RASDA-1.pl, more details by "perl  RASDA-1.pl  -h".
+     Step 2  by using RASDA-2.pl, more details by "perl  RASDA-2.pl  -h".
+     ......
 
 
 
-##Usage:                              
-     Step 1  by using RASDA-1.pl, more details by "perl  RASDA-1.pl  -h".                       
-     Step 2  by using RASDA-2.pl, more details by "perl  RASDA-2.pl  -h".                               
-     ......                                        
 
 
-
-                                                                    
