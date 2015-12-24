@@ -239,7 +239,7 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_subread/$temp.bam    -T $output_subread/1_$temp      $output_subread/$temp.q.bam   >>$output2_subread/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_subread/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_subread/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_subread/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp    --java-mem-size=5G  >>$output2_subread/$temp.runLog    2>&1");
     system("samstat   $output_subread/$temp.bam           >> $output2_subread/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_subread/$temp.runLog    2>&1");   
 
@@ -313,7 +313,7 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_BWAaln/$temp.bam    -T $output_BWAaln/1_$temp      $output_BWAaln/$temp.sam   >>$output2_BWAaln/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAaln/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_BWAaln/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAaln/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_BWAaln/$temp.runLog    2>&1");
     system("samstat   $output_BWAaln/$temp.bam           >> $output2_BWAaln/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAaln/$temp.runLog    2>&1");   
 
@@ -385,7 +385,7 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_BWAmem/$temp.bam    -T $output_BWAmem/1_$temp      $output_BWAmem/$temp.sam   >>$output2_BWAmem/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAmem/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_BWAmem/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAmem/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp    --java-mem-size=5G   >>$output2_BWAmem/$temp.runLog    2>&1");
     system("samstat   $output_BWAmem/$temp.bam           >> $output2_BWAmem/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAmem/$temp.runLog    2>&1");   
 
@@ -452,7 +452,7 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_Bowtie1/$temp.bam    -T $output_Bowtie1/1_$temp      $output_Bowtie1/$temp.sam   >>$output2_Bowtie1/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie1/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_Bowtie1/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie1/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_Bowtie1/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie1/$temp.bam           >> $output2_Bowtie1/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie1/$temp.runLog    2>&1");   
 
@@ -521,7 +521,7 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_Bowtie2/$temp.bam    -T $output_Bowtie2/1_$temp      $output_Bowtie2/$temp.sam   >>$output2_Bowtie2/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie2/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_Bowtie2/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie2/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_Bowtie2/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie2/$temp.bam           >> $output2_Bowtie2/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie2/$temp.runLog    2>&1");   
 
