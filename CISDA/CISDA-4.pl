@@ -366,17 +366,17 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_subread/Removed_$temp.bam    -T $output_subread/3_$temp      $output_subread/Removed_$temp.sam     >>$output2_subread/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_subread/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp      >>$output2_subread/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_subread/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp  --java-mem-size=5G    >>$output2_subread/$temp.runLog    2>&1");
     system("samstat   $output_subread/All_$temp.bam       >> $output2_subread/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_subread/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_subread/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_subread/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_subread/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp    --java-mem-size=5G   >>$output2_subread/$temp.runLog    2>&1");
     system("samstat   $output_subread/$temp.bam       >> $output2_subread/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_subread/$temp.runLog    2>&1");   
 
     if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_subread/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp      >>$output2_subread/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_subread/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp    --java-mem-size=5G   >>$output2_subread/$temp.runLog    2>&1");
     system("samstat   $output_subread/Removed_$temp.bam       >> $output2_subread/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                            >> $output2_subread/$temp.runLog    2>&1");
 
@@ -465,17 +465,17 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_BWAaln/Removed_$temp.bam    -T $output_BWAaln/3_$temp      $output_BWAaln/Removed_$temp.sam     >>$output2_BWAaln/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAaln/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp      >>$output2_BWAaln/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAaln/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp    --java-mem-size=5G  >>$output2_BWAaln/$temp.runLog    2>&1");
     system("samstat   $output_BWAaln/All_$temp.bam       >> $output2_BWAaln/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAaln/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAaln/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_BWAaln/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAaln/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_BWAaln/$temp.runLog    2>&1");
     system("samstat   $output_BWAaln/$temp.bam       >> $output2_BWAaln/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAaln/$temp.runLog    2>&1");   
 
     if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAaln/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp      >>$output2_BWAaln/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAaln/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp   --java-mem-size=5G   >>$output2_BWAaln/$temp.runLog    2>&1");
     system("samstat   $output_BWAaln/Removed_$temp.bam       >> $output2_BWAaln/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                            >> $output2_BWAaln/$temp.runLog    2>&1");
 
@@ -564,17 +564,17 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_BWAmem/Removed_$temp.bam    -T $output_BWAmem/3_$temp      $output_BWAmem/Removed_$temp.sam     >>$output2_BWAmem/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAmem/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp      >>$output2_BWAmem/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAmem/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp    --java-mem-size=5G   >>$output2_BWAmem/$temp.runLog    2>&1");
     system("samstat   $output_BWAmem/All_$temp.bam       >> $output2_BWAmem/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAmem/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAmem/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_BWAmem/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAmem/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp    --java-mem-size=5G    >>$output2_BWAmem/$temp.runLog    2>&1");
     system("samstat   $output_BWAmem/$temp.bam       >> $output2_BWAmem/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_BWAmem/$temp.runLog    2>&1");   
 
     if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_BWAmem/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp      >>$output2_BWAmem/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_BWAmem/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp    --java-mem-size=5G   >>$output2_BWAmem/$temp.runLog    2>&1");
     system("samstat   $output_BWAmem/Removed_$temp.bam       >> $output2_BWAmem/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                            >> $output2_BWAmem/$temp.runLog    2>&1");
 
@@ -663,17 +663,17 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_Bowtie1/Removed_$temp.bam    -T $output_Bowtie1/3_$temp      $output_Bowtie1/Removed_$temp.sam     >>$output2_Bowtie1/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie1/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp      >>$output2_Bowtie1/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie1/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp    --java-mem-size=5G  >>$output2_Bowtie1/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie1/All_$temp.bam       >> $output2_Bowtie1/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie1/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie1/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_Bowtie1/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie1/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_Bowtie1/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie1/$temp.bam       >> $output2_Bowtie1/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie1/$temp.runLog    2>&1");   
 
     if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie1/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp      >>$output2_Bowtie1/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie1/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp   --java-mem-size=5G   >>$output2_Bowtie1/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie1/Removed_$temp.bam       >> $output2_Bowtie1/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                            >> $output2_Bowtie1/$temp.runLog    2>&1");
 
@@ -763,17 +763,17 @@ for(my $i=0; $i<=$#inputFiles; $i++) {
     system("samtools  sort   -O bam       -o $output_Bowtie2/Removed_$temp.bam    -T $output_Bowtie2/3_$temp      $output_Bowtie2/Removed_$temp.sam     >>$output2_Bowtie2/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie2/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp      >>$output2_Bowtie2/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie2/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp    --java-mem-size=5G   >>$output2_Bowtie2/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie2/All_$temp.bam       >> $output2_Bowtie2/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie2/$temp.runLog    2>&1");
 
     if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie2/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp      >>$output2_Bowtie2/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie2/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp    --java-mem-size=5G  >>$output2_Bowtie2/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie2/$temp.bam       >> $output2_Bowtie2/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                        >> $output2_Bowtie2/$temp.runLog    2>&1");   
 
     if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Bowtie2/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp      >>$output2_Bowtie2/$temp.runLog    2>&1");
+    system("qualimap  bamqc  -bam $output_Bowtie2/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp    --java-mem-size=5G   >>$output2_Bowtie2/$temp.runLog    2>&1");
     system("samstat   $output_Bowtie2/Removed_$temp.bam       >> $output2_Bowtie2/$temp.runLog    2>&1");
     system("echo    '\n\n\n\n\n\n'                            >> $output2_Bowtie2/$temp.runLog    2>&1");
 
