@@ -400,7 +400,6 @@ for (my $i=0; $i<=$#pairedEnd; $i=$i+2) {
         open(tempFH, ">>", "$STAR_2/z-paired-end-files.txt")  or  die;
         print  tempFH  "$end1,  $end2\n";
         system("./$STAR_run   --runThreadN 16     --outFileNamePrefix  $STAR/$temp      --genomeDir $STAR_index      --readFilesIn $input_g/$end1.fastq    $input_g/$end2.fastq        >>$STAR_2/$temp.runLog   2>&1  ");       
-        system("mv   a.sh   b.sh"); 
 }
 
 for (my $i=0; $i<=$#singleEnd; $i++) {  
