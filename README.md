@@ -1,4 +1,4 @@
-# [2ndGS_Pipelines](https://github.com/CTLife/2ndGS_Pipelines/releases)                                 
+#2ndGS_Pipelines                                                          
 ###Perl source codes for next generation (second generation) sequencing data analysis by integrating lots of open-source softwares.
                                                              
 
