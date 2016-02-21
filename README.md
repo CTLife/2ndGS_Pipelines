@@ -12,7 +12,7 @@
                                                                
   All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
                                                
-                                                             
+---------------------------------------------------------------------------------------------                                  ##Download: https://github.com/CTLife/2ndGS_Pipelines/releases                   
 ---------------------------------------------------------------------------------------------                                                                     
 ### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS: 
 0. Perl, https://www.perl.org/                 
