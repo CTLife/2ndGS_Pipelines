@@ -16,7 +16,7 @@
 #[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                   
 ---------------------------------------------------------------------------------------------                                                                     
 ### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
-+ ####Common:               
++ ####Common:                                        
 0. Perl, https://www.perl.org/                 
 1. NCBI SRA Toolkit, http://www.ncbi.nlm.nih.gov/Traces/sra/                                
 2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
@@ -32,7 +32,7 @@
 12. BEDOPS, http://bedops.readthedocs.org/en/latest/                
 13. Deeptools, http://deeptools.github.io/ 
 
-+ ####Only for CISDA:
++ ####Only for CISDA:                                                     
 14. MACS1.4, http://liulab.dfci.harvard.edu/MACS/         
 15. MACS2, https://github.com/taoliu/MACS/                
 16. HOMER, http://homer.salk.edu/homer/                
@@ -47,11 +47,11 @@
 25. SAMStat: http://samstat.sourceforge.net/                                                          
 26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing  
                                   
-+ ####Only for MESDA:      
++ ####Only for MESDA:                            
                                
-+ ####Only for RASDA:      
++ ####Only for RASDA:                         
                             
-+ ####Only for HISDA:                      
++ ####Only for HISDA:                                                  
                                                                                            
                                                                                                         
 ---------------------------------------------------------------------------------
