@@ -6,7 +6,7 @@ Please run `perl CISDA-N.pl -h` to know that what can the N-th script do.
 #[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
                                                        
-###Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. 
+Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. 
 
 ###All Rules for NGS pipeline CISDA:
     1. Raw sequencing reads can only be stored in SRA or compressed FASTQ files, because only SRA format and compressed FASTQ format are supported. 
