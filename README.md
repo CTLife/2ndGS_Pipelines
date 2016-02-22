@@ -15,8 +15,8 @@
                                                
 #[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                   
 ---------------------------------------------------------------------------------------------                                                                     
-### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS:          
-####Common
+### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
+####Common:               
 0. Perl, https://www.perl.org/                 
 1. NCBI SRA Toolkit, http://www.ncbi.nlm.nih.gov/Traces/sra/                                
 2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
@@ -45,9 +45,12 @@
 23. Qualimap 2: http://qualimap.bioinfo.cipf.es/
 24. STAR: https://github.com/alexdobin/STAR/releases                                                                      
 25. SAMStat: http://samstat.sourceforge.net/                                                          
-26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing                        
-####Only for MESDA:                      
-####Only for RASDA:                  
+26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing  
+                                  
+####Only for MESDA:      
+                               
+####Only for RASDA:      
+                            
 ####Only for HISDA:                      
                                                                                            
                                                                                                         
