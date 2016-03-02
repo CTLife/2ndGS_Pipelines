@@ -610,7 +610,7 @@ system( "kpal   matrix   $kPAL/rawReads.k8   $kPAL/rawReads.k8.matrix   >> $kPAL
 system( "kpal   matrix   $kPAL/rawReads.k6   $kPAL/rawReads.k6.matrix   >> $kPAL/rawReads.k6.runLog   2>&1");
 system( "kpal   matrix   $kPAL/rawReads.k4   $kPAL/rawReads.k4.matrix   >> $kPAL/rawReads.k4.runLog   2>&1");
 system( "kpal   matrix   $kPAL/rawReads.k2   $kPAL/rawReads.k2.matrix   >> $kPAL/rawReads.k2.runLog   2>&1");
-system( "rm   $kPAL/*.fa " );
+##system( "rm   $kPAL/*.fa " );
 my $R_QC2 = "$R_QC"."-Final";
 &myMakeDir($R_QC2);
 system( "Rscript  0-Other/Rsrc/Rqc.R         $output_g    $R_QC2        >> $R_QC2/Rqc2.runLog              2>&1" );
