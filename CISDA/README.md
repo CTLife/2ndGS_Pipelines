@@ -54,8 +54,8 @@ Some rules are necessary for automatic NGS data processing, such as the names of
                  3_Input-Mouse-Lab_Rep1_2_Lane1.fastq.xz
                  3_Input-Mouse-Lab_Rep1_2_Lane2.fastq.zip
 
-    5. In your work directory, you should create a folder "0-Other", and put Illumina TruSeq adapters file "TruSeqAdapter.fasta" into folder "0-Other".
-       The file  "0-Other/TruSeqAdapter.fasta" will be used by CISDA.
+    5. In your work directory, you should create a folder named "0-Other", and put folder "Rsrc" and Illumina TruSeq adapters file "TruSeqAdapter.fasta"
+       into the folder "0-Other".  The R scripts in "Rsrc" and the file  "0-Other/TruSeqAdapter.fasta" will be used by CISDA.                   
 
 
 ###Usage:                                            
