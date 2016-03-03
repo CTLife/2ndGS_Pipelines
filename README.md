@@ -17,8 +17,9 @@
 ---------------------------------------------------------------------------------------------                                                                     
 ### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
 ####Common:                                        
-0. [Perl 5](https://www.perl.org/)                                 
-1. NCBI SRA Toolkit, http://www.ncbi.nlm.nih.gov/Traces/sra/                                
+1. [Perl 5](https://www.perl.org/)   
+2. [R](https://www.r-project.org/)                            
+3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)                                 
 2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 3. Trimmomatic, http://www.usadellab.org/cms/?page=trimmomatic                   
 4. NGS QC Toolkit, http://www.nipgr.res.in/ngsqctoolkit.html              
