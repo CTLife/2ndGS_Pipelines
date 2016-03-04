@@ -43,7 +43,8 @@
 24. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                    
 
 
-####Only for CISDA:                                                     
+####Only for CISDA: 
+1. [Stampy](http://www.well.ox.ac.uk/bioinformatics/Software/Stampy-latest.tgz)   
 14. MACS1.4, http://liulab.dfci.harvard.edu/MACS/         
 15. MACS2, https://github.com/taoliu/MACS/                
 16. HOMER, http://homer.salk.edu/homer/                
