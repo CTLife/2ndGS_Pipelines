@@ -16,7 +16,7 @@
 #[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                   
 ---------------------------------------------------------------------------------------------                                                                     
 ### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
-####Common:                                        
+####Common Tools:                                        
 1. [Perl 5](https://www.perl.org/)   
 2. [R](https://www.r-project.org/)                            
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
