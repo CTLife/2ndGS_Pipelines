@@ -19,11 +19,24 @@
 ####Common:                                        
 1. [Perl 5](https://www.perl.org/)   
 2. [R](https://www.r-project.org/)                            
-3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)                                 
-4. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)    
-5. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
-6. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
-7. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
+3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
+4. bzip2, gunzip, tar, unrar, xz and unzip. 
+5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)    
+6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
+7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
+8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
+9. [kPAL](https://github.com/LUMC/kPAL)
+10. [FaQCs](https://github.com/chienchi/FaQCs)    
+11. [prinseq](http://prinseq.sourceforge.net/)      
+12. [SolexaQA](http://solexaqa.sourceforge.net/)     
+13. [Raspberry](https://github.com/CEG-ICRISAT/Raspberry)     
+14. [SGA](https://github.com/jts/sga)    
+15. [fastools](https://pypi.python.org/pypi/fastools)      
+16. [HTQC](https://sourceforge.net/projects/htqc/files/)    
+17. [fastqp](https://github.com/mdshw5/fastqp)    
+18. [Rqc](http://bioconductor.org/packages/release/bioc/html/Rqc.html)       
+19. [ShortRead](https://bioconductor.org/packages/release/bioc/html/ShortRead.html)     
+20. [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)     
 
 
 ####Only for CISDA:                                                     
