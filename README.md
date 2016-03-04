@@ -21,10 +21,9 @@
 2. [R](https://www.r-project.org/)                            
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)                                 
 4. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)    
-5. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                   
-6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
-7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
-8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils]  or 
+5. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
+6. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
+7. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
 
 
 ####Only for CISDA:                                                     
