@@ -20,18 +20,12 @@
 1. [Perl 5](https://www.perl.org/)   
 2. [R](https://www.r-project.org/)                            
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)                                 
-2. FastQC, http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
-3. Trimmomatic, http://www.usadellab.org/cms/?page=trimmomatic                   
-4. NGS QC Toolkit, http://www.nipgr.res.in/ngsqctoolkit.html              
-5. FASTX-Toolkit, http://hannonlab.cshl.edu/fastx_toolkit/                  
-6. Subread, http://subread.sourceforge.net/               
-7. BWA, http://bio-bwa.sourceforge.net/          
-8. Bowtie, http://bowtie-bio.sourceforge.net/index.shtml       
-9. Bowtie2, http://bowtie-bio.sourceforge.net/bowtie2/index.shtml              
-10. SAMtools, http://www.htslib.org/            
-11. BEDtools, https://github.com/arq5x/bedtools2/releases                                
-12. BEDOPS, http://bedops.readthedocs.org/en/latest/                
-13. Deeptools, http://deeptools.github.io/ 
+4. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)    
+5. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                   
+6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
+7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
+8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils]  or 
+
 
 ####Only for CISDA:                                                     
 14. MACS1.4, http://liulab.dfci.harvard.edu/MACS/         
@@ -47,6 +41,14 @@
 24. STAR: https://github.com/alexdobin/STAR/releases                                                                      
 25. SAMStat: http://samstat.sourceforge.net/                                                          
 26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing  
+27. 6. Subread, http://subread.sourceforge.net/               
+7. BWA, http://bio-bwa.sourceforge.net/          
+8. Bowtie, http://bowtie-bio.sourceforge.net/index.shtml       
+9. Bowtie2, http://bowtie-bio.sourceforge.net/bowtie2/index.shtml              
+10. SAMtools, http://www.htslib.org/            
+11. BEDtools, https://github.com/arq5x/bedtools2/releases                                
+12. BEDOPS, http://bedops.readthedocs.org/en/latest/                
+13. Deeptools, http://deeptools.github.io/ 
                                   
 ####Only for MESDA:                            
                                
