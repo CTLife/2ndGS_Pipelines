@@ -31,12 +31,16 @@
 12. [SolexaQA](http://solexaqa.sourceforge.net/)     
 13. [Raspberry](https://github.com/CEG-ICRISAT/Raspberry)     
 14. [SGA](https://github.com/jts/sga)    
-15. [fastools](https://pypi.python.org/pypi/fastools)      
+15. [fastools](https://pypi.python.org/pypi/fastools)  (convert fastq to fasta)     
 16. [HTQC](https://sourceforge.net/projects/htqc/files/)    
 17. [fastqp](https://github.com/mdshw5/fastqp)    
 18. [Rqc](http://bioconductor.org/packages/release/bioc/html/Rqc.html)       
 19. [ShortRead](https://bioconductor.org/packages/release/bioc/html/ShortRead.html)     
-20. [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)     
+20. [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)                        
+21. [Skewer](https://sourceforge.net/projects/skewer/files/)                   
+22. [AdapterRemoval](https://github.com/MikkelSchubert/adapterremoval)                         
+23. [Cutadapt](https://github.com/marcelm/cutadapt)                                   
+24. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                    
 
 
 ####Only for CISDA:                                                     
