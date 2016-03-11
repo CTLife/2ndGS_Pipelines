@@ -1,7 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.20;    ## perl5 version >= 5.20
+use  v5.20;
+## perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 
 
 
@@ -15,14 +16,14 @@ use  v5.20;    ## perl5 version >= 5.20
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.7.0, 2016-03-05.
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-03-20.
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ by using SRA_Toolkit,
                 and merge the two lanes of the same sample (merge technical replicates).
-                And  assess the quality of the raw reads to identify possible sequencing errors or biases by using
-                Rqc, FastQC, kPAL, NGS_QC_Toolkit, FASTX-toolkit, FaQCs, prinseq, fastq-stats in EA-Utils, SolexaQA,
-                Raspberry, ht2-stat in HTQC, SGA, fastqp,  ShortRead and seqTools.
+                And  assess the quality of the raw reads to identify possible sequencing errors or biases by using 20 softwares:
+                Rqc, FastQC, kPAL, NGS_QC_Toolkit, FASTX-toolkit, FaQCs, prinseq, SolexaQA, stats in fastqutils of NGSUtils, htseq-qa, MultiQC,
+                fqtools(alastair-droop), fastq-stats in EA-Utils, Raspberry, ht2-stat in HTQC, fastqp, QC3, fastq-tools, ShortRead and seqTools.
 
         Usage:
                perl  RASDA-1.pl    [-v]    [-h]    [-i inputDir]    [-o outDir]
@@ -30,6 +31,7 @@ my $HELP_g = '
                      perl  RASDA-1.pl    -i 1-rawReads          -o 2-FASTQ
                      perl  RASDA-1.pl    --input 1-rawReads     --output 2-FASTQ
                      perl  RASDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> RASDA-1.runLog  2>&1
+                     RASDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> RASDA-1.runLog  2>&1
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -57,7 +59,7 @@ my $HELP_g = '
 
 
 ########## Version Infromation ##########
-my $version_g = "    The First Step of RASDA (RNA-Seq Data Analyzer), version 0.7.0, 2016-03-05.";
+my $version_g = "    The First Step of RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-03-20.";
 
 
 ########## Keys and Values ##########
@@ -87,8 +89,8 @@ if($boole_g == 1) {
 ########## Get Arguments ##########
 if ( ( exists $args{'-v' } )  or  ( exists $args{'--version' } )  )     { say  "\n$version_g\n";    exit 0; }
 if ( ( exists $args{'-h' } )  or  ( exists $args{'--help'    } )  )     { say  "\n$HELP_g\n";       exit 0; }
-if ( ( exists $args{'-i' } )  or  ( exists $args{'--input'   } )  )     { ($input_g  = $args{'-i' })  or  ($input_g  = $args{'--input' });  }else{say   "\n -i or --input  is required.\n";   say  "\n$HELP_g\n";    exit 0; }                         
-if ( ( exists $args{'-o' } )  or  ( exists $args{'--output'  } )  )     { ($output_g = $args{'-o' })  or  ($output_g = $args{'--output'});  }else{say   "\n -o or --output is required.\n";   say  "\n$HELP_g\n";    exit 0; }                             
+if ( ( exists $args{'-i' } )  or  ( exists $args{'--input'   } )  )     { ($input_g  = $args{'-i' })  or  ($input_g  = $args{'--input' });  }else{say   "\n -i or --input  is required.\n";   say  "\n$HELP_g\n";    exit 0; }
+if ( ( exists $args{'-o' } )  or  ( exists $args{'--output'  } )  )     { ($output_g = $args{'-o' })  or  ($output_g = $args{'--output'});  }else{say   "\n -o or --output is required.\n";   say  "\n$HELP_g\n";    exit 0; }
 
 
 ########### Conditions #############
@@ -117,14 +119,14 @@ say  "\n
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Running ......";
 sub myMakeDir  {
     my $path = $_[0];
     if ( !( -e $path) )  { mkdir $path  ||  die; }
 }
-my $input2_g  = "$input_g/Results";
-my $output2_g = "$output_g/Results";
+my $input2_g  = "$input_g/QC_Results";
+my $output2_g = "$output_g/QC_Results";
 &myMakeDir("$input2_g");
 &myMakeDir("$output_g");
 &myMakeDir("$output2_g");
@@ -138,7 +140,7 @@ my $numCores = 8;
 
 
 ## These commands must be available:
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Checking all the necessary softwares in this step ......";
 sub printVersion  {
     my $software = $_[0];
@@ -158,30 +160,32 @@ sub printVersion  {
 &printVersion(" kpal  -v ");
 &printVersion(" IlluQC_PRLL.pl  -h ");
 &printVersion(" fastx_quality_stats  -h ");
-&printVersion(" fastq_quality_boxplot_graph.sh   -h ");
-&printVersion(" fastx_nucleotide_distribution_graph.sh  -h ");
 &printVersion(" FaQCs.pl   --version ");
 &printVersion(" prinseq-lite.pl  -version ");
-&printVersion(" fastq-stats -v ");
+&printVersion(" fastq-stats -h "); ## in EA-Utils.
 &printVersion(" SolexaQA ");
 &printVersion(" raspberry ");
-&printVersion(" sga ");
-&printVersion(" fastools  -v ");
 &printVersion(" ht2-stat  -v ");
 &printVersion(" fastqp    -h ");
+&printVersion(" fastqutils ");
+&printVersion(" htseq-qa  -h ");
+&printVersion(" multiqc  --version ");
+&printVersion(" fqtools  -v ");
+&printVersion(" qc3.pl  -h ");
+&printVersion(" fastq-uniq  --version ");  ## in fastq-tools.
 
 
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Checking all the input file names ......";
 my @groupFiles = ();
 my $fileNameBool = 1;
 for ( my $i=0; $i<=$#inputFiles; $i++ ) {
         next unless $inputFiles[$i] !~ m/^[.]/;
         next unless $inputFiles[$i] !~ m/[~]$/;
-        next unless $inputFiles[$i] !~ m/^Results$/;
+        next unless $inputFiles[$i] !~ m/^QC_Results$/;
         say   "\t......$inputFiles[$i]" ;
         my $temp = $inputFiles[$i];
         $groupFiles[++$#groupFiles] = $inputFiles[$i];
@@ -209,12 +213,12 @@ say  "\n\t\tThere are $numGroup groups.";
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Converting SRA files into FASTQ files or Extracting the compressed fastq files ......";
 for ( my $i=0; $i<=$#inputFiles; $i++ ) {
         next unless $inputFiles[$i] !~ m/^[.]/;
         next unless $inputFiles[$i] !~ m/[~]$/;
-        next unless $inputFiles[$i] !~ m/^Results$/;
+        next unless $inputFiles[$i] !~ m/^QC_Results$/;
         say  "\t......$inputFiles[$i]" ;
         my $temp = $inputFiles[$i];
         if ($temp =~ m/\.sra$/) {
@@ -240,14 +244,14 @@ for ( my $i=0; $i<=$#inputFiles; $i++ ) {
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Merge the two lanes of the same sample or copy files ......";
-my $FastQCdir1       = "$input2_g/FastQC";  
+my $FastQCdir1       = "$input2_g/FastQC";
 &myMakeDir("$FastQCdir1");
 opendir($DH_input, $input_g) || die;
 my @twoLanes = readdir($DH_input);
 for (my $i=0; $i<=$#twoLanes; $i++) {
-    next unless $twoLanes[$i] !~ m/^Results$/;
+    next unless $twoLanes[$i] !~ m/^QC_Results$/;
     next unless $twoLanes[$i] =~ m/\.fastq$/;
     next unless $twoLanes[$i] !~ m/^[.]/;
     next unless $twoLanes[$i] !~ m/[~]$/;
@@ -267,14 +271,14 @@ for (my $i=0; $i<=$#twoLanes; $i++) {
     }
     system( "fastqc    --outdir $FastQCdir1   --threads $numCores    --kmers 7     $input_g/$twoLanes[$i]       >> $FastQCdir1/$twoLanes[$i].runLog   2>&1" );
 }
-system( "Rscript  0-Other/Rsrc/Rqc.R   $input_g    $input2_g   >> $input2_g/Rqc.runLog   2>&1" );
 system( "rm    $input_g/*.fastq" );
+system( "multiqc  --outdir $input2_g   $FastQCdir1/*_fastqc.zip  >> $input2_g/multiqc.runLog   2>&1" );
 
 
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Detecting single-end and paired-end FASTQ files ......";
 opendir(my $DH_output, $output_g) || die;
 my @outputFiles = readdir($DH_output);
@@ -286,7 +290,7 @@ for ( my $i=0; $i<=$#outputFiles; $i++ ) {
     next unless $outputFiles[$i] !~ m/^[.]/;
     next unless $outputFiles[$i] !~ m/[~]$/;
     next unless $outputFiles[$i] !~ m/^unpaired/;
-    next unless $outputFiles[$i] !~ m/^Results$/;
+    next unless $outputFiles[$i] !~ m/^QC_Results$/;
     say    "\t......$outputFiles[$i]";
     $outputFiles[$i] =~ m/^(\d+)_($pattern)_(Rep[1-9])_?([1-2]?)\.fastq$/   or  die;
     if ($outputFiles[$i] =~ m/^(\d+)_($pattern)_(Rep[1-9])\.fastq$/) {   ## sinlge end sequencing files.
@@ -326,46 +330,53 @@ say     "\t\t\t\tThere are $numPaired paired-end sequencing files.\n";
 
 
 
-my $R_QC         = "$output2_g/1-Rqc";
-my $FastQC       = "$output2_g/2-FastQC";
-my $kPAL         = "$output2_g/3-kPAL";
-my $NGSQCToolkit = "$output2_g/4-NGSQCToolkit";
-my $FASTXtoolkit = "$output2_g/5-FASTXtoolkit";
-my $FaQCs        = "$output2_g/6-FaQCs";
-my $PRINSEQ      = "$output2_g/7-PRINSEQ";
-my $EA_Utils     = "$output2_g/8-EA-Utils";
-my $SolexaQA     = "$output2_g/9-SolexaQA";
-my $Raspberry    = "$output2_g/10-raspberry";
-my $HTQC         = "$output2_g/11-HTQC";
-my $SGA          = "$output2_g/12-SGA";
-my $Fastqp       = "$output2_g/13-fastqp";
-my $ShortRead    = "$output2_g/14-ShortRead";
-my $seqTools     = "$output2_g/15-seqTools";
+my $R_QC          = "$output2_g/1_R_QC";
+my $FastQC        = "$output2_g/2_FastQC";
+my $kPAL          = "$output2_g/3_kPAL";
+my $NGSQC_Toolkit = "$output2_g/4_NGSQC_Toolkit";
+my $FASTX_Toolkit = "$output2_g/5_FASTX_Toolkit";
+my $FaQCs         = "$output2_g/6_FaQCs";
+my $PRINSEQ       = "$output2_g/7_PRINSEQ";
+my $EA_Utils      = "$output2_g/8_EA_Utils";
+my $SolexaQA      = "$output2_g/9_SolexaQA";
+my $Raspberry     = "$output2_g/10_Raspberry";
+my $HTQC          = "$output2_g/11_HTQC";
+my $Fastqp        = "$output2_g/12_Fastqp";
+my $ShortRead     = "$output2_g/13_ShortRead";
+my $seqTools      = "$output2_g/14_seqTools";
+my $FastqUtils    = "$output2_g/15_FastqUtils";
+my $HTSeqQA       = "$output2_g/16_HTSeqQA";
+my $MultiQC       = "$output2_g/17_MultiQC";
+my $FqTools       = "$output2_g/18_FqTools";
+my $QC3           = "$output2_g/19_QC3";
+my $FastqTools    = "$output2_g/20_FastqTools";
 &myMakeDir("$R_QC");
 &myMakeDir("$FastQC");
 &myMakeDir("$kPAL");
-&myMakeDir("$NGSQCToolkit");
-&myMakeDir("$FASTXtoolkit");
+&myMakeDir("$NGSQC_Toolkit");
+&myMakeDir("$FASTX_Toolkit");
 &myMakeDir("$FaQCs");
 &myMakeDir("$PRINSEQ");
 &myMakeDir("$EA_Utils");
 &myMakeDir("$SolexaQA");
 &myMakeDir("$Raspberry");
 &myMakeDir("$HTQC");
-&myMakeDir("$SGA");
 &myMakeDir("$Fastqp");
 &myMakeDir("$ShortRead");
 &myMakeDir("$seqTools");
+&myMakeDir("$FastqUtils");
+&myMakeDir("$HTSeqQA");
+&myMakeDir("$MultiQC");
+&myMakeDir("$FqTools");
+&myMakeDir("$QC3");
+&myMakeDir("$FastqTools");
 
 
 
 
 
-say   "\n\n##################################################################################################";
-say   "Detecting the quality of all FASTQ files by using Rqc, FastQC, fastq-stats in EA-Utils, SolexaQA, raspberry, fastqp, FASTX-toolkit, ShortRead and seqTools ......";
-system( "Rscript  0-Other/Rsrc/Rqc.R         $output_g    $R_QC        >> $R_QC/Rqc.runLog              2>&1" );
-system( "Rscript  0-Other/Rsrc/ShortRead.R   $output_g    $ShortRead   >> $ShortRead/ShortRead.runLog   2>&1" );
-system( "Rscript  0-Other/Rsrc/seqTools.R    $output_g    $seqTools    >> $seqTools/seqTools.runLog     2>&1" );
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Detecting the quality of all FASTQ files by using FastQC, fastq-stats in EA-Utils, SolexaQA, raspberry, fastqp, FASTX-toolkit, fastqutils, htseq-qa, fqtools, fastq-tools, Rqc, ShortRead and seqTools ......";
 for ( my $i=0; $i<=$#outputFiles; $i++ ) {
     next unless $outputFiles[$i] =~ m/\.fastq$/;
     next unless $outputFiles[$i] !~ m/^[.]/;
@@ -374,56 +385,78 @@ for ( my $i=0; $i<=$#outputFiles; $i++ ) {
     say    "\t......$temp";
     $temp =~ m/^(\d+)_($pattern)_(Rep[1-9])_?([1-2]?)\.fastq$/   or  die;
     $temp =~ s/\.fastq$//  ||  die;
-    &myMakeDir("$FastQC/$temp");
-    &myMakeDir("$FASTXtoolkit/$temp");
+    &myMakeDir("$FASTX_Toolkit/$temp");
     &myMakeDir("$EA_Utils/$temp");
     &myMakeDir("$SolexaQA/$temp");
-    system( "fastqc    --outdir $FastQC/$temp    --threads $numCores    --kmers 7    $output_g/$temp.fastq       >> $FastQC/$temp.runLog     2>&1" );
-    system( "fastx_quality_stats                        -i $output_g/$temp.fastq                          -o $FASTXtoolkit/$temp/$temp.txt            >> $FASTXtoolkit/$temp.runLog   2>&1" );
-    system( "fastq_quality_boxplot_graph.sh             -i $FASTXtoolkit/$temp/$temp.txt     -t $temp     -o $FASTXtoolkit/$temp/$temp.quality.png    >> $FASTXtoolkit/$temp.runLog   2>&1" );
-    system( "fastx_nucleotide_distribution_graph.sh     -i $FASTXtoolkit/$temp/$temp.txt     -t $temp     -o $FASTXtoolkit/$temp/$temp.nucDis.png     >> $FASTXtoolkit/$temp.runLog   2>&1" );
+    &myMakeDir("$FastqTools/$temp");
+    system( "fastqc    --outdir $FastQC    --threads $numCores  --format fastq   --kmers 7    $output_g/$temp.fastq       >> $FastQC/$temp.runLog     2>&1" );
+
+    system( "fastx_quality_stats                        -i $output_g/$temp.fastq                           -o $FASTX_Toolkit/$temp/$temp.txt            >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "fastq_quality_boxplot_graph.sh             -i $FASTX_Toolkit/$temp/$temp.txt     -t $temp     -o $FASTX_Toolkit/$temp/$temp.quality.png    >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "fastx_nucleotide_distribution_graph.sh     -i $FASTX_Toolkit/$temp/$temp.txt     -t $temp     -o $FASTX_Toolkit/$temp/$temp.nucDis.png     >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    my $temp2 = $temp;
+    $temp2 =~ s/\.//g;
+    system( "fastq_to_fasta   -v -n   -i $output_g/$temp.fastq    -o $output_g/$temp2.fasta                                                         >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "echo     -e    '\n\nfastx_clipper:\n'   >> $FASTX_Toolkit/$temp.runLog  ");
+    system( "fastx_clipper    -a AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGTA   -l 30   -n  -v    -i $output_g/$temp2.fasta   -o $output_g/$temp.clipped.fa   >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "echo     -e    '\n\nfastx_trimmer:\n'   >> $FASTX_Toolkit/$temp.runLog  ");
+    system( "fastx_trimmer   -v   -m 30    -i $output_g/$temp.clipped.fa   -o $output_g/$temp.trimmed.fa                                            >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "echo     -e    '\n\nfastx_collapser:\n'   >> $FASTX_Toolkit/$temp.runLog  ");
+    system( "fastx_collapser -v   -i $output_g/$temp.trimmed.fa    -o $output_g/$temp.collapsed.fa                                                  >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "fasta_clipping_histogram.pl    $output_g/$temp.collapsed.fa     $FASTX_Toolkit/$temp.collapsed.png                                     >> $FASTX_Toolkit/$temp.runLog   2>&1" );
+    system( "rm  $output_g/*.fa" );
+
     system( "fastq-stats  -d  -s 100   -x $EA_Utils/$temp/$temp.fastxStatistics    -b $EA_Utils/$temp/$temp.baseBreakdown    -L $EA_Utils/$temp/$temp.lengthCounts  $output_g/$temp.fastq   >> $EA_Utils/$temp.runLog   2>&1" );
     system( "SolexaQA  analysis   $output_g/$temp.fastq    --minmax    --directory $SolexaQA/$temp       >> $SolexaQA/$temp.runLog    2>&1" );
     system( "raspberry  -t $numCores   $output_g/$temp.fastq                                             >> $Raspberry/$temp.runLog   2>&1" );
-    system( "fastqp    --nreads 20000000   --kmer 5    --output $Fastqp/$temp  --type fastq   --median-qual 30     $output_g/$temp.fastq     >> $Fastqp/$temp.runLog     2>&1 " );
     system( "mv  $output_g/*.rlen   $Raspberry" );
+    system( "fastqp    --nreads 20000000   --kmer 5    --output $Fastqp/$temp  --type fastq   --median-qual 30     $output_g/$temp.fastq     >> $Fastqp/$temp.runLog     2>&1 " );
+    system( "fastqutils   stats  $output_g/$temp.fastq     >> $FastqUtils/$temp.runLog     2>&1 " );
+    system( "htseq-qa   --type=fastq    --outfile=$HTSeqQA/$temp.pdf     $output_g/$temp.fastq    >> $HTSeqQA/$temp.runLog     2>&1 " );
+
+    system( "fqtools   count        $output_g/$temp.fastq    >> $FqTools/$temp.runLog     2>&1 " );
+    system( "fqtools   basetab  -a  $output_g/$temp.fastq    >> $FqTools/$temp.runLog     2>&1 " );
+    system( "fqtools   qualtab      $output_g/$temp.fastq    >> $FqTools/$temp.runLog     2>&1 " );
+    system( "fqtools   lengthtab    $output_g/$temp.fastq    >> $FqTools/$temp.runLog     2>&1 " );
+
+    system( "fastq-kmers -k 1  $output_g/$temp.fastq    >> $FastqTools/$temp/$temp.1mer     2>&1 " );
+    system( "fastq-kmers -k 2  $output_g/$temp.fastq    >> $FastqTools/$temp/$temp.2mer     2>&1 " );
+    system( "fastq-kmers -k 3  $output_g/$temp.fastq    >> $FastqTools/$temp/$temp.3mer     2>&1 " );
+    system( "fastq-kmers -k 4  $output_g/$temp.fastq    >> $FastqTools/$temp/$temp.4mer     2>&1 " );
+    system( "fastq-qual        $output_g/$temp.fastq    >> $FastqTools/$temp/$temp.qual     2>&1 " );
+    system( "fastq-uniq  --verbose  $output_g/$temp.fastq          >> $FastqTools/$temp/$temp.uniq     2>&1 " );
+
+
 }
+system( "multiqc  --outdir $MultiQC          $FastQC/*_fastqc.zip      >> $MultiQC/multiqc.fastqc.runLog   2>&1" );
+system( "Rscript  0-Other/Rsrc/Rqc.R         $output_g    $R_QC        >> $R_QC/Rqc.runLog              2>&1" );
+system( "Rscript  0-Other/Rsrc/ShortRead.R   $output_g    $ShortRead   >> $ShortRead/ShortRead.runLog   2>&1" );
+system( "Rscript  0-Other/Rsrc/seqTools.R    $output_g    $seqTools    >> $seqTools/seqTools.runLog     2>&1" );
 
 
 
 
 
-say   "\n\n##################################################################################################";
-say   "Detecting the quality of single-end FASTQ files by using kPAL, NGS_QC_Toolkit, FaQCs, prinseq, ht2-stat in HTQC and SGA ......";
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Detecting the quality of single-end FASTQ files by using NGS_QC_Toolkit, FaQCs, prinseq, ht2-stat in HTQC ......";
 for ( my $i=0; $i<=$#singleEnd; $i++ ) {
     my $temp = $singleEnd[$i];
     say   "\t......$singleEnd[$i]";
     $temp =~ m/^(\d+)_($pattern)_(Rep[1-9])\.fastq$/   or  die;
     $temp =~ s/\.fastq$//  ||  die;
-    &myMakeDir("$NGSQCToolkit/$temp");
+    &myMakeDir("$NGSQC_Toolkit/$temp");
     &myMakeDir("$FaQCs/$temp");
     &myMakeDir("$PRINSEQ/$temp");
     &myMakeDir("$HTQC/$temp");
-    &myMakeDir("$SGA/$temp");
-    system( "fastools  fq2fa         $output_g/$temp.fastq        $kPAL/$temp.fa               >> $kPAL/$temp.runLog   2>&1");
-    system( "IlluQC_PRLL.pl      -se $output_g/$temp.fastq     N    A      -cpus $numCores  -onlyStat     -outputFolder $NGSQCToolkit/$temp           >> $NGSQCToolkit/$temp.runLog   2>&1" );
-    system( "FaQCs.pl     -prefix $temp     -t $numCores      -qc_only      -d $FaQCs/$temp          -u $output_g/$temp.fastq                         >> $FaQCs/$temp.runLog          2>&1" );
-    system( "prinseq-lite.pl  -out_format 1 -verbose  -fastq $output_g/$temp.fastq    -graph_data $PRINSEQ/$temp/$temp.gd      >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-lite.pl  -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                               >> $PRINSEQ/$temp.stats_all   2>&1" );
+    system( "echo         '$output_g/$temp.fastq'   >> $QC3/fileLists  ");
+    system( "IlluQC_PRLL.pl      -se $output_g/$temp.fastq     N    A      -cpus $numCores  -onlyStat     -outputFolder $NGSQC_Toolkit/$temp          >> $NGSQC_Toolkit/$temp.runLog   2>&1" );
+    system( "FaQCs.pl     -prefix $temp     -t $numCores      -qc_only  -min_L 30    -d $FaQCs/$temp          -u $output_g/$temp.fastq                         >> $FaQCs/$temp.runLog          2>&1" );
     system( "ht2-stat  -i $output_g/$temp.fastq    -o  $HTQC/$temp   --se     --encode sanger   --threads $numCores  >> $HTQC/$temp.runLog   2>&1" );
-    system( "sga  preprocess  --verbose    --out=$SGA/$temp/$temp.preprocess.fastq   --pe-mode=0  $output_g/$temp.fastq      >> $SGA/$temp.runLog   2>&1" );
-    system( "sga index        --verbose  -a ropebwt   -t $numCores   $SGA/$temp/$temp.preprocess.fastq                     >> $SGA/$temp.runLog   2>&1" );
-    system( "cp  *.preprocess.bwt      $SGA/$temp " );
-    system( "cp  *.preprocess.rbwt     $SGA/$temp " );
-    system( "cp  *.preprocess.sai      $SGA/$temp " );
-    system( "cp  *.preprocess.rsai     $SGA/$temp " );
-    system( "sga preqc         -t $numCores   $SGA/$temp/$temp.preprocess.fastq     > $SGA/$temp/$temp.preqc                             " );
-    system( "sga-preqc-report.py  -o $SGA/$temp/$temp   --page_per_plot  $SGA/$temp/$temp.preqc                                         >> $SGA/$temp.runLog   2>&1" );
-    system( "sga stats   --verbose   --threads=$numCores   --run-lengths     --kmer-distribution    $SGA/$temp/$temp.preprocess.fastq   >> $SGA/$temp.stats    2>&1" );
-    system( "rm  $SGA/$temp/*.preprocess.* " );
-    system( "rm  *.preprocess.* " );
+
+    system( "prinseq-lite.pl  -out_format 1 -verbose  -fastq $output_g/$temp.fastq    -graph_data $PRINSEQ/$temp/$temp.gd      >> $PRINSEQ/$temp.runLog      2>&1" );
+    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                              >> $PRINSEQ/$temp.runLog      2>&1" );
+    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                              >> $PRINSEQ/$temp.runLog      2>&1" );
+    system( "prinseq-lite.pl  -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                              >> $PRINSEQ/$temp.stats_all   2>&1" );
     system( "rm   $output_g/*_prinseq_* " );
 }
 
@@ -431,8 +464,8 @@ for ( my $i=0; $i<=$#singleEnd; $i++ ) {
 
 
 
-say   "\n\n##################################################################################################";
-say   "Detecting the quality of paired-end FASTQ files by using kPAL, NGS_QC_Toolkit, FaQCs, prinseq, ht2-stat in HTQC and SGA ......";
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Detecting the quality of paired-end FASTQ files by using NGS_QC_Toolkit, FaQCs, prinseq, ht2-stat in HTQC ......";
 for ( my $j=0; $j<=$#pairedEnd; $j=$j+2 ) {
     my $temp1 = $pairedEnd[$j];
     my $temp2 = $pairedEnd[$j+1];
@@ -444,57 +477,47 @@ for ( my $j=0; $j<=$#pairedEnd; $j=$j+2 ) {
     $temp1 =~ s/\.fastq$//    ||  die;
     $temp2 =~ s/\.fastq$//    ||  die;
     $temp  =~ s/_2\.fastq$//  ||  die;
-    &myMakeDir("$NGSQCToolkit/$temp");  
+    &myMakeDir("$NGSQC_Toolkit/$temp");
     &myMakeDir("$FaQCs/$temp");
     &myMakeDir("$PRINSEQ/$temp");
     &myMakeDir("$HTQC/$temp");
-    &myMakeDir("$SGA/$temp");
-    system( "fastools  fq2fa         $output_g/$temp1.fastq        $kPAL/$temp1.fa               >> $kPAL/$temp.runLog   2>&1");
-    system( "fastools  fq2fa         $output_g/$temp2.fastq        $kPAL/$temp2.fa               >> $kPAL/$temp.runLog   2>&1");
-    system( "IlluQC_PRLL.pl      -pe $output_g/$temp1.fastq  $output_g/$temp2.fastq   N    A      -cpus $numCores     -onlyStat          -outputFolder $NGSQCToolkit/$temp           >> $NGSQCToolkit/$temp.runLog   2>&1" );
-    system( "FaQCs.pl     -prefix $temp     -t $numCores      -qc_only      -d $FaQCs/$temp          -p $output_g/$temp1.fastq  $output_g/$temp2.fastq   >> $FaQCs/$temp.runLog          2>&1" );
+    system( "echo         '$output_g/$temp1.fastq'  >> $QC3/fileLists  ");
+    system( "echo         '$output_g/$temp2.fastq'  >> $QC3/fileLists  ");
+    system( "IlluQC_PRLL.pl      -pe $output_g/$temp1.fastq  $output_g/$temp2.fastq   N    A      -cpus $numCores     -onlyStat          -outputFolder $NGSQC_Toolkit/$temp           >> $NGSQC_Toolkit/$temp.runLog   2>&1" );
+    system( "FaQCs.pl     -prefix $temp     -t $numCores      -qc_only   -min_L 30    -d $FaQCs/$temp          -p $output_g/$temp1.fastq  $output_g/$temp2.fastq            >> $FaQCs/$temp.runLog          2>&1" );
+    system( "ht2-stat  -i $output_g/$temp1.fastq  $output_g/$temp2.fastq   -o  $HTQC/$temp    --pe     --encode sanger   --threads 6  >> $HTQC/$temp.runLog   2>&1" );
+
     system( "prinseq-lite.pl   -out_format 1   -verbose  -fastq $output_g/$temp1.fastq  -fastq2 $output_g/$temp2.fastq   -graph_data $PRINSEQ/$temp/$temp.gd      >> $PRINSEQ/$temp.runLog   2>&1" );
     system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
     system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                               >> $PRINSEQ/$temp.stats_all   2>&1" );
-    system( "ht2-stat  -i $output_g/$temp1.fastq $output_g/$temp2.fastq   -o  $HTQC/$temp    --pe     --encode sanger   --threads 6  >> $HTQC/$temp.runLog   2>&1" );
-    system( "sga  preprocess  --verbose  --out=$SGA/$temp/$temp.preprocess.fastq   --pe-mode=1  $output_g/$temp1.fastq   $output_g/$temp2.fastq   >> $SGA/$temp.runLog   2>&1" );
-    system( "sga index        --verbose  -a ropebwt   -t $numCores   $SGA/$temp/$temp.preprocess.fastq                             >> $SGA/$temp.runLog   2>&1" );
-    system( "cp  *.preprocess.bwt      $SGA/$temp " );
-    system( "cp  *.preprocess.rbwt     $SGA/$temp " );
-    system( "cp  *.preprocess.sai      $SGA/$temp " );
-    system( "cp  *.preprocess.rsai     $SGA/$temp " );
-    system( "sga preqc       -t $numCores   $SGA/$temp/$temp.preprocess.fastq     > $SGA/$temp/$temp.preqc                             " );
-    system( "sga-preqc-report.py  -o $SGA/$temp/$temp   --page_per_plot  $SGA/$temp/$temp.preqc                            >> $SGA/$temp.runLog   2>&1" );
-    system( "sga stats        --verbose   --threads=$numCores   --run-lengths     --kmer-distribution    $SGA/$temp/$temp.preprocess.fastq             >> $SGA/$temp.stats   2>&1" );
-    system( "rm  $SGA/$temp/*.preprocess.* " );
-    system( "rm  *.preprocess.* " );
+    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                                  >> $PRINSEQ/$temp.stats_all   2>&1" );
     system( "rm   $output_g/*_prinseq_* " );
 }
-system( "kpal   count  -k 8   $kPAL/*.fa    $kPAL/rawReads.k8   >> $kPAL/rawReads.k8.runLog   2>&1");
-system( "kpal   count  -k 6   $kPAL/*.fa    $kPAL/rawReads.k6   >> $kPAL/rawReads.k6.runLog   2>&1");
-system( "kpal   count  -k 4   $kPAL/*.fa    $kPAL/rawReads.k4   >> $kPAL/rawReads.k4.runLog   2>&1");
-system( "kpal   count  -k 2   $kPAL/*.fa    $kPAL/rawReads.k2   >> $kPAL/rawReads.k2.runLog   2>&1");
-system( "kpal   info   $kPAL/rawReads.k8   >> $kPAL/rawReads.k8.runLog   2>&1");
-system( "kpal   info   $kPAL/rawReads.k6   >> $kPAL/rawReads.k6.runLog   2>&1");
-system( "kpal   info   $kPAL/rawReads.k4   >> $kPAL/rawReads.k4.runLog   2>&1");
-system( "kpal   info   $kPAL/rawReads.k2   >> $kPAL/rawReads.k2.runLog   2>&1");
-system( "kpal   matrix   $kPAL/rawReads.k8   $kPAL/rawReads.k8.matrix   >> $kPAL/rawReads.k8.runLog   2>&1");
-system( "kpal   matrix   $kPAL/rawReads.k6   $kPAL/rawReads.k6.matrix   >> $kPAL/rawReads.k6.runLog   2>&1");
-system( "kpal   matrix   $kPAL/rawReads.k4   $kPAL/rawReads.k4.matrix   >> $kPAL/rawReads.k4.runLog   2>&1");
-system( "kpal   matrix   $kPAL/rawReads.k2   $kPAL/rawReads.k2.matrix   >> $kPAL/rawReads.k2.runLog   2>&1");
-##system( "rm   $kPAL/*.fa " );
-my $R_QC2 = "$R_QC"."-Final";
+
+
+
+
+
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Detecting the quality of all FASTQ files by using kPAL and QC3 ......";
+system( "kpal   count  -k 6   $output_g/*.fasta    $kPAL/rawReads.k6   >> $kPAL/rawReads.k6.runLog   2>&1");
+system( "kpal   info                               $kPAL/rawReads.k6   >> $kPAL/rawReads.k6.runLog   2>&1");
+system( "kpal   matrix   $kPAL/rawReads.k6   $kPAL/rawReads.k6.matrix  >> $kPAL/rawReads.k6.runLog   2>&1");
+system( "rm   $output_g/*.fasta " );
+system( "qc3.pl   -m f    -i $QC3/fileLists   -o $QC3   -t $numCores  >> $QC3/qc3.runLog   2>&1" );
+my $R_QC2 = "$R_QC"."_Final";
 &myMakeDir($R_QC2);
-system( "Rscript     0-Other/Rsrc/Rqc.R         $output_g    $R_QC2        >> $R_QC2/Rqc2.runLog   2>&1" );
+system( "Rscript     0-Other/Rsrc/Rqc.R     $output_g    $R_QC2        >> $R_QC2/Rqc2.runLog   2>&1" );
 
 
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "\tJob Done! Cheers! \n\n";
 
 
 
 
+
+## END
