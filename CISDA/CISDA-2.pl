@@ -5,7 +5,7 @@ use  v5.20;
 ## perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 
 
-                                       
+
 
 
 ###################################################################################################################################################################################################
@@ -16,7 +16,7 @@ use  v5.20;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-03-20.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-04-11.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 2: Remove adaptors and PCR primers, trim and filter the raw reads by using Skewer, AdapterRemoval, Cutadapt and Trimmomatic.
@@ -58,7 +58,7 @@ my $HELP_g = '
 
 
 ########## Version Infromation ##########
-my $version_g = "    The Second Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-03-20.";
+my $version_g = "    The Second Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-04-11.";
 
 
 ########## Keys and Values ##########
@@ -118,7 +118,7 @@ say  "\n
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Running ......";
 sub myMakeDir  {
     my $path = $_[0];
@@ -137,7 +137,7 @@ my $numCores = 8;
 
 
 ## These commands must be available:
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Checking all the necessary softwares in this step ......";
 sub printVersion  {
     my $software = $_[0];
@@ -173,7 +173,7 @@ my $Trimmomatic = "/home/yp/.MyProgramFiles/2-HTS-2G/1-commonTools/Trimmomatic-0
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Checking all the input file names ......";
 my @groupFiles = ();
 my $fileNameBool = 1;
@@ -209,7 +209,7 @@ say  "\n\t\tThere are $numGroup groups.";
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Detecting single-end and paired-end FASTQ files in input folder ......";
 my @singleEnd = ();
 my @pairedEnd = ();
@@ -257,7 +257,7 @@ say     "\t\t\t\tThere are $numPaired paired-end sequencing files.\n";
 
 
 
-say    "\n\n##################################################################################################";
+say    "\n\n\n\n\n\n##################################################################################################";
 say    "Filtering the reads by using Trimmomatic ......";
 my $Trimmomatic_dir  = "$output_g/1-Trimmomatic";
 &myMakeDir("$Trimmomatic_dir");   
@@ -286,7 +286,7 @@ system( "Rscript  0-Other/Rsrc/Rqc.R   $Trimmomatic_dir    $Trimmomatic_dir   >>
 
 
 
-say    "\n\n##################################################################################################";
+say    "\n\n\n\n\n\n##################################################################################################";
 say    "Filtering the reads by using Skewer ......";
 my $Skewer_dir  = "$output_g/2-Skewer";
 &myMakeDir("$Skewer_dir");   
@@ -316,7 +316,7 @@ system( "rm  $Trimmomatic_dir/*.fastq" );
 
 
 
-say    "\n\n##################################################################################################";
+say    "\n\n\n\n\n\n##################################################################################################";
 say    "Filtering the reads by using AdapterRemoval ......";
 my $AdapterRemoval_dir  = "$output_g/3-AdapterRemoval";
 &myMakeDir("$AdapterRemoval_dir");   
@@ -347,7 +347,7 @@ system( "rm  $Skewer_dir/*.fastq" );
 
 
 
-say    "\n\n##################################################################################################";
+say    "\n\n\n\n\n\n##################################################################################################";
 say    "Filtering the reads by using Cutadapt ......";
 my $Cutadapt_dir  = "$output_g/4-Cutadapt";
 &myMakeDir("$Cutadapt_dir");   
@@ -378,7 +378,7 @@ system( "rm  $AdapterRemoval_dir/*.discarded" );
 
 
 
-say    "\n\n##################################################################################################";
+say    "\n\n\n\n\n\n##################################################################################################";
 say    "Filtering the reads by using Trimmomatic ......"; 
 for (my $i=0; $i<=$#pairedEnd; $i=$i+2) {
         $pairedEnd[$i] =~ m/^(\d+)_($pattern)_(Rep[1-9])_1\.fastq$/   or  die;
@@ -406,7 +406,7 @@ system( "rm  $output_g/unpaired-*.fastq" );
 
 
 
-say   "\n\n##################################################################################################";
+say   "\n\n\n\n\n\n##################################################################################################";
 say   "Detecting single-end and paired-end FASTQ files in output folder ......";
 opendir(my $DH_output, $output_g) || die;     
 my @outputFiles = readdir($DH_output);
