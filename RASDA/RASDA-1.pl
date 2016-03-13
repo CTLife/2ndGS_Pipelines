@@ -16,7 +16,7 @@ use  v5.20;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-03-20.
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-04-11.
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ by using SRA_Toolkit,
@@ -59,7 +59,7 @@ my $HELP_g = '
 
 
 ########## Version Infromation ##########
-my $version_g = "    The First Step of RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-03-20.";
+my $version_g = "    The First Step of RASDA (RNA-Seq Data Analyzer), version 0.7.1, 2016-04-11.";
 
 
 ########## Keys and Values ##########
