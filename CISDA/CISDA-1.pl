@@ -16,7 +16,7 @@ use  v5.20;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-03-20.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-04-11.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ by using SRA_Toolkit,
@@ -31,7 +31,7 @@ my $HELP_g = '
                      perl  CISDA-1.pl    -i 1-rawReads          -o 2-FASTQ
                      perl  CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ
                      perl  CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> CISDA-1.runLog  2>&1
-                     CISDA-1.pl    --input 1-rawReads     --output 2-FASTQ    >> CISDA-1.runLog  2>&1
+                       CISDA-1.pl        --input 1-rawReads     --output 2-FASTQ    >> CISDA-1.runLog  2>&1
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -59,7 +59,7 @@ my $HELP_g = '
 
 
 ########## Version Infromation ##########
-my $version_g = "    The First Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-03-20.";
+my $version_g = "    The First Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.1, 2016-04-11.";
 
 
 ########## Keys and Values ##########
