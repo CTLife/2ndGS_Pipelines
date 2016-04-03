@@ -22,7 +22,7 @@
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
 4. bzip2, gunzip, tar, unrar, xz and unzip.  (You can install them by using "sudo apt-get isntall" in Ubuntu.)                 
                                                                    
-5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)                       
+5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)   
 6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
 7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
 8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
