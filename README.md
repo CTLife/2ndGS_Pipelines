@@ -20,8 +20,9 @@
 1. [Perl 5](https://www.perl.org/)   
 2. [R](https://www.r-project.org/)                            
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
-4. bzip2, gunzip, tar, unrar, xz and unzip. 
-5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)    
+4. bzip2, gunzip, tar, unrar, xz and unzip.  (You can install them by using "sudo apt-get isntall" in Ubuntu.)                 
+                                                                   
+5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)                       
 6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
 7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
 8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
@@ -30,17 +31,25 @@
 11. [prinseq](http://prinseq.sourceforge.net/)      
 12. [SolexaQA](http://solexaqa.sourceforge.net/)     
 13. [Raspberry](https://github.com/CEG-ICRISAT/Raspberry)     
-14. [SGA](https://github.com/jts/sga)    
-15. [fastools](https://pypi.python.org/pypi/fastools)  (convert fastq to fasta)     
+14. [fastq tools](http://homes.cs.washington.edu/~dcjones/fastq-tools/)                    
+15. [HTSeq](https://github.com/bowhan/HTSeq-count)          
 16. [HTQC](https://sourceforge.net/projects/htqc/files/)    
 17. [fastqp](https://github.com/mdshw5/fastqp)    
 18. [Rqc](http://bioconductor.org/packages/release/bioc/html/Rqc.html)       
 19. [ShortRead](https://bioconductor.org/packages/release/bioc/html/ShortRead.html)     
-20. [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)                        
-21. [Skewer](https://sourceforge.net/projects/skewer/files/)                   
-22. [AdapterRemoval](https://github.com/MikkelSchubert/adapterremoval)                         
-23. [Cutadapt](https://github.com/marcelm/cutadapt)                                   
-24. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                    
+20. [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)              
+21. [MultiQC](http://multiqc.info/)     
+22. [raspberry](https://github.com/CEG-ICRISAT/NGS-QCbox)       
+23. [ngsutils](http://ngsutils.org/)                   
+24. [QC3](https://github.com/slzhao/QC3)      
+                       
+25. [fastools](https://pypi.python.org/pypi/fastools)  (convert fastq to fasta)                           
+26. [TOGGLE](https://github.com/SouthGreenPlatform/TOGGLE)                                    
+                                            
+25. [Skewer](https://sourceforge.net/projects/skewer/files/)                   
+26. [AdapterRemoval](https://github.com/MikkelSchubert/adapterremoval)                         
+27. [Cutadapt](https://github.com/marcelm/cutadapt)                                   
+28. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                  
 
 
 ####Only for CISDA: 
