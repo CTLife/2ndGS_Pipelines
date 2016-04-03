@@ -21,9 +21,9 @@
 2. [R](https://www.r-project.org/)                            
 3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
 4. bzip2, gunzip, tar, unrar, xz and unzip.  (You can install them by using "sudo apt-get isntall" in Ubuntu.)                 
-                                                                   
-5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)   
-6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html)             
+                       
+5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)
+6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html) 
 7. [FASTX-Toolkit](http://hannonlab.cshl.edu/fastx_toolkit/)      
 8. [Ea-utils](https://launchpad.net/ubuntu/+source/ea-utils)  or http://wiki.hpc.ufl.edu/doc/EA-Utils      
 9. [kPAL](https://github.com/LUMC/kPAL)
@@ -43,8 +43,8 @@
 23. [ngsutils](http://ngsutils.org/)                   
 24. [QC3](https://github.com/slzhao/QC3)      
                        
-25. [fastools](https://pypi.python.org/pypi/fastools)  (convert fastq to fasta)                           
-26. [TOGGLE](https://github.com/SouthGreenPlatform/TOGGLE)                                    
+25. [fastools](https://pypi.python.org/pypi/fastools)  (convert fastq to fasta)  
+26. [TOGGLE](https://github.com/SouthGreenPlatform/TOGGLE)         
                                             
 25. [Skewer](https://sourceforge.net/projects/skewer/files/)                   
 26. [AdapterRemoval](https://github.com/MikkelSchubert/adapterremoval)                         
