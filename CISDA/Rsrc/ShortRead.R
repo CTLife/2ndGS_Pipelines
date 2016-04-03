@@ -35,6 +35,6 @@ report(x1, dest=QA2_html,  type="html")
 x2 <- qa(dirPath=inputPath,   pattern=".fastq$",   type="fastq",   BPPARAM=SerialParam())
 report(x2, dest=QA_html,  type="html")
 
-
+   
 
 
