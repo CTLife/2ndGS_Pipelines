@@ -26,5 +26,5 @@ rqc(  path = inputPath,  pattern=".fastq$",   sample = FALSE,  outdir = outPath,
 
 
 
-
+  
 
