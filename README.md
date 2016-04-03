@@ -29,7 +29,7 @@
 10. [FaQCs](https://github.com/chienchi/FaQCs)    
 11. [prinseq](http://prinseq.sourceforge.net/)      
 12. [SolexaQA](http://solexaqa.sourceforge.net/)     
-13. [Raspberry](https://github.com/CEG-ICRISAT/Raspberry)     
+13. [fqtools](https://github.com/alastair-droop/fqtools)        
 14. [fastq tools](http://homes.cs.washington.edu/~dcjones/fastq-tools/)                    
 15. [HTSeq](https://github.com/bowhan/HTSeq-count)          
 16. [HTQC](https://sourceforge.net/projects/htqc/files/)    
