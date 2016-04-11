@@ -17,9 +17,7 @@
 ---------------------------------------------------------------------------------------------                                                                     
 ### To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
 ####Common Tools:                                        
-1. [Perl 5](https://www.perl.org/)   
-2. [R](https://www.r-project.org/)                            
-3. [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
+1. [Perl 5](https://www.perl.org/) , [R](https://www.r-project.org/) , [NCBI SRA Toolkit](http://www.ncbi.nlm.nih.gov/Traces/sra/)   
 4. bzip2, gunzip, tar, unrar, xz and unzip.  (You can install them by using "sudo apt-get isntall" in Ubuntu.)      
 5. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/)     #QC of fastq files (5-24)                    
 6. [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html) 
