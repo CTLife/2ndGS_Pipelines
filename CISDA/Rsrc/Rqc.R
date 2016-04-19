@@ -21,10 +21,3 @@ print(getwd())
 
 rqc(  path = inputPath,  pattern=".fastq$",   sample = FALSE,  outdir = outPath,
       file = "Rqc_report",   openBrowser = FALSE,    workers = multicoreWorkers()  )
-
-
-
-
-
-  
-
