@@ -22,31 +22,14 @@
 3. [FastQC](http://www.bioinformatics.babraham.ac.uk/projects/fastqc/) ,  [MultiQC](http://multiqc.info/) ,  [fastq tools](http://homes.cs.washington.edu/~dcjones/fastq-tools/) ,  [FaQCs](https://github.com/chienchi/FaQCs) ,  [prinseq](http://prinseq.sourceforge.net/) ,   [fastqp](https://github.com/mdshw5/fastqp) ,  [QC3](https://github.com/slzhao/QC3) , [NGS QC Toolkit](http://www.nipgr.res.in/ngsqctoolkit.html) , [HTQC](https://sourceforge.net/projects/htqc/files/) ,  [Rqc](http://bioconductor.org/packages/release/bioc/html/Rqc.html) , [ShortRead](https://bioconductor.org/packages/release/bioc/html/ShortRead.html) ,  [seqTools](https://www.bioconductor.org/packages/release/bioc/html/seqTools.html)            
 4. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                       
 5. [SAMtools](http://www.htslib.org/), [Subread utilities](http://subread.sourceforge.net/),  [SAMstat](http://samstat.sourceforge.net/), [Qualimap2](http://qualimap.bioinfo.cipf.es/), [PRESEQ](http://smithlabresearch.org/software/preseq/), [Picard](http://broadinstitute.github.io/picard/),  [BamQC](https://github.com/s-andrews/BamQC)
+6. [BEDtools](https://github.com/arq5x/bedtools2/releases) , [BEDOPS](http://bedops.readthedocs.org/en/latest/) ,  [Deeptools](http://deeptools.github.io/)
+7. [MACS2](https://github.com/taoliu/MACS/) , [Peak Caller Q](http://charite.github.io/Q/) ,  [HOMER](http://homer.salk.edu/homer/) , [DANPOS](http://code.google.com/p/danpos/) , 
 
 
 ####Only for CISDA: 
-1. [Stampy](http://www.well.ox.ac.uk/bioinformatics/Software/Stampy-latest.tgz)   
-14. MACS1.4, http://liulab.dfci.harvard.edu/MACS/         
-15. MACS2, https://github.com/taoliu/MACS/                
-16. HOMER, http://homer.salk.edu/homer/                
-17. DANPOS, http://code.google.com/p/danpos/      
-18. Peak Caller Q: http://charite.github.io/Q/                           
-19. bamUtil:  http://ngsutils.org/modules/bamutils/        
-20. HISAT2: http://ccb.jhu.edu/software/hisat2
-21. R: https://www.r-project.org/
-22. Picard:                                 
-23. : 
-24. STAR: https://github.com/alexdobin/STAR/releases                                                                      
-25. SAMStat:                                                           
-26. BamTools: https://github.com/pezmaster31/bamtools/wiki/Building-and-installing  
-27. 6. Subread, http://subread.sourceforge.net/               
-7. BWA, http://bio-bwa.sourceforge.net/          
-8. Bowtie, http://bowtie-bio.sourceforge.net/index.shtml       
-9. Bowtie2, http://bowtie-bio.sourceforge.net/bowtie2/index.shtml              
-10. SAMtools,             
-11. BEDtools, https://github.com/arq5x/bedtools2/releases                                
-12. BEDOPS, http://bedops.readthedocs.org/en/latest/                
-13. Deeptools, http://deeptools.github.io/ 
+1. [BWA](http://bio-bwa.sourceforge.net/) , [Bowtie](http://bowtie-bio.sourceforge.net/index.shtml) , [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) ,   [Subread](http://subread.sourceforge.net/)  
+            
+
                                   
 ####Only for MESDA:                            
                                
