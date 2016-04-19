@@ -28,7 +28,7 @@
 
 ####Only for CISDA: 
 1. [BWA](http://bio-bwa.sourceforge.net/) , [Bowtie](http://bowtie-bio.sourceforge.net/index.shtml) , [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) ,   [Subread](http://subread.sourceforge.net/)  
-2. [MACS2](https://github.com/taoliu/MACS/) , [Peak Caller Q](http://charite.github.io/Q/) ,  [HOMER](http://homer.salk.edu/homer/) , [DANPOS](http://code.google.com/p/danpos/)             
+2. [MACS2](https://github.com/taoliu/MACS/) , [Peak Caller Q](http://charite.github.io/Q/) ,  [HOMER](http://homer.salk.edu/homer/) , [DANPOS](https://sites.google.com/site/danposdoc/)             
 
                                   
 ####Only for MESDA:                            
