@@ -1,7 +1,7 @@
 #CISDA 
 ###ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and all ChIPseq-like data.)           
 You can run the scripts step by step or run one of them for a specific purpose.                                           
-Please run `perl CISDA-N.pl -h` to know that what can the N-th script do.                    
+Please run `perl CISDAn.pl -h` to know that what can the n-th script do.                    
                                    
 #[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
@@ -59,9 +59,9 @@ Some rules are necessary for automatic NGS data processing, such as the names of
 
 
 ###Usage:                                            
-     Step 1  by using CISDA-1.pl, more details by "perl  CISDA-1.pl  -h".
-     Step 2  by using CISDA-2.pl, more details by "perl  CISDA-2.pl  -h".
-     Step 3  by using CISDA-3.pl, more details by "perl  CISDA-3.pl  -h".
+     Step 1  by using CISDA1.pl, more details by "perl  CISDA-1.pl  -h".
+     Step 2  by using CISDA2.pl, more details by "perl  CISDA-2.pl  -h".
+     Step 3  by using CISDA3.pl, more details by "perl  CISDA-3.pl  -h".
      ......
 
 
