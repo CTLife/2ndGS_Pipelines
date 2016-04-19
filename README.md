@@ -23,12 +23,12 @@
 4. [Trimmomatic](http://www.usadellab.org/cms/?page=trimmomatic)                       
 5. [SAMtools](http://www.htslib.org/), [Subread utilities](http://subread.sourceforge.net/),  [SAMstat](http://samstat.sourceforge.net/), [Qualimap2](http://qualimap.bioinfo.cipf.es/), [PRESEQ](http://smithlabresearch.org/software/preseq/), [Picard](http://broadinstitute.github.io/picard/),  [BamQC](https://github.com/s-andrews/BamQC)
 6. [BEDtools](https://github.com/arq5x/bedtools2/releases) , [BEDOPS](http://bedops.readthedocs.org/en/latest/) ,  [Deeptools](http://deeptools.github.io/)
-7. [MACS2](https://github.com/taoliu/MACS/) , [Peak Caller Q](http://charite.github.io/Q/) ,  [HOMER](http://homer.salk.edu/homer/) , [DANPOS](http://code.google.com/p/danpos/) , 
+ 
 
 
 ####Only for CISDA: 
 1. [BWA](http://bio-bwa.sourceforge.net/) , [Bowtie](http://bowtie-bio.sourceforge.net/index.shtml) , [Bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) ,   [Subread](http://subread.sourceforge.net/)  
-            
+2. [MACS2](https://github.com/taoliu/MACS/) , [Peak Caller Q](http://charite.github.io/Q/) ,  [HOMER](http://homer.salk.edu/homer/) , [DANPOS](http://code.google.com/p/danpos/)             
 
                                   
 ####Only for MESDA:                            
