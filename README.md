@@ -1,5 +1,5 @@
 #2ndGS_Pipelines                                                          
-###Perl 5 and R source codes for next generation (second generation) sequencing data analysis by integrating lots of open-source softwares.
+###Perl 5 and R source codes for next generation (the second generation) sequencing data analysis by integrating lots of open-source softwares.
                                                              
 
 + `CISDA`: ChIP-Seq Data Analyzer (also contains MNase-Seq, DNase-Seq, ChIP-exo and all ChIPseq-like data.)                                              
