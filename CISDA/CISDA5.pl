@@ -1,8 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.18;       
-## perl5 version >= 5.18,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
+use  v5.20;       
+## perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
 ###################################################################################################################################################################################################
 
@@ -15,18 +15,18 @@ use  v5.18;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.      
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.      
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 5: Potential PCR duplicates are removed using "MarkDuplicates" from "Picards".
-                Finally, only the UMNRR4 with MAPQ is more than 20 are kept.
-                Assess the quality of BAM files to identify possible sequencing errors or biases by using 10 softwares:
-                    SAMtools, Subread utilities, FASTQC, samstat, qualimap, MultiQC, PRESEQ, Picard, fastqp, BamQC.                
+                Finally, only the UMNRR4 with MAPQ is more than 30 are kept.
+                Assess the quality of BAM files to identify possible sequencing errors or biases by using 12 softwares:
+                    SAMtools, Subread utilities, FASTQC, SAMstat, BAMStats, qualimap, MultiQC, ezBAMQC, PRESEQ, Picard, fastqp, BamQC.                 
 
         Usage:  
                perl  CISDA5.pl    [-version]    [-help]    [-in inputDir]    [-out outDir]  
         For instance: 
-               perl  CISDA5.pl    -in 5-MAPQ20/4_Subread     -out 6-FinalBAM/4_Subread      >> CISDA5.runLog  2>&1
+               perl  CISDA5.pl    -in 5-MAPQ30/1_BWA     -out 6-FinalBAM/1_BWA      >> CISDA5.runLog  2>&1
      
         -------------------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -50,16 +50,16 @@ my $HELP_g = '
 ';
 
 ## Version Information
-my $version_g = "  The Fifth Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.";
+my $version_g = "  The Fifth Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1) { say  "\n$HELP_g\n";  exit 0; }       ## when there are no any command argumants.
-if ($#ARGV%2 ==  0) { @ARGV = (@ARGV, "-h");       }       ## when the number of command argumants is odd. 
+if ($#ARGV%2 ==  0) { @ARGV = (@ARGV, "-help");    }       ## when the number of command argumants is odd. 
 my %args = @ARGV;
 
 ## Initialize  Variables
-my $input_g  = '5-MAPQ20/4_Subread';      ## This is only an initialization  value or suggesting value, not default value.
-my $output_g = '6-FinalBAM/4_Subread';       ## This is only an initialization  value or suggesting value, not default value.
+my $input_g  = '5-MAPQ30/1_BWA';         ## This is only an initialization  value or suggesting value, not default value.
+my $output_g = '6-FinalBAM/1_BWA';       ## This is only an initialization  value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "  -version    -help   -in   -out      ";
@@ -69,7 +69,7 @@ while( my ($key, $value) = each %args ) {
 }
 if($boole_g == 1) {
     say   "\tThe Command Line Arguments are wrong!";
-    say   "\tPlease see help message by using 'perl  CISDA5.pl  -h' \n";
+    say   "\tPlease see help message by using 'perl  CISDA5.pl  -help' \n";
     exit 0;
 }
 
@@ -127,17 +127,31 @@ sub printVersion  {
     system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
-my  $Picard_g = "/home/yp/.MyProgramFiles/3_HTS2G/1_common/3_afterMap/picard-tools-2.1.1/picard.jar";
+sub fullPathApp  {
+    my $software = $_[0];
+    say($software);
+    system("which   $software  > yp_my_temp_1.$software.txt");
+    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
+    my @fullPath1 = <tempFH>; 
+    ($#fullPath1 == 0)  or  die;
+    system("rm  yp_my_temp_1.$software.txt");
+    $fullPath1[0] =~ s/\n$//  or  die;
+    return($fullPath1[0]);
+}
+my  $Picard_g   = &fullPathApp("picard.jar");
+my  $BAMStats_g = &fullPathApp("BAMStats.jar");   
 &printVersion("samtools");
 &printVersion("fastqc   -v");
 &printVersion("samstat   -v");
+&printVersion("java  -jar  $BAMStats_g  -h");
 &printVersion("bamqc  -v");
 &printVersion("preseq");
 &printVersion("qualimap  -v");
 &printVersion("fastqp   -h");
 &printVersion("multiqc   --version");
 &printVersion("propmapped");
-&printVersion("qualityScores");
+&printVersion("qualityScores");  
+&printVersion("ezBAMQC  -h");
 &printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
 &printVersion("java  -jar  $Picard_g   EstimateLibraryComplexity           --version");
 &printVersion("java  -jar  $Picard_g   CollectInsertSizeMetrics            --version");
@@ -274,17 +288,21 @@ sub  myQC_BAM_1  {
 
 ###################################################################################################################################################################################################
 sub  myQC_BAM_2  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
+    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.   
     my $QCresults = "$dir1/QC_Results";
     my $PRESEQ    = "$QCresults/6_PRESEQ";
     my $PicardDir = "$QCresults/7_Picard";
     my $MultiQC1  = "$QCresults/8_MultiQC_PRESEQ";
     my $MultiQC2  = "$QCresults/8_MultiQC_Picard";
+    my $BAMStats  = "$QCresults/9_BAMStats";
+    my $ezBAMQC   = "$QCresults/10_ezBAMQC";
     &myMakeDir($QCresults);
     &myMakeDir($PRESEQ);
     &myMakeDir($PicardDir);
     &myMakeDir($MultiQC1);
     &myMakeDir($MultiQC2);
+    &myMakeDir($BAMStats);
+    &myMakeDir($ezBAMQC);
     opendir(my $FH_Files, $dir1) || die;     
     my @Files = readdir($FH_Files);
     say   "\n\n\n\n\n\n##################################################################################################";
@@ -299,7 +317,8 @@ sub  myQC_BAM_2  {
         system("preseq  c_curve   -output  $PRESEQ/$temp.pe.PRESEQ     -step 1000000    -verbose   -pe  -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.pe.runLog   2>&1");   
         system("preseq  c_curve   -output  $PRESEQ/$temp.se.PRESEQ     -step 1000000    -verbose        -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.se.runLog   2>&1");  
         &myMakeDir("$PicardDir/$temp"); 
-        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics     R=0-Other/ShortCuts/mm10.fa                                 >> $PicardDir/$temp/1.runLog   2>&1" );
+
+        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics     R=0-Other/Shortcuts/mm10.fa                            >> $PicardDir/$temp/1.runLog   2>&1" );
         system("java  -jar   $Picard_g   EstimateLibraryComplexity           INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/2_EstimateLibraryComplexity                                                                      >> $PicardDir/$temp/2.runLog   2>&1" );
         system("java  -jar   $Picard_g   CollectInsertSizeMetrics            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/3_CollectInsertSizeMetrics          HISTOGRAM_FILE=$PicardDir/$temp/3.pdf  MINIMUM_PCT=0.01      >> $PicardDir/$temp/3.runLog   2>&1" );
         system("java  -jar   $Picard_g   CollectJumpingLibraryMetrics        INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/4_CollectJumpingLibraryMetrics                                                                   >> $PicardDir/$temp/4.runLog   2>&1" );
@@ -309,6 +328,9 @@ sub  myQC_BAM_2  {
         system("java  -jar   $Picard_g   CollectWgsMetricsFromQuerySorted    INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/8_CollectWgsMetricsFromQuerySorted                                                               >> $PicardDir/$temp/8.runLog   2>&1" );
         system("java  -jar   $Picard_g   MeanQualityByCycle                  INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/9_MeanQualityByCycle                 CHART_OUTPUT=$PicardDir/$temp/9.pdf                         >> $PicardDir/$temp/9.runLog   2>&1" );
         system("java  -jar   $Picard_g   QualityScoreDistribution            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/10_QualityScoreDistribution          CHART_OUTPUT=$PicardDir/$temp/10.pdf                        >> $PicardDir/$temp/10.runLog  2>&1" ); 
+
+        system("java  -jar  $BAMStats_g    --distances  --infile $dir1/$temp.bam   --lengths   --mapped    --outfile $BAMStats/$temp   --qualities   --starts   --view html   >> $BAMStats/$temp.runLog   2>&1");  
+        system("ezBAMQC    -i $dir1/$temp.bam   --refgene 0-Other/Shortcuts/mm10_RefSeq_GTF   --outputDir $ezBAMQC/$temp  --stranded no  --label $temp  --threads $numCores_g      >> $ezBAMQC/$temp.runLog   2>&1");  
     }
     system( "multiqc  --verbose  --outdir $MultiQC1          $PRESEQ/*                 >> $MultiQC1/MultiQC.PRESEQ.runLog   2>&1" );
     system( "multiqc  --verbose  --outdir $MultiQC2          $PicardDir/*              >> $MultiQC2/MultiQC.Picard.runLog   2>&1" );
@@ -323,9 +345,9 @@ sub  myQC_BAM_2  {
 sub  myQC_BAM_3  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $SubreadUti= "$QCresults/9_SubreadUti";
-    my $Fastqp    = "$QCresults/10_fastqp";
-    my $BamQC     = "$QCresults/11_BamQC";
+    my $SubreadUti= "$QCresults/11_SubreadUti";
+    my $Fastqp    = "$QCresults/12_fastqp";
+    my $BamQC     = "$QCresults/13_BamQC";
     &myMakeDir("$QCresults");
     &myMakeDir("$SubreadUti");
     &myMakeDir("$Fastqp");
@@ -359,7 +381,7 @@ sub  myQC_BAM_3  {
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Removing some reads ......";
+say   "Removing duplicates ......";
 for (my $i=0; $i<=$#BAMfiles_g; $i++) {
     my $temp = $BAMfiles_g[$i]; 
     $temp =~ s/\.bam$//  ||  die; 
