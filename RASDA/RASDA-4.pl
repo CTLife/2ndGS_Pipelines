@@ -1,29 +1,31 @@
-#!/usr/bin/env perl5
+#!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.20;
+use  v5.20;       
+## perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
+## Suffixes of all self-defined global variables must be "_g".
+###################################################################################################################################################################################################
 
 
 
 
 
 ###################################################################################################################################################################################################
-###################################################################################################################################################################################################
-########## Help Infromation ##########
+## Help Infromation
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.62, 2016-01-13.      
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.7.3, 2016-06-01.      
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 4: Remove unmapped reads, and mapped reads on chrUn, chrRandom and chrM, and sort the filtered reads.  
-                Quality statistics by using FastQC, BamUtil, SAMtools, QualiMap and samstat.
+        Step 4: Only the mapped reads with MAPQ>30 are retained and reads on chr_random and chrUn, all of them are removed.
+                Assess the quality of BAM files to identify possible sequencing errors or biases by using 12 softwares:
+                    SAMtools, Subread utilities, FASTQC, SAMstat, BAMStats, qualimap, MultiQC, ezBAMQC, PRESEQ, Picard, fastqp, BamQC.              
+
         Usage:  
-               perl  RASDA-4.pl    [-v]    [-h]    [-i inputDir]    [-o outDir]   
+               perl  RASDA4.pl    [-version]    [-help]    [-in inputDir]    [-out outDir]  
         For instance: 
-                     perl  RASDA-4.pl    -i 4-Mapping          -o 5-SortMapped               
-                     perl  RASDA-4.pl    --input 4-Mapping     --output 5-SortMapped    
-                     perl  RASDA-4.pl    --input 4-Mapping     --output 5-SortMapped      >> RASDA-4.runLog  2>&1
+               perl  RASDA4.pl    -in 4-Mapping/5_STAR     -out 5-MAPQ30/5_STAR      >> RASDA4.runLog  2>&1
      
         -------------------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -32,11 +34,9 @@ my $HELP_g = '
         -h, --help           Show this help message and exit.
 
         Required arguments:
-        -i inputDir,  --input inputDir        inputDir is the name of your input folder that contains your SAM files,
-                                              the suffix of the SAM files must be ".sam".    (no default)
+        -in inputDir        inputDir is the name of your input folder that contains your BAM files, the suffix of the BAM files must be ".bam".    (no default)
 
-        -o outDir,  --output outDir           outDir is the name of your output folder that contains running 
-                                              results (BAM format) of this step.      (no default)
+        -out outDir         outDir is the name of your output folder that contains running results.    (no default)                                                
         ------------------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines such as CISDA, MESDA and HISDA,
@@ -48,608 +48,404 @@ my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------  
 ';
 
+## Version Information
+my $version_g = "  The Fourth Step of RASDA (RNA-Seq Data Analyzer), version 0.7.3, 2016-06-01.";
 
-########## Version Infromation ##########
-my $version_g = "  The Fourth Step of RASDA (RNA-Seq Data Analyzer), version 0.62, 2016-01-13.";
-
-
-########## Keys and Values ##########
-if ($#ARGV   == -1) { print  "\n$HELP_g\n\n";  exit 0; }       ## when there are no any command argumants.
-if ($#ARGV%2 ==  0) { @ARGV = (@ARGV, "-h");           }       ## when the number of command argumants is odd. 
+## Keys and Values
+if ($#ARGV   == -1) { say  "\n$HELP_g\n";  exit 0; }       ## when there are no any command argumants.
+if ($#ARGV%2 ==  0) { @ARGV = (@ARGV, "-h");       }       ## when the number of command argumants is odd. 
 my %args = @ARGV;
 
+## Initialize  Variables
+my $input_g  = '4-Mapping/5_STAR';      ## This is only an initialization  value or suggesting value, not default value.
+my $output_g = '5-MAPQ30/5_STAR';       ## This is only an initialization  value or suggesting value, not default value.
 
-########## Initialize  Variables ##########
-my $input_g  = '5-SortMapped';      ## This is only an initialization  value or suggesting value, not default value.
-my $output_g = '5-SortMapped';      ## This is only an initialization  value or suggesting value, not default value.
-
-
-########## Available Arguments ##########
-my $available = "  -v  --version    -h  --help    -i  --input    -o    --output   ";
+## Available Arguments
+my $available = "  -version    -help   -in   -out      ";
 my $boole_g = 0;
 while( my ($key, $value) = each %args ) {
-    if($available !~ m/\s$key\s/) {print  "    Cann't recognize $key !!\n";  $boole_g = 1; }
+    if($available !~ m/\s$key\s/) {say    "\n\tCann't recognize $key !!";  $boole_g = 1; }
 }
 if($boole_g == 1) {
-    print "\n    The Command Line Arguments are wrong!\n";
-    print   '    Please see help message by using "perl  RASDA-4.pl  -h". ';
-    print "\n\n";
+    say   "\tThe Command Line Arguments are wrong!";
+    say   "\tPlease see help message by using 'perl  RASDA4.pl  -help' \n";
     exit 0;
 }
 
+## Get Arguments
+if ( exists $args{'-version' }   )     { say  "\n$version_g\n";   exit 0; }
+if ( exists $args{'-help'    }   )     { say  "\n$HELP_g\n";      exit 0; }
+if ( exists $args{'-in'      }   )     { $input_g  = $args{'-in' };       }else{say   "\n -in  is required.\n";          say  "\n$HELP_g\n";    exit 0; }
+if ( exists $args{'-out'     }   )     { $output_g = $args{'-out'};       }else{say   "\n -out is required.\n";          say  "\n$HELP_g\n";    exit 0; }
 
-########## Get Arguments ##########
-if ( ( exists $args{'-v' } )  or  ( exists $args{'--version'      } )  )     { print  "\n$version_g\n\n";    exit 0; }
-if ( ( exists $args{'-h' } )  or  ( exists $args{'--help'         } )  )     { print  "\n$HELP_g\n\n";       exit 0; }
-if ( ( exists $args{'-i' } )  or  ( exists $args{'--input'        } )  )     { ($input_g  = $args{'-i' })  or  ($input_g  = $args{'--input'      });  }else{print   "\n -i or --input  is required.\n\n";   print  "\n$HELP_g\n\n";       exit 0; }                                               
-if ( ( exists $args{'-o' } )  or  ( exists $args{'--output'       } )  )     { ($output_g = $args{'-o' })  or  ($output_g = $args{'--output'     });  }else{print   "\n -o or --output is required.\n\n";   print  "\n$HELP_g\n\n";       exit 0; }      
+## Conditions
+$input_g   =~ m/^\S+$/   ||  die   "The Command Line Arguments are wrong!\n$HELP_g\n\n";
+$output_g  =~ m/^\S+$/   ||  die   "The Command Line Arguments are wrong!\n$HELP_g\n\n";
 
-
-########### Conditions #############
-$input_g  =~ m/^\S+$/   ||  die   "\n$HELP_g\n\n";
-$output_g =~ m/^\S+$/   ||  die   "\n$HELP_g\n\n";
-
-
-######### Print Command Arguments to Standard Output ###########
-print  "\n\n
-        ################ Your Arguments ###############################
+## Print Command Arguments to Standard Output
+say  "\n
+        ################ Arguments ###############################
                 Input  folder:  $input_g
                 Output folder:  $output_g
         ###############################################################  
-\n\n";
-
-
-###################################################################################################################################################################################################
+\n";
 ###################################################################################################################################################################################################
 
 
 
 
 
-print "\n\n\n\n\n##################################################################################################\n";
-print   "\nRunning......\n";
-my $output2_g = "$output_g/Results";
-if ( !(-e $output_g) )   { mkdir $output_g    ||  die; }
-if ( !(-e $output2_g))   { mkdir $output2_g   ||  die; }
-(-e $output_g)   ||  die;
-my $pattern = "[-.0-9A-Za-z]+";
+###################################################################################################################################################################################################
+say    "\n\n\n\n\n\n##################################################################################################";
+say    "Running......";
+sub myMakeDir  {
+    my $path = $_[0];
+    if ( !( -e $path) )  { system("mkdir  -p  $path"); }
+    if ( !( -e $path) )  { mkdir $path  ||  die; }
+}
+my $output2_g = "$output_g/QC_Results";
+&myMakeDir($output_g);
+&myMakeDir($output2_g);
+opendir(my $DH_input_g, $input_g)  ||  die;     
+my @inputFiles_g = readdir($DH_input_g);
+my $pattern_g = "[-.0-9A-Za-z]+";
+my $numCores_g = 4;
+###################################################################################################################################################################################################
 
 
 
 
 
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Checking all the necessary softwares in this step......" ;
+sub printVersion  {
+    my $software = $_[0];
+    system("echo    '##############################################################################'  >> $output2_g/VersionsOfSoftwares.txt   2>&1");
+    system("echo    '#########$software'                                                              >> $output2_g/VersionsOfSoftwares.txt   2>&1");
+    system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
+    system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
+}
+sub fullPathApp  {
+    my $software = $_[0];
+    say($software);
+    system("which   $software  > yp_my_temp_1.$software.txt");
+    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
+    my @fullPath1 = <tempFH>; 
+    ($#fullPath1 == 0)  or  die;
+    system("rm  yp_my_temp_1.$software.txt");
+    $fullPath1[0] =~ s/\n$//  or  die;
+    return($fullPath1[0]);
+}
+my  $Picard_g   = &fullPathApp("picard.jar");
+my  $BAMStats_g = &fullPathApp("BAMStats.jar");   
+&printVersion("samtools");
+&printVersion("fastqc   -v");
+&printVersion("samstat   -v");
+&printVersion("java  -jar  $BAMStats_g  -h");
+&printVersion("bamqc  -v");
+&printVersion("preseq");
+&printVersion("qualimap  -v");
+&printVersion("fastqp   -h");
+&printVersion("multiqc   --version");
+&printVersion("propmapped");
+&printVersion("qualityScores");  
+&printVersion("ezBAMQC  -h");
+&printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
+&printVersion("java  -jar  $Picard_g   EstimateLibraryComplexity           --version");
+&printVersion("java  -jar  $Picard_g   CollectInsertSizeMetrics            --version");
+&printVersion("java  -jar  $Picard_g   CollectJumpingLibraryMetrics        --version");
+&printVersion("java  -jar  $Picard_g   CollectMultipleMetrics              --version");
+&printVersion("java  -jar  $Picard_g   CollectBaseDistributionByCycle      --version");
+&printVersion("java  -jar  $Picard_g   CollectQualityYieldMetrics          --version");
+&printVersion("java  -jar  $Picard_g   CollectWgsMetricsFromQuerySorted    --version");
+&printVersion("java  -jar  $Picard_g   MeanQualityByCycle                  --version");
+&printVersion("java  -jar  $Picard_g   QualityScoreDistribution            --version");
+###################################################################################################################################################################################################
 
 
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nChecking all the necessary softwares in this step......\n");
-
-system("samtools                  >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'    >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
-
-system("bam                       >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'    >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
-
-system("fastqc    -v              >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'    >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
-
-system("qualimap  bamqc           >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'    >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
-
-system("samstat                   >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '\n\n\n\n\n\n'    >> $output2_g/z-version_softwares.txt   2>&1");
-system("echo    '##############################################################################'  >> $output2_g/z-version_softwares.txt   2>&1");
 
 
-
-
-
-
-
-
-
-
-
-##############################################################################################################
-sub myFilterSAM  
-##############################################################################################################
+ 
+###################################################################################################################################################################################################                 
 {
-my $name1=$_[0];  ## input dir
-my $name2=$_[1];  ## name of input file
-my $name3=$_[2];  ## output dir
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Checking all the input file names ......";
+my @groupFiles = ();     
+my $fileNameBool = 1;
+for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {   
+        next unless $inputFiles_g[$i] =~ m/\.bam$/;  
+        next unless $inputFiles_g[$i] !~ m/^[.]/;
+        next unless $inputFiles_g[$i] !~ m/[~]$/;
+        next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
+        next unless $inputFiles_g[$i] !~ m/^unpaired/;
+        say   "\t......$inputFiles_g[$i]" ; 
+        my $temp = $inputFiles_g[$i]; 
+        $groupFiles[++$#groupFiles] = $inputFiles_g[$i];  
+        $temp =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/   or  die   "wrong-1: ## $temp ##";
+        $temp =~ m/_(Rep[1-9])\.bam$/  or    die   "wrong-2: ## $temp ##";
+        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.bam$/) {
+             $fileNameBool = 0;
+        }
+}
+if($fileNameBool == 1)  { say    "\n\t\tAll the file names are passed.\n";  }
+@groupFiles   = sort(@groupFiles);
+my $numGroup  = 0;
+my $noteGroup = 0;
+for ( my $i=0; $i<=$#groupFiles; $i++ ) { 
+    $groupFiles[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;
+    my $n1 = $1;
+    $n1>=1  or  die;
+    if($noteGroup != $n1) {say "\n\t\tGroup $n1:";  $numGroup++; }
+    say  "\t\t\t$groupFiles[$i]";
+    $noteGroup = $n1; 
+}
+say  "\n\t\tThere are $numGroup groups.";
+}
+###################################################################################################################################################################################################
 
-my $name4="All_$name2";      ## all reads
-my $name5="$name2";          ## kept reads
-my $name6="Removed_$name2";  ## removed reads
-
-my $n4 = 0; ## all reads
-my $n5 = 0; ## kept reads
-my $n6 = 0; ## removed reads
-  
-my $num_chr1  = 0; ## number of reads on chr1
-my $num_chr2  = 0; ## number of reads on chr2
-my $num_chr3  = 0; ## number of reads on chr3
-my $num_chr4  = 0; ## number of reads on chr4
-my $num_chr5  = 0; ## number of reads on chr5
-my $num_chr6  = 0; ## number of reads on chr6
-my $num_chr7  = 0; ## number of reads on chr7
-my $num_chr8  = 0; ## number of reads on chr8
-my $num_chr9  = 0; ## number of reads on chr9
-my $num_chr10 = 0; ## number of reads on chr10
-my $num_chr11 = 0; ## number of reads on chr11
-my $num_chr12 = 0; ## number of reads on chr12
-my $num_chr13 = 0; ## number of reads on chr13
-my $num_chr14 = 0; ## number of reads on chr14
-my $num_chr15 = 0; ## number of reads on chr15
-my $num_chr16 = 0; ## number of reads on chr16
-my $num_chr17 = 0; ## number of reads on chr17
-my $num_chr18 = 0; ## number of reads on chr18
-my $num_chr19 = 0; ## number of reads on chr19
-my $num_chrX  = 0; ## number of reads on chrX
-my $num_chrY  = 0; ## number of reads on chrY
 
 
-open(FILE1, "<", "$name1/$name2")  or die "$!";                    
-open(FILE4, ">", "$name3/$name4")  or die "$!";  
-open(FILE5, ">", "$name3/$name5")  or die "$!";  
-open(FILE6, ">", "$name3/$name6")  or die "$!";  
-open(FILE7, ">", "$name3/Results/z-$name2.numberOfReads")  or die "$!";
 
-my  $numOfHeader = 0;
-while (my $line1=<FILE1>) {
-    if ($line1 =~ m/^@/) {
-        print  FILE4  $line1   ;  
-        print  FILE5  $line1   ;  
-        print  FILE6  $line1   ;  
-        $numOfHeader++;  
-    }else{
-        $line1 =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+/  or die;
-        my $chr = $3;
-        $n4++;
-        print  FILE4   $line1;
-        given($chr) {
-             when("chr1")  {print  FILE5   $line1; $num_chr1++;  $n5++; }       
-             when("chr2")  {print  FILE5   $line1; $num_chr2++;  $n5++; }       
-             when("chr3")  {print  FILE5   $line1; $num_chr3++;  $n5++; }       
-             when("chr4")  {print  FILE5   $line1; $num_chr4++;  $n5++; }       
-             when("chr5")  {print  FILE5   $line1; $num_chr5++;  $n5++; }       
-             when("chr6")  {print  FILE5   $line1; $num_chr6++;  $n5++; }       
-             when("chr7")  {print  FILE5   $line1; $num_chr7++;  $n5++; }       
-             when("chr8")  {print  FILE5   $line1; $num_chr8++;  $n5++; }       
-             when("chr9")  {print  FILE5   $line1; $num_chr9++;  $n5++; }       
-             when("chr10") {print  FILE5   $line1; $num_chr10++; $n5++; }       
-             when("chr11") {print  FILE5   $line1; $num_chr11++; $n5++; }       
-             when("chr12") {print  FILE5   $line1; $num_chr12++; $n5++; }       
-             when("chr13") {print  FILE5   $line1; $num_chr13++; $n5++; }       
-             when("chr14") {print  FILE5   $line1; $num_chr14++; $n5++; }       
-             when("chr15") {print  FILE5   $line1; $num_chr15++; $n5++; }       
-             when("chr16") {print  FILE5   $line1; $num_chr16++; $n5++; }       
-             when("chr17") {print  FILE5   $line1; $num_chr17++; $n5++; }       
-             when("chr18") {print  FILE5   $line1; $num_chr18++; $n5++; }       
-             when("chr19") {print  FILE5   $line1; $num_chr19++; $n5++; }       
-             when("chrX")  {print  FILE5   $line1; $num_chrX++;  $n5++; }       
-             when("chrY")  {print  FILE5   $line1; $num_chrY++;  $n5++; }   
-             default       {print  FILE6   $line1; $n6++;               }    
+
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Detecting BAM files in input folder ......";
+my @BAMfiles_g = ();
+open(seqFiles_FH, ">", "$output2_g/BAM-Files.txt")  or  die; 
+for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
+    next unless $inputFiles_g[$i] =~ m/\.bam$/;
+    next unless $inputFiles_g[$i] !~ m/^[.]/;
+    next unless $inputFiles_g[$i] !~ m/[~]$/;
+    next unless $inputFiles_g[$i] !~ m/^unpaired/;
+    say    "\t......$inputFiles_g[$i]"; 
+    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
+    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
+
+}
+say   seqFiles_FH  "\n\n\n\n\n";  
+say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
+say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
+my $num1 = $#BAMfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 BAM files.\n";
+say         "\t\t\t\tThere are $num1 BAM files.\n";
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub  myQC_BAM_1  {
+    my $dir1      =  $_[0];   ## All the SAM files must be in this folder.
+    my $QCresults = "$dir1/QC_Results";
+    my $SAMtools  = "$QCresults/1_SAMtools";
+    my $FastQC    = "$QCresults/2_FastQC";
+    my $qualimap  = "$QCresults/3_qualimap";
+    my $samstat   = "$QCresults/4_samstat";
+    my $MultiQC1  = "$QCresults/5_MultiQC_FastQC";
+    my $MultiQC2  = "$QCresults/5_MultiQC_qualimap";
+    &myMakeDir($QCresults);
+    &myMakeDir($SAMtools);
+    &myMakeDir($FastQC);
+    &myMakeDir($qualimap);
+    &myMakeDir($samstat);
+    &myMakeDir($MultiQC1);
+    &myMakeDir($MultiQC2);
+    opendir(my $FH_Files, $dir1) || die;     
+    my @Files = readdir($FH_Files);
+    say   "\n\n\n\n\n\n##################################################################################################";
+    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat and MultiQC ......";
+    for ( my $i=0; $i<=$#Files; $i++ ) {
+        next unless $Files[$i] =~ m/\.sam$/;
+        next unless $Files[$i] !~ m/^[.]/;
+        next unless $Files[$i] !~ m/[~]$/;
+        next unless $Files[$i] !~ m/^removed_/;
+        my $temp = $Files[$i];
+        say    "\t......$temp";
+        $temp =~ s/\.sam$//  ||  die;
+        system("samtools  sort  -m 2G  -o $dir1/$temp.bam   --output-fmt bam  -T $dir1/yp_$temp   --threads $numCores_g    $dir1/$temp.sam    >>$SAMtools/$temp.runLog    2>&1");
+        system("samtools  index           $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
+        system("samtools  flagstat        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
+        system(`samtools  idxstats        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1`);
+        system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam              >> $FastQC/$temp.runLog      2>&1" );
+        system( "qualimap  bamqc   -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=12G   >> $qualimap/$temp.runLog    2>&1" );
+        system( "qualimap  rnaseq  -bam $dir1/$temp.bam   -gtf 0-Other/Shortcuts/mm10_RefSeq_GTF   -oc $temp.counts   -outdir $qualimap/rnaseq_$temp   --java-mem-size=12G   >> $qualimap/rnaseq_$temp.runLog    2>&1" );
+        system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");  
+        system( "rm   $dir1/$temp.sam" );  
+    }
+    system( "multiqc  --verbose  --outdir $MultiQC1          $FastQC/*_fastqc.zip      >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
+    system( "multiqc  --verbose  --outdir $MultiQC2          $qualimap/*               >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub  myQC_BAM_2  {
+    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.   
+    my $QCresults = "$dir1/QC_Results";
+    my $PRESEQ    = "$QCresults/6_PRESEQ";
+    my $PicardDir = "$QCresults/7_Picard";
+    my $MultiQC1  = "$QCresults/8_MultiQC_PRESEQ";
+    my $MultiQC2  = "$QCresults/8_MultiQC_Picard";
+    my $BAMStats  = "$QCresults/9_BAMStats";
+    my $ezBAMQC   = "$QCresults/10_ezBAMQC";
+    &myMakeDir($QCresults);
+    &myMakeDir($PRESEQ);
+    &myMakeDir($PicardDir);
+    &myMakeDir($MultiQC1);
+    &myMakeDir($MultiQC2);
+    &myMakeDir($BAMStats);
+    &myMakeDir($ezBAMQC);
+    opendir(my $FH_Files, $dir1) || die;     
+    my @Files = readdir($FH_Files);
+    say   "\n\n\n\n\n\n##################################################################################################";
+    say   "Detecting the quality of all BAM files by using PRESEQ, Picard and MultiQC ......";
+    for ( my $i=0; $i<=$#Files; $i++ ) {
+        next unless $Files[$i] =~ m/\.bam$/;
+        next unless $Files[$i] !~ m/^[.]/;
+        next unless $Files[$i] !~ m/[~]$/;
+        my $temp = $Files[$i];
+        say    "\t......$temp";
+        $temp =~ s/\.bam$//  ||  die;
+        system("preseq  c_curve   -output  $PRESEQ/$temp.pe.PRESEQ     -step 1000000    -verbose   -pe  -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.pe.runLog   2>&1");   
+        system("preseq  c_curve   -output  $PRESEQ/$temp.se.PRESEQ     -step 1000000    -verbose        -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.se.runLog   2>&1");  
+        &myMakeDir("$PicardDir/$temp"); 
+
+        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics     R=0-Other/Shortcuts/mm10.fa                            >> $PicardDir/$temp/1.runLog   2>&1" );
+        system("java  -jar   $Picard_g   EstimateLibraryComplexity           INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/2_EstimateLibraryComplexity                                                                      >> $PicardDir/$temp/2.runLog   2>&1" );
+        system("java  -jar   $Picard_g   CollectInsertSizeMetrics            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/3_CollectInsertSizeMetrics          HISTOGRAM_FILE=$PicardDir/$temp/3.pdf  MINIMUM_PCT=0.01      >> $PicardDir/$temp/3.runLog   2>&1" );
+        system("java  -jar   $Picard_g   CollectJumpingLibraryMetrics        INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/4_CollectJumpingLibraryMetrics                                                                   >> $PicardDir/$temp/4.runLog   2>&1" );
+        system("java  -jar   $Picard_g   CollectMultipleMetrics              INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/5_CollectMultipleMetrics                                                                         >> $PicardDir/$temp/5.runLog   2>&1" );
+        system("java  -jar   $Picard_g   CollectBaseDistributionByCycle      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/6_CollectBaseDistributionByCycle     CHART_OUTPUT=$PicardDir/$temp/6.pdf                         >> $PicardDir/$temp/6.runLog   2>&1" );
+        system("java  -jar   $Picard_g   CollectQualityYieldMetrics          INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/7_CollectQualityYieldMetrics                                                                     >> $PicardDir/$temp/7.runLog   2>&1" ); 
+        system("java  -jar   $Picard_g   CollectWgsMetricsFromQuerySorted    INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/8_CollectWgsMetricsFromQuerySorted                                                               >> $PicardDir/$temp/8.runLog   2>&1" );
+        system("java  -jar   $Picard_g   MeanQualityByCycle                  INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/9_MeanQualityByCycle                 CHART_OUTPUT=$PicardDir/$temp/9.pdf                         >> $PicardDir/$temp/9.runLog   2>&1" );
+        system("java  -jar   $Picard_g   QualityScoreDistribution            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/10_QualityScoreDistribution          CHART_OUTPUT=$PicardDir/$temp/10.pdf                        >> $PicardDir/$temp/10.runLog  2>&1" ); 
+
+        system("java  -jar  $BAMStats_g    --distances  --infile $dir1/$temp.bam   --lengths   --mapped    --outfile $BAMStats/$temp   --qualities   --starts   --view html   >> $BAMStats/$temp.runLog   2>&1");  
+        system("ezBAMQC    -i $dir1/$temp.bam   --refgene 0-Other/Shortcuts/mm10_RefSeq_GTF   --outputDir $ezBAMQC/$temp  --stranded no  --label $temp  --threads $numCores_g      >> $ezBAMQC/$temp.runLog   2>&1");  
+    }
+    system( "multiqc  --verbose  --outdir $MultiQC1          $PRESEQ/*                 >> $MultiQC1/MultiQC.PRESEQ.runLog   2>&1" );
+    system( "multiqc  --verbose  --outdir $MultiQC2          $PicardDir/*              >> $MultiQC2/MultiQC.Picard.runLog   2>&1" );
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub  myQC_BAM_3  {
+    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
+    my $QCresults = "$dir1/QC_Results";
+    my $SubreadUti= "$QCresults/11_SubreadUti";
+    my $Fastqp    = "$QCresults/12_fastqp";
+    my $BamQC     = "$QCresults/13_BamQC";
+    &myMakeDir("$QCresults");
+    &myMakeDir("$SubreadUti");
+    &myMakeDir("$Fastqp");
+    &myMakeDir("$BamQC");
+    opendir(my $DH_map, $dir1) || die;     
+    my @mapFiles = readdir($DH_map);
+    say   "\n\n\n\n\n\n##################################################################################################";
+    say   "Detecting the quality of bam files by using Subreads utilities, fastqp and BamQC ......";
+    for (my $i=0; $i<=$#mapFiles; $i++) {
+           next unless $mapFiles[$i] =~ m/\.bam$/;
+           next unless $mapFiles[$i] !~ m/^[.]/;
+           next unless $mapFiles[$i] !~ m/[~]$/;
+           my $temp = $mapFiles[$i]; 
+           $temp =~ s/\.bam$//  ||  die; 
+           say   "\t......$mapFiles[$i]";  
+           system("propmapped   -i $dir1/$temp.bam                    -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1");
+           system("echo      '\n\n\n\n\n'                                                                  >> $SubreadUti/$temp.prommapped      2>&1"); 
+           system("propmapped   -i $dir1/$temp.bam       -f           -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1"); 
+           system("echo      '\n\n\n\n\n'                                                                  >> $SubreadUti/$temp.prommapped      2>&1"); 
+           system("propmapped   -i $dir1/$temp.bam       -f   -p      -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1"); 
+           system("qualityScores   --BAMinput   -i $dir1/$temp.bam    -o $SubreadUti/$temp.qualityScores   >> $SubreadUti/$temp.qualityScores   2>&1");
+           system("fastqp    --nreads 50000000   --kmer 4    --output $Fastqp/$temp  --type bam   --median-qual 30     $dir1/$temp.bam     >> $Fastqp/$temp.runLog     2>&1 " );
+     }
+     system( "bamqc  $dir1   --outdir  $BamQC        >> $BamQC/bamqc.runLog     2>&1 " );
+}  
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub myFilterSAM  {
+    my $folder  = $_[0];  ## input and output dir
+    my $filePre = $_[1];  ## prefix of name of input and out file
+    open(FILE1, "<", "$folder/$filePre.t.sam")          or die "$!";                    
+    open(FILE2, ">", "$folder/$filePre.sam")            or die "$!";  
+    open(FILE3, ">", "$folder/removed_$filePre.sam")    or die "$!";  
+    my $n1 = 0; ## all reads
+    my $n2 = 0; ## kept reads
+    my $n3 = 0; ## removed reads
+    while (my $line1=<FILE1>) {
+        if ($line1 =~ m/^@/) {
+            print  FILE2  $line1   ;  
+            print  FILE3  $line1   ;  
+        }else{
+            $line1 =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+/  or die;
+            my $chr = $3;
+            $n1++;
+            if( $chr =~ m/(chrUn_)|(chr\S+_random)/ ) {
+                 print  FILE3  $line1;  $n3++; 
+            }else{
+                 print  FILE2  $line1;  $n2++; 
+            } 
         }
     }
+    print      "\t\tall reads in $filePre: $n1\n";
+    print     "\t\tkept reads in $filePre: $n2\n";
+    print  "\t\tremoved reads in $filePre: $n3\n\n\n";
 }
-print("numOfHeader:$numOfHeader\n\n");
-
-
-print  FILE7  "All     Reads: $n4\n";
-print  FILE7  "Kept    Reads: $n5\n";
-print  FILE7  "Removed Reads: $n6\n\n\n";
-
-print  FILE7  "chr1:  $num_chr1\n";
-print  FILE7  "chr2:  $num_chr2\n";
-print  FILE7  "chr3:  $num_chr3\n";
-print  FILE7  "chr4:  $num_chr4\n";
-print  FILE7  "chr5:  $num_chr5\n";
-print  FILE7  "chr6:  $num_chr6\n";
-print  FILE7  "chr7:  $num_chr7\n";
-print  FILE7  "chr8:  $num_chr8\n";
-print  FILE7  "chr9:  $num_chr9\n";
-print  FILE7  "chr10: $num_chr10\n";
-print  FILE7  "chr11: $num_chr11\n";
-print  FILE7  "chr12: $num_chr12\n";
-print  FILE7  "chr13: $num_chr13\n";
-print  FILE7  "chr14: $num_chr14\n";
-print  FILE7  "chr15: $num_chr15\n";
-print  FILE7  "chr16: $num_chr16\n";
-print  FILE7  "chr17: $num_chr17\n";
-print  FILE7  "chr18: $num_chr18\n";
-print  FILE7  "chr19: $num_chr19\n";
-print  FILE7  "chrX:  $num_chrX\n";
-print  FILE7  "chrY:  $num_chrY\n";
-
-close FILE1;
-close FILE4;
-close FILE5;
-close FILE6;
-close FILE7;
-
-}########################################### END 
+###################################################################################################################################################################################################
 
 
 
 
 
-
-
-
-my $input_HISAT2    = "$input_g/1-HISAT2";
-my $input_Subjunc   = "$input_g/2-Subjunc";
-my $input_STAR      = "$input_g/3-STAR";
-
-my $output_HISAT2   = "$output_g/1-HISAT2";
-my $output_Subjunc  = "$output_g/2-Subjunc";
-my $output_STAR     = "$output_g/3-STAR";
-
-my $output2_HISAT2   = "$output_g/1-HISAT2/Results";
-my $output2_Subjunc  = "$output_g/2-Subjunc/Results";
-my $output2_STAR     = "$output_g/3-STAR/Results";
-
-if ( !(-e $output_HISAT2)  )   { mkdir $output_HISAT2    ||  die; }
-if ( !(-e $output_Subjunc) )   { mkdir $output_Subjunc   ||  die; }
-if ( !(-e $output_STAR )   )   { mkdir $output_STAR      ||  die; }
-
-if ( !(-e $output2_HISAT2)  )   { mkdir $output2_HISAT2    ||  die; }
-if ( !(-e $output2_Subjunc) )   { mkdir $output2_Subjunc   ||  die; }
-if ( !(-e $output2_STAR )   )   { mkdir $output2_STAR      ||  die; }
- 
-
-
-
-
-
-
-
-{ ########## Start HISAT2
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nChecking all the input file names......\n");
-opendir(my $DH_input, "$input_HISAT2")  ||  die;     
-my @inputFiles = readdir($DH_input);
-
-my $fileNameBool = 1;
-for ( my $i=0; $i<=$#inputFiles; $i++ ) {  
-        next unless $inputFiles[$i] =~ m/\.sam$/;   
-        next unless $inputFiles[$i] !~ m/^[.]/;
-        next unless $inputFiles[$i] !~ m/[~]$/;
-        next unless $inputFiles[$i] !~ m/^unpaired/;
-        my $temp = $inputFiles[$i]; 
-        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]).sam$/   or  die  "wrong-1: ## $temp ##";
-        if($temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.sam$/) {
-             print("$inputFiles[$i]......\n");
-        }else{
-             $fileNameBool = 0;
-        }
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Removing some reads ......";
+for (my $i=0; $i<=$#BAMfiles_g; $i++) {
+    my $temp = $BAMfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$BAMfiles_g[$i]";
+    system(`samtools  view  -h  -F 4  --threads $numCores_g  -q 30     -o $output_g/$temp.t.sam   $input_g/$temp.bam    >> $output2_g/$temp.runLog     2>&1  `);  
+    &myFilterSAM($output_g, $temp); 
+    system("rm   $output_g/$temp.t.sam"); 
 }
-if($fileNameBool == 1)  {print("    All the file names are passed.\n\n");}
+###################################################################################################################################################################################################
 
 
 
- 
-my $qualimapDir = "$output2_HISAT2/qualimap"; 
-my $FastQCdir   = "$output2_HISAT2/FastQC";  
-my $outDirQC    = "$output2_HISAT2/QCstatistics";
 
 
-if ( !( -e $qualimapDir ) )   { mkdir $qualimapDir     ||  die; }
-if ( !( -e $FastQCdir)    )   { mkdir $FastQCdir       ||  die; }
-if ( !( -e $outDirQC)     )   { mkdir $outDirQC        ||  die; }
+###################################################################################################################################################################################################
+&myQC_BAM_1($output_g);
+&myQC_BAM_2($output_g);
+&myQC_BAM_3($output_g); 
+###################################################################################################################################################################################################
 
 
 
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nAnalysis all the sam files ......\n");
-for(my $i=0; $i<=$#inputFiles; $i++) {
-    next unless $inputFiles[$i] =~ m/\.sam$/;
-    next unless $inputFiles[$i] !~ m/^[.]/;
-    next unless $inputFiles[$i] !~ m/[~]$/;
-    print("$inputFiles[$i] ......\n");      
-    my $temp = $inputFiles[$i];
-    $temp =~ s/\.sam$//  or  die;
 
-    &myFilterSAM("$input_HISAT2",  "$temp.sam",  "$output_HISAT2");   
-    (-e "$output_HISAT2/All_$temp.sam")       ||  die;
-    (-e "$output_HISAT2/$temp.sam")           ||  die;
-    (-e "$output_HISAT2/Removed_$temp.sam")   ||  die;
-    system("samtools  sort   -O bam       -o $output_HISAT2/All_$temp.bam        -T $output_HISAT2/1_$temp      $output_HISAT2/All_$temp.sam         >>$output2_HISAT2/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_HISAT2/$temp.bam            -T $output_HISAT2/2_$temp      $output_HISAT2/$temp.sam             >>$output2_HISAT2/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_HISAT2/Removed_$temp.bam    -T $output_HISAT2/3_$temp      $output_HISAT2/Removed_$temp.sam     >>$output2_HISAT2/$temp.runLog    2>&1");
 
-    if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_HISAT2/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp   --java-mem-size=5G    >>$output2_HISAT2/$temp.runLog    2>&1");
-    system("samstat   $output_HISAT2/All_$temp.bam       >> $output2_HISAT2/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_HISAT2/$temp.runLog    2>&1");
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "\tJob Done! Cheers! \n\n";
 
-    if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_HISAT2/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp  --java-mem-size=5G    >>$output2_HISAT2/$temp.runLog    2>&1");
-    system("samstat   $output_HISAT2/$temp.bam       >> $output2_HISAT2/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_HISAT2/$temp.runLog    2>&1");   
 
-    if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_HISAT2/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp  --java-mem-size=5G    >>$output2_HISAT2/$temp.runLog    2>&1");
-    system("samstat   $output_HISAT2/Removed_$temp.bam       >> $output2_HISAT2/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                            >> $output2_HISAT2/$temp.runLog    2>&1");
 
-    system("samtools  index       $output_HISAT2/All_$temp.bam      >>$outDirQC/All_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_HISAT2/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_HISAT2/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_HISAT2/All_$temp.bam      >>$outDirQC/All_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_HISAT2/All_$temp.bam  --basic  --qual  --phred    >>$outDirQC/All_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_HISAT2/All_$temp.bam          >>$FastQCdir/All_$temp.runLog        2>&1");  
 
-    system("samtools  index       $output_HISAT2/$temp.bam      >>$outDirQC/$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_HISAT2/$temp.bam      >>$outDirQC/$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_HISAT2/$temp.bam      >>$outDirQC/$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_HISAT2/$temp.bam      >>$outDirQC/$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_HISAT2/$temp.bam  --basic  --qual  --phred    >>$outDirQC/$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_HISAT2/$temp.bam          >>$FastQCdir/$temp.runLog        2>&1");  
 
-    system("samtools  index       $output_HISAT2/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_HISAT2/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_HISAT2/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_HISAT2/Removed_$temp.bam      >>$outDirQC/Removed_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_HISAT2/Removed_$temp.bam  --basic  --qual  --phred    >>$outDirQC/Removed_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_HISAT2/Removed_$temp.bam          >>$FastQCdir/Removed_$temp.runLog        2>&1");  
-
-    system("rm   $output_HISAT2/All_$temp.sam");
-    system("rm   $output_HISAT2/$temp.sam");
-    system("rm   $output_HISAT2/Removed_$temp.sam");
-}
-} ########## End HISAT2
-
-
-
-
-
-
-
-
-
-
-{ ########## Start Subjunc
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nChecking all the input file names......\n");
-opendir(my $DH_input, "$input_Subjunc")  ||  die;     
-my @inputFiles = readdir($DH_input);
-
-my $fileNameBool = 1;
-for ( my $i=0; $i<=$#inputFiles; $i++ ) {  
-        next unless $inputFiles[$i] =~ m/\.sam$/;   
-        next unless $inputFiles[$i] !~ m/^[.]/;
-        next unless $inputFiles[$i] !~ m/[~]$/;
-        next unless $inputFiles[$i] !~ m/^unpaired/;
-        my $temp = $inputFiles[$i]; 
-        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]).sam$/   or  die  "wrong-1: ## $temp ##";
-        if($temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.sam$/) {
-             print("$inputFiles[$i]......\n");
-        }else{
-             $fileNameBool = 0;
-        }
-}
-if($fileNameBool == 1)  {print("    All the file names are passed.\n\n");}
-
-
-
- 
-my $qualimapDir = "$output2_Subjunc/qualimap"; 
-my $FastQCdir   = "$output2_Subjunc/FastQC";  
-my $outDirQC    = "$output2_Subjunc/QCstatistics";
-
-
-if ( !( -e $qualimapDir ) )   { mkdir $qualimapDir     ||  die; }
-if ( !( -e $FastQCdir)    )   { mkdir $FastQCdir       ||  die; }
-if ( !( -e $outDirQC)     )   { mkdir $outDirQC        ||  die; }
-
-
-
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nAnalysis all the sam files ......\n");
-for(my $i=0; $i<=$#inputFiles; $i++) {
-    next unless $inputFiles[$i] =~ m/\.sam$/;
-    next unless $inputFiles[$i] !~ m/^[.]/;
-    next unless $inputFiles[$i] !~ m/[~]$/;
-    print("$inputFiles[$i] ......\n");      
-    my $temp = $inputFiles[$i];
-    $temp =~ s/\.sam$//  or  die;
-
-    &myFilterSAM("$input_Subjunc",  "$temp.sam",  "$output_Subjunc");   
-    (-e "$output_Subjunc/All_$temp.sam")       ||  die;
-    (-e "$output_Subjunc/$temp.sam")           ||  die;
-    (-e "$output_Subjunc/Removed_$temp.sam")   ||  die;
-    system("samtools  sort   -O bam       -o $output_Subjunc/All_$temp.bam        -T $output_Subjunc/1_$temp      $output_Subjunc/All_$temp.sam         >>$output2_Subjunc/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_Subjunc/$temp.bam            -T $output_Subjunc/2_$temp      $output_Subjunc/$temp.sam             >>$output2_Subjunc/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_Subjunc/Removed_$temp.bam    -T $output_Subjunc/3_$temp      $output_Subjunc/Removed_$temp.sam     >>$output2_Subjunc/$temp.runLog    2>&1");
-
-    if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Subjunc/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp   --java-mem-size=5G   >>$output2_Subjunc/$temp.runLog    2>&1");
-    system("samstat   $output_Subjunc/All_$temp.bam       >> $output2_Subjunc/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_Subjunc/$temp.runLog    2>&1");
-
-    if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Subjunc/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_Subjunc/$temp.runLog    2>&1");
-    system("samstat   $output_Subjunc/$temp.bam       >> $output2_Subjunc/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_Subjunc/$temp.runLog    2>&1");   
-
-    if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_Subjunc/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp    --java-mem-size=5G  >>$output2_Subjunc/$temp.runLog    2>&1");
-    system("samstat   $output_Subjunc/Removed_$temp.bam       >> $output2_Subjunc/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                            >> $output2_Subjunc/$temp.runLog    2>&1");
-
-    system("samtools  index       $output_Subjunc/All_$temp.bam      >>$outDirQC/All_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_Subjunc/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_Subjunc/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_Subjunc/All_$temp.bam      >>$outDirQC/All_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_Subjunc/All_$temp.bam  --basic  --qual  --phred    >>$outDirQC/All_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_Subjunc/All_$temp.bam          >>$FastQCdir/All_$temp.runLog        2>&1");  
-
-    system("samtools  index       $output_Subjunc/$temp.bam      >>$outDirQC/$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_Subjunc/$temp.bam      >>$outDirQC/$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_Subjunc/$temp.bam      >>$outDirQC/$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_Subjunc/$temp.bam      >>$outDirQC/$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_Subjunc/$temp.bam  --basic  --qual  --phred    >>$outDirQC/$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_Subjunc/$temp.bam          >>$FastQCdir/$temp.runLog        2>&1");  
-
-    system("samtools  index       $output_Subjunc/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_Subjunc/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_Subjunc/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_Subjunc/Removed_$temp.bam      >>$outDirQC/Removed_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_Subjunc/Removed_$temp.bam  --basic  --qual  --phred    >>$outDirQC/Removed_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_Subjunc/Removed_$temp.bam          >>$FastQCdir/Removed_$temp.runLog        2>&1");  
-
-    system("rm   $output_Subjunc/All_$temp.sam");
-    system("rm   $output_Subjunc/$temp.sam");
-    system("rm   $output_Subjunc/Removed_$temp.sam");
-}
-} ########## End Subjunc
-
-
-
-
-
-
-
-
-
-
-{ ########## Start STAR
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nChecking all the input file names......\n");
-opendir(my $DH_input, "$input_STAR")  ||  die;     
-my @inputFiles = readdir($DH_input);
-
-my $fileNameBool = 1;
-for ( my $i=0; $i<=$#inputFiles; $i++ ) {  
-        next unless $inputFiles[$i] =~ m/\.sam$/;   
-        next unless $inputFiles[$i] !~ m/^[.]/;
-        next unless $inputFiles[$i] !~ m/[~]$/;
-        next unless $inputFiles[$i] !~ m/^unpaired/;
-        my $temp = $inputFiles[$i]; 
-        $temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]).sam$/   or  die  "wrong-1: ## $temp ##";
-        if($temp =~ m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])\.sam$/) {
-             print("$inputFiles[$i]......\n");
-        }else{
-             $fileNameBool = 0;
-        }
-}
-if($fileNameBool == 1)  {print("    All the file names are passed.\n\n");}
-
-
-
- 
-my $qualimapDir = "$output2_STAR/qualimap"; 
-my $FastQCdir   = "$output2_STAR/FastQC";  
-my $outDirQC    = "$output2_STAR/QCstatistics";
-
-
-if ( !( -e $qualimapDir ) )   { mkdir $qualimapDir     ||  die; }
-if ( !( -e $FastQCdir)    )   { mkdir $FastQCdir       ||  die; }
-if ( !( -e $outDirQC)     )   { mkdir $outDirQC        ||  die; }
-
-
-
-print "\n\n\n\n\n##################################################################################################\n";
-print("\nAnalysis all the sam files ......\n");
-for(my $i=0; $i<=$#inputFiles; $i++) {
-    next unless $inputFiles[$i] =~ m/\.sam$/;
-    next unless $inputFiles[$i] !~ m/^[.]/;
-    next unless $inputFiles[$i] !~ m/[~]$/;
-    print("$inputFiles[$i] ......\n");      
-    my $temp = $inputFiles[$i];
-    $temp =~ s/\.sam$//  or  die;
-
-    &myFilterSAM("$input_STAR",  "$temp.sam",  "$output_STAR");   
-    (-e "$output_STAR/All_$temp.sam")       ||  die;
-    (-e "$output_STAR/$temp.sam")           ||  die;
-    (-e "$output_STAR/Removed_$temp.sam")   ||  die;
-    system("samtools  sort   -O bam       -o $output_STAR/All_$temp.bam        -T $output_STAR/1_$temp      $output_STAR/All_$temp.sam         >>$output2_STAR/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_STAR/$temp.bam            -T $output_STAR/2_$temp      $output_STAR/$temp.sam             >>$output2_STAR/$temp.runLog    2>&1");
-    system("samtools  sort   -O bam       -o $output_STAR/Removed_$temp.bam    -T $output_STAR/3_$temp      $output_STAR/Removed_$temp.sam     >>$output2_STAR/$temp.runLog    2>&1");
-
-    if ( !( -e "$qualimapDir/All_$temp")     )   { mkdir  "$qualimapDir/All_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_STAR/All_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/All_$temp  --java-mem-size=5G    >>$output2_STAR/$temp.runLog    2>&1");
-    system("samstat   $output_STAR/All_$temp.bam       >> $output2_STAR/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_STAR/$temp.runLog    2>&1");
-
-    if ( !( -e "$qualimapDir/$temp")     )   { mkdir  "$qualimapDir/$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_STAR/$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/$temp   --java-mem-size=5G   >>$output2_STAR/$temp.runLog    2>&1");
-    system("samstat   $output_STAR/$temp.bam       >> $output2_STAR/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                        >> $output2_STAR/$temp.runLog    2>&1");   
-
-    if ( !( -e "$qualimapDir/Removed_$temp")     )   { mkdir  "$qualimapDir/Removed_$temp"   ||  die; }       
-    system("qualimap  bamqc  -bam $output_STAR/Removed_$temp.bam   -c    -gd MOUSE  -outdir $qualimapDir/Removed_$temp   --java-mem-size=5G   >>$output2_STAR/$temp.runLog    2>&1");
-    system("samstat   $output_STAR/Removed_$temp.bam       >> $output2_STAR/$temp.runLog    2>&1");
-    system("echo    '\n\n\n\n\n\n'                            >> $output2_STAR/$temp.runLog    2>&1");
-
-    system("samtools  index       $output_STAR/All_$temp.bam      >>$outDirQC/All_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_STAR/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_STAR/All_$temp.bam      >>$outDirQC/All_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_STAR/All_$temp.bam      >>$outDirQC/All_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_STAR/All_$temp.bam  --basic  --qual  --phred    >>$outDirQC/All_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_STAR/All_$temp.bam          >>$FastQCdir/All_$temp.runLog        2>&1");  
-
-    system("samtools  index       $output_STAR/$temp.bam      >>$outDirQC/$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_STAR/$temp.bam      >>$outDirQC/$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_STAR/$temp.bam      >>$outDirQC/$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_STAR/$temp.bam      >>$outDirQC/$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_STAR/$temp.bam  --basic  --qual  --phred    >>$outDirQC/$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_STAR/$temp.bam          >>$FastQCdir/$temp.runLog        2>&1");  
-
-    system("samtools  index       $output_STAR/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog 2>&1");
-    system("samtools  flagstat    $output_STAR/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1");
-    system(`samtools  idxstats    $output_STAR/Removed_$temp.bam      >>$outDirQC/Removed_$temp.runLog  2>&1`);
-    system(`bam  validate  --in   $output_STAR/Removed_$temp.bam      >>$outDirQC/Removed_$temp.run=bam.runLog       2>&1`);
-    system(`bam  stats     --in   $output_STAR/Removed_$temp.bam  --basic  --qual  --phred    >>$outDirQC/Removed_$temp.run=bam.runLog 2>&1`);
-    system("fastqc    --outdir $FastQCdir          --threads 16    --format bam    --kmers 7     $output_STAR/Removed_$temp.bam          >>$FastQCdir/Removed_$temp.runLog        2>&1");  
-
-    system("rm   $output_STAR/All_$temp.sam");
-    system("rm   $output_STAR/$temp.sam");
-    system("rm   $output_STAR/Removed_$temp.sam");
-}
-} ########## End STAR
-
-
-
-
-
-
-
-
-
-
-print "\n\n\n\n\n##################################################################################################\n";
-print "\n\n        Job Done! Cheers! \n\n";
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## END
