@@ -1,8 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.18;
-## Perl5 version >= 5.18,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
+use  v5.20;
+## Perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
 ###################################################################################################################################################################################################
 
@@ -15,7 +15,7 @@ use  v5.18;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 2: Remove adaptors and PCR primers, trim and filter the raw reads by using Trimmomatic.
@@ -34,9 +34,9 @@ my $HELP_g = '
         -help           Show this help message and exit.
 
         Required arguments:
-        -input inputDir        "inputDir" is the name of input folder that contains your fastq files files.  (no default)
+        -in inputDir        "inputDir" is the name of input folder that contains your fastq files files.  (no default)
 
-        -output outDir         "outDir" is the name of output folder that contains your running results (fastq format) of this step.  (no default)
+        -out outDir         "outDir" is the name of output folder that contains your running results (fastq format) of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines such as RASDA, MESDA and HISDA,
@@ -49,7 +49,7 @@ my $HELP_g = '
 ';
 
 ## Version Infromation
-my $version_g = "    The Second Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.";
+my $version_g = "    The Second Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP_g\n";  exit 0;  }       ## when there are no any command argumants.
@@ -109,7 +109,7 @@ my $output2_g = "$output_g/QC_Results";
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
+my $numCores_g   = 6;
 ###################################################################################################################################################################################################
 
 
@@ -127,7 +127,18 @@ sub printVersion  {
     system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
-my $Trimmomatic_g = "/home/yp/.MyProgramFiles/3_HTS2G/1_common/5_Trim/Trimmomatic-0.36/trimmomatic-0.36.jar";
+sub fullPathApp  {
+    my $software = $_[0];
+    say($software);
+    system("which   $software  > yp_my_temp_1.$software.txt");
+    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
+    my @fullPath1 = <tempFH>; 
+    ($#fullPath1 == 0)  or  die;
+    system("rm  yp_my_temp_1.$software.txt");
+    $fullPath1[0] =~ s/\n$//  or  die;
+    return($fullPath1[0]);
+}
+my $Trimmomatic_g = &fullPathApp("trimmomatic-0.36.jar");  
 &printVersion(" java  -jar  $Trimmomatic_g  -version");
 &printVersion(" fastqc    -v ");
 &printVersion(" multiqc           --version ");
@@ -219,10 +230,10 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
 }
 ( ($#pairedEnd_g+1)%2 == 0 )  or die;
 say   seqFiles_FH_g  "\n\n\n\n\n";
-say   seqFiles_FH_g  "All single-end sequencing files:@singleEnd_g\n\n\n";
-say   seqFiles_FH_g  "All paired-end sequencing files:@pairedEnd_g\n\n\n";
-say          "\t\t\t\tAll single-end sequencing files:@singleEnd_g\n\n";
-say          "\t\t\t\tAll paired-end sequencing files:@pairedEnd_g\n\n";
+say   seqFiles_FH_g  "All single-end sequencing files: @singleEnd_g\n\n\n";
+say   seqFiles_FH_g  "All paired-end sequencing files: @pairedEnd_g\n\n\n";
+say          "\t\t\t\tAll single-end sequencing files: @singleEnd_g\n\n";
+say          "\t\t\t\tAll paired-end sequencing files: @pairedEnd_g\n\n";
 my $numSingle_g = $#singleEnd_g + 1;
 my $numPaired_g = $#pairedEnd_g + 1;
 say seqFiles_FH_g   "\nThere are $numSingle_g single-end sequencing files.\n";
@@ -250,13 +261,13 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         ($end2 eq $pairedEnd_g[$i+1])  or  die;
         open(tempFH, ">>", "$output2_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("java  -jar  $Trimmomatic_g  PE   -threads $numCores_g     $input_g/$end1  $input_g/$end2    $output_g/$end1  $output_g/unpaired-$end1    $output_g/$end2  $output_g/unpaired-$end2      ILLUMINACLIP:0-Other/Adapters/PE.fasta:1:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30   TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                                                   
+        system("java  -jar  $Trimmomatic_g  PE   -threads $numCores_g     $input_g/$end1  $input_g/$end2    $output_g/$end1  $output_g/unpaired-$end1    $output_g/$end2  $output_g/unpaired-$end2      ILLUMINACLIP:0-Other/Adapters/PE.fasta:1:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:5   MINLEN:30   TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                                                   
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {   
         say   "\t......$singleEnd_g[$i]" ;
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die; 
         my $temp = $1; 
-        system("java  -jar  $Trimmomatic_g  SE   -threads $numCores_g     $input_g/$temp.fastq  $output_g/$temp.fastq    ILLUMINACLIP:0-Other/Adapters/SE.fasta:1:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:10   MINLEN:30    TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                    
+        system("java  -jar  $Trimmomatic_g  SE   -threads $numCores_g     $input_g/$temp.fastq  $output_g/$temp.fastq    ILLUMINACLIP:0-Other/Adapters/SE.fasta:1:30:10   LEADING:3   TRAILING:3   SLIDINGWINDOW:4:5   MINLEN:30    TOPHRED33    >>$output2_g/$temp.runLog  2>&1");                    
 }
 }
 ###################################################################################################################################################################################################
@@ -319,6 +330,8 @@ sub  myQC_FASTQ_2  {
         system( "fastq-kmers   -k 3     $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.3mer     2>&1 " );
         system( "fastq-qual             $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.qual     2>&1 " );
         system( "fastq-uniq  --verbose  $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.uniq     2>&1 " );
+        system( "head -n 250000   $FastqTools/$temp/$temp.uniq    > $FastqTools/$temp/$temp.uniq2 " );
+        system( "rm  $FastqTools/$temp/$temp.uniq" );
     }
 }
 ###################################################################################################################################################################################################
@@ -407,7 +420,7 @@ say   "Detecting the quality of paired-end FASTQ files by using NGS_QC_Toolkit, 
 my $NGSQC_Toolkit = "$output2_g/7_NGSQC_Toolkit_PairedEnd";
 my $FaQCs         = "$output2_g/8_FaQCs_PairedEnd";
 my $HTQC          = "$output2_g/9_HTQC_PairedEnd";
-my $PRINSEQ       = "$output2_g/10_PRINSEQ_PairedEnd"; 
+my $PRINSEQ       = "$output2_g/10_PRINSEQ_PairedEnd";    
 &myMakeDir($NGSQC_Toolkit); 
 &myMakeDir($FaQCs); 
 &myMakeDir($HTQC); 
@@ -433,7 +446,7 @@ for ( my $j=0; $j<=$#pairedEnd_g; $j=$j+2 ) {
     system( "prinseq-lite.pl   -out_format 1   -verbose  -fastq $output_g/$temp1.fastq  -fastq2 $output_g/$temp2.fastq   -graph_data $PRINSEQ/$temp/$temp.gd      >> $PRINSEQ/$temp.runLog   2>&1" );
     system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
     system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                                  >> $PRINSEQ/$temp.stats_all   2>&1" );
+    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                >> $PRINSEQ/$temp.stats_all   2>&1" );
     system( "rm   $output_g/*_prinseq_* " );
 }
 }
