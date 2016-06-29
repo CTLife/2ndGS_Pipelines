@@ -1,8 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.18;       
-## perl5 version >= 5.18,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
+use  v5.20;       
+## perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
 ###################################################################################################################################################################################################
 
@@ -15,18 +15,18 @@ use  v5.18;
 my $HELP_g = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.      
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.      
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
         Step 3: Mapping reads to the reference genome by using 5 softwares (mappers or aligners): 
-                    BWA-aln/BWA-mem, Bowtie1/Bowtie2, Trim_Bowtie2, Subread, Trim_Subread. 
-                Assess the quality of BAM files to identify possible sequencing errors or biases by using 10 softwares:
-                    SAMtools, Subread utilities, FASTQC, samstat, qualimap, MultiQC, PRESEQ, Picard, fastqp, BamQC.
+                    BWA-aln/BWA-mem, Trim_BWA-mem, Bowtie1/Bowtie2,  Trim_Bowtie2, Subread, Yara, Novoalign. 
+                Assess the quality of BAM files to identify possible sequencing errors or biases by using 12 softwares:
+                    SAMtools, Subread utilities, FASTQC, SAMstat, BAMStats, qualimap, MultiQC, ezBAMQC, PRESEQ, Picard, fastqp, BamQC.
 
         Usage:  
                perl  CISDA3.pl    [-version]    [-help]    [-in inputDir]    [-out outDir]   [-mismatch N]   [-60bp yes]  [-genome reference_genome]    
         For instance: 
-               perl  CISDA3.pl   -in 3-Filtered    -out 4-Mapping   -mismatch 6     -60bp yes   -genome mm10   >> CISDA3.runLog  2>&1
+               perl  CISDA3.pl   -in 3-Filtered    -out 4-Mapping   -mismatch 4     -60bp yes   -genome mm10   >> CISDA3.runLog  2>&1
 
         -------------------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -37,12 +37,12 @@ my $HELP_g = '
         Required arguments:
         -in inputDir        inputDir is the name of your input folder that contains your FASTQ files, the suffix of the FASTQ files must be ".fastq".    (no default)
 
-        -out outDir         outDir is the name of your output folder that contains running results (BAM format) of this step.      (no default)
+        -out outDir         outDir is the name of your output folder that contains running results (BAM format) of this step.   (no default)   
 
-        -mismatch N         Specify the maximum number of mis-matched bases allowed in the alignment.  (no default)
+        -mismatch N         Specify the maximum number of mis-matched bases allowed in the alignment (only for subread).  (no default)
 
-        -60bp booleValue    booleValue is "no"  if reads length <= 60 bp, then Bowtie1 and BWA-aln will be invoked. 
-                            booleValue is "yes" if reads length >  60 bp, then Bowtie2 and BWA-mem will be invoked.   (no default)
+        -60bp booleValue    booleValue should be  "no"  if reads length <  60 bp, then Bowtie1 and BWA-aln will be invoked. 
+                            booleValue should be  "yes" if reads length >= 60 bp, then Bowtie2 and BWA-mem will be invoked.   (no default)
                                                   
         -genome reference_genome        NGS reads wil be mapped to "reference_genome". 
                                         10 UCSC reference genomes are available:  hg38, mm10, dm6, ce11, sacCer3, danRer10, oryCun2, rn6, rheMac3, panTro4.  
@@ -68,7 +68,7 @@ my $HELP_g = '
 ';
 
 ## Version Infromation 
-my $version_g = "  The Third Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.";
+my $version_g = "  The Third Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1) { say  "\n$HELP_g\n";  exit 0; }       ## when there are no any command argumants.
@@ -78,7 +78,7 @@ my %args = @ARGV;
 ## Initialize  Variables
 my $input_g  = '3-Filtered';      ## This is only an initialization  value or suggesting value, not default value.
 my $output_g = '4-Mapping';       ## This is only an initialization  value or suggesting value, not default value.
-my $MM_g     = 6;                 ## This is only an initialization  value or suggesting value, not default value.
+my $MM_g     = 4;                 ## This is only an initialization  value or suggesting value, not default value.
 my $readLen_g= 'yes';             ## This is only an initialization  value or suggesting value, not default value.
 my $genome_g = 'mm10';            ## This is only an initialization  value or suggesting value, not default value.
 
@@ -110,13 +110,13 @@ $MM_g      =~ m/^\d+$/   ||  die   "The Command Line Arguments are wrong!\n$HELP
 $readLen_g =~ m/^\S+$/   ||  die   "The Command Line Arguments are wrong!\n$HELP_g\n\n";
 $genome_g  =~ m/^\S+$/   ||  die   "The Command Line Arguments are wrong!\n$HELP_g\n\n";
 
-## say Command Arguments to Standard Output
+## Print Command Arguments to Standard Output
 say  "\n
         ################ Arguments ###############################
                 Input  folder:  $input_g
                 Output folder:  $output_g
                 Maximum number of mis-matched bases: $MM_g
-                Read length is more than 60bp: $readLen_g
+                Read length is no less than 60bp: $readLen_g
                 Reference genome: $genome_g
         ###############################################################  
 \n";
@@ -149,11 +149,13 @@ my $numCores_g   = 6;
 
 ###################################################################################################################################################################################################
 ## Context specific:
-my  $commonPath_g         = "/home/yp/.MyProgramFiles/3_HTS2G/2_ChIPseq/2_Mapping";
-my  $BWA_index_g          = "$commonPath_g/bwa-0.7.13/RefGenomes/$genome_g/$genome_g";
-my  $Bowtie1_index_g      = "$commonPath_g/bowtie-1.1.2/RefGenomes/$genome_g/$genome_g";
-my  $Bowtie2_index_g      = "$commonPath_g/bowtie2-2.2.8/RefGenomes/$genome_g/$genome_g";
-my  $Subread_index_g      = "$commonPath_g/subread-1.5.0-p1/RefGenomes/$genome_g/$genome_g";
+my  $commonPath_g      = "/home/yp/.MyProgramFiles/3_HTS2G/4_ChIPseq/3_Aligners";
+my  $BWA_index_g       = "$commonPath_g/bwa.kit/RefGenomes/$genome_g/$genome_g";
+my  $Bowtie1_index_g   = "$commonPath_g/bowtie-1.1.2/RefGenomes/$genome_g/$genome_g";
+my  $Bowtie2_index_g   = "$commonPath_g/bowtie2-2.2.9/RefGenomes/$genome_g/$genome_g";
+my  $Subread_index_g   = "$commonPath_g/subread-1.5.0-p2/RefGenomes/$genome_g/$genome_g";
+my  $Yara_index_g      = "$commonPath_g/yara-0.9.6/RefGenomes/$genome_g/$genome_g";
+my  $Novoalign_index_g = "$commonPath_g/novocraft/RefGenomes/$genome_g/$genome_g";
 ###################################################################################################################################################################################################
 
 
@@ -170,24 +172,40 @@ sub printVersion  {
     system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
-my  $Picard_g = "/home/yp/.MyProgramFiles/3_HTS2G/1_common/3_afterMap/picard-tools-2.1.1/picard.jar";
-my  $trim5_g  = 2;   ##bp
-my  $trim3_g  = 5;   ##bp
+sub fullPathApp  {
+    my $software = $_[0];
+    say($software);
+    system("which   $software  > yp_my_temp_1.$software.txt");
+    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
+    my @fullPath1 = <tempFH>; 
+    ($#fullPath1 == 0)  or  die;
+    system("rm  yp_my_temp_1.$software.txt");
+    $fullPath1[0] =~ s/\n$//  or  die;
+    return($fullPath1[0]);
+}
+my  $Picard_g   = &fullPathApp("picard.jar");
+my  $BAMStats_g = &fullPathApp("BAMStats.jar");
+my  $trim5_g  = 3;   ##bp
+my  $trim3_g  = 3;   ##bp
 &printVersion("bwa  aln");
 &printVersion("bwa  mem");
 &printVersion("bowtie    --version");
 &printVersion("bowtie2   --version");
 &printVersion("subread-align  -v");
+&printVersion("yara_mapper    --version");
+&printVersion("novoalign ");
 &printVersion("samtools");
 &printVersion("fastqc   -v");
 &printVersion("samstat   -v");
+&printVersion("java  -jar  $BAMStats_g  -h");
 &printVersion("bamqc  -v");
 &printVersion("preseq");
 &printVersion("qualimap  -v");
 &printVersion("fastqp   -h");
 &printVersion("multiqc   --version");
 &printVersion("propmapped");
-&printVersion("qualityScores");
+&printVersion("qualityScores");  
+&printVersion("ezBAMQC  -h");
 &printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
 &printVersion("java  -jar  $Picard_g   EstimateLibraryComplexity           --version");
 &printVersion("java  -jar  $Picard_g   CollectInsertSizeMetrics            --version");
@@ -329,10 +347,10 @@ sub  myQC_BAM_1  {
         system("samtools  index           $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
         system("samtools  flagstat        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
         system(`samtools  idxstats        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1`);
-        ##system("rm   $dir1/$temp.sam"); 
         system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam              >> $FastQC/$temp.runLog      2>&1" );
-        system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=12G   >> $qualimap/$temp.runLog    2>&1" );
-        system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");   
+        system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=12G   >> $qualimap/$temp.runLog    2>&1" );
+        system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");  
+        system( "rm   $dir1/$temp.sam" );  
     }
     system( "multiqc  --verbose  --outdir $MultiQC1          $FastQC/*_fastqc.zip      >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
     system( "multiqc  --verbose  --outdir $MultiQC2          $qualimap/*               >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
@@ -345,17 +363,21 @@ sub  myQC_BAM_1  {
 
 ###################################################################################################################################################################################################
 sub  myQC_BAM_2  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
+    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.   
     my $QCresults = "$dir1/QC_Results";
     my $PRESEQ    = "$QCresults/6_PRESEQ";
     my $PicardDir = "$QCresults/7_Picard";
     my $MultiQC1  = "$QCresults/8_MultiQC_PRESEQ";
     my $MultiQC2  = "$QCresults/8_MultiQC_Picard";
+    my $BAMStats  = "$QCresults/9_BAMStats";
+    my $ezBAMQC   = "$QCresults/10_ezBAMQC";
     &myMakeDir($QCresults);
     &myMakeDir($PRESEQ);
     &myMakeDir($PicardDir);
     &myMakeDir($MultiQC1);
     &myMakeDir($MultiQC2);
+    &myMakeDir($BAMStats);
+    &myMakeDir($ezBAMQC);
     opendir(my $FH_Files, $dir1) || die;     
     my @Files = readdir($FH_Files);
     say   "\n\n\n\n\n\n##################################################################################################";
@@ -370,7 +392,8 @@ sub  myQC_BAM_2  {
         system("preseq  c_curve   -output  $PRESEQ/$temp.pe.PRESEQ     -step 1000000    -verbose   -pe  -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.pe.runLog   2>&1");   
         system("preseq  c_curve   -output  $PRESEQ/$temp.se.PRESEQ     -step 1000000    -verbose        -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.se.runLog   2>&1");  
         &myMakeDir("$PicardDir/$temp"); 
-        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics     R=0-Other/ShortCuts/$genome_g.fa                            >> $PicardDir/$temp/1.runLog   2>&1" );
+
+        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics      INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics     R=0-Other/Shortcuts/$genome_g.fa                            >> $PicardDir/$temp/1.runLog   2>&1" );
         system("java  -jar   $Picard_g   EstimateLibraryComplexity           INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/2_EstimateLibraryComplexity                                                                      >> $PicardDir/$temp/2.runLog   2>&1" );
         system("java  -jar   $Picard_g   CollectInsertSizeMetrics            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/3_CollectInsertSizeMetrics          HISTOGRAM_FILE=$PicardDir/$temp/3.pdf  MINIMUM_PCT=0.01      >> $PicardDir/$temp/3.runLog   2>&1" );
         system("java  -jar   $Picard_g   CollectJumpingLibraryMetrics        INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/4_CollectJumpingLibraryMetrics                                                                   >> $PicardDir/$temp/4.runLog   2>&1" );
@@ -380,6 +403,9 @@ sub  myQC_BAM_2  {
         system("java  -jar   $Picard_g   CollectWgsMetricsFromQuerySorted    INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/8_CollectWgsMetricsFromQuerySorted                                                               >> $PicardDir/$temp/8.runLog   2>&1" );
         system("java  -jar   $Picard_g   MeanQualityByCycle                  INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/9_MeanQualityByCycle                 CHART_OUTPUT=$PicardDir/$temp/9.pdf                         >> $PicardDir/$temp/9.runLog   2>&1" );
         system("java  -jar   $Picard_g   QualityScoreDistribution            INPUT=$dir1/$temp.bam   OUTPUT=$PicardDir/$temp/10_QualityScoreDistribution          CHART_OUTPUT=$PicardDir/$temp/10.pdf                        >> $PicardDir/$temp/10.runLog  2>&1" ); 
+
+        system("java  -jar  $BAMStats_g    --distances  --infile $dir1/$temp.bam   --lengths   --mapped    --outfile $BAMStats/$temp   --qualities   --starts   --view html   >> $BAMStats/$temp.runLog   2>&1");  
+        system("ezBAMQC    -i $dir1/$temp.bam   --refgene 0-Other/Shortcuts/mm10_RefSeq_GTF   --outputDir $ezBAMQC/$temp  --stranded no  --label $temp  --threads $numCores_g      >> $ezBAMQC/$temp.runLog   2>&1");  
     }
     system( "multiqc  --verbose  --outdir $MultiQC1          $PRESEQ/*                 >> $MultiQC1/MultiQC.PRESEQ.runLog   2>&1" );
     system( "multiqc  --verbose  --outdir $MultiQC2          $PicardDir/*              >> $MultiQC2/MultiQC.Picard.runLog   2>&1" );
@@ -394,9 +420,9 @@ sub  myQC_BAM_2  {
 sub  myQC_BAM_3  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $SubreadUti= "$QCresults/9_SubreadUti";
-    my $Fastqp    = "$QCresults/10_fastqp";
-    my $BamQC     = "$QCresults/11_BamQC";
+    my $SubreadUti= "$QCresults/11_SubreadUti";
+    my $Fastqp    = "$QCresults/12_fastqp";
+    my $BamQC     = "$QCresults/13_BamQC";
     &myMakeDir("$QCresults");
     &myMakeDir("$SubreadUti");
     &myMakeDir("$Fastqp");
@@ -446,16 +472,16 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         ("$end2.fastq"   eq   $pairedEnd_g[$i+1])  or  die;
         open(tempFH, ">>", "$BWA_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("bwa aln   -n 0.04  -o 2   -t $numCores_g   -R 10   -f $BWA_g/$end1.sai      $BWA_index_g     $input_g/$end1.fastq    >>$BWA_g/$end1.runLog   2>&1");
-        system("bwa aln   -n 0.04  -o 2   -t $numCores_g   -R 10   -f $BWA_g/$end2.sai      $BWA_index_g     $input_g/$end2.fastq    >>$BWA_g/$end2.runLog   2>&1");
-        system("bwa sampe -a 600    -f $BWA_g/$temp.sam      $BWA_index_g     $BWA_g/$end1.sai  $BWA_g/$end2.sai     $input_g/$end1.fastq  $input_g/$end2.fastq    >>$BWA_g/$temp.runLog   2>&1"); 
+        system("bwa aln   -t $numCores_g   -f $BWA_g/$end1.sai      $BWA_index_g     $input_g/$end1.fastq    >>$BWA_g/$end1.runLog   2>&1");
+        system("bwa aln   -t $numCores_g   -f $BWA_g/$end2.sai      $BWA_index_g     $input_g/$end2.fastq    >>$BWA_g/$end2.runLog   2>&1");
+        system("bwa sampe                  -f $BWA_g/$temp.sam      $BWA_index_g     $BWA_g/$end1.sai  $BWA_g/$end2.sai     $input_g/$end1.fastq  $input_g/$end2.fastq    >>$BWA_g/$temp.runLog   2>&1"); 
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {   
         say   "\t......$singleEnd_g[$i]";
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;  
         my $temp = $1; 
-        system("bwa aln   -n 0.04   -o 2  -t $numCores_g    -f $BWA_g/$temp.sai    $BWA_index_g                         $input_g/$temp.fastq         >>$BWA_g/$temp.runLog   2>&1");
-        system("bwa samse                                   -f $BWA_g/$temp.sam    $BWA_index_g     $BWA_g/$temp.sai    $input_g/$temp.fastq         >>$BWA_g/$temp.runLog   2>&1");
+        system("bwa aln   -t $numCores_g    -f $BWA_g/$temp.sai    $BWA_index_g                         $input_g/$temp.fastq         >>$BWA_g/$temp.runLog   2>&1");
+        system("bwa samse                   -f $BWA_g/$temp.sam    $BWA_index_g     $BWA_g/$temp.sai    $input_g/$temp.fastq         >>$BWA_g/$temp.runLog   2>&1");
 }
 }else{  ## Start bwa mem, longer  than 60bp
 ($readLen_g  eq "yes")   or   die;
@@ -489,8 +515,42 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 
+################################################################################################################################################################################################### 
+my $BWA2_g  = "$output_g/2_Trim_BWAmem";   
+&myMakeDir($BWA2_g);
+my $inputDir2 = "2-FASTQ";
+{ ## Start BWA
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Mapping reads to the reference genome by using BWA mem ......";
+for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
+        say    "\t......$pairedEnd_g[$i]";
+        say    "\t......$pairedEnd_g[$i+1]";   
+        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
+        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
+        my $temp = $1;   
+        my $end1 = $temp."_1";
+        my $end2 = $temp."_2";
+        ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
+        open(tempFH, ">>", "$BWA_g/paired-end-files.txt")  or  die;
+        say  tempFH  "$end1,  $end2\n";
+        system("bwa mem  -t $numCores_g  -T 0   $BWA_index_g   $inputDir2/$end1.fastq  $inputDir2/$end2.fastq    >$BWA2_g/$temp.sam"); 
+}
+for (my $i=0; $i<=$#singleEnd_g; $i++) {  
+        say   "\t......$singleEnd_g[$i]";
+        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;  
+        my $temp = $1; 
+        system("bwa mem  -t $numCores_g  -T 0   $BWA_index_g   $inputDir2/$temp.fastq   >$BWA2_g/$temp.sam");
+}
+} ## End BWA
+&myQC_BAM_1($BWA2_g);
 ###################################################################################################################################################################################################
-my $Bowtie_g   = "$output_g/2_Bowtie";  
+
+
+
+
+
+###################################################################################################################################################################################################
+my $Bowtie_g   = "$output_g/3_Bowtie";  
 &myMakeDir($Bowtie_g); 
 { ## Start Bowtie
 if ($readLen_g  eq  "no")  {
@@ -507,13 +567,13 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         ("$end2.fastq"  eq $pairedEnd_g[$i+1])  or  die;
         open(tempFH, ">>", "$Bowtie_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("bowtie   --threads $numCores_g   -q  --chunkmbs 6400  --best  --maxins 800   --sam   --phred33-quals   $Bowtie1_index_g    -1 $input_g/$end1.fastq   -2 $input_g/$end2.fastq    $Bowtie_g/$temp.sam    >>$Bowtie_g/$temp.runLog   2>&1"); 
+        system("bowtie   --threads $numCores_g   --chunkmbs 6400  --best  --maxins 500   --sam   $Bowtie1_index_g    -1 $input_g/$end1.fastq   -2 $input_g/$end2.fastq    $Bowtie_g/$temp.sam    >>$Bowtie_g/$temp.runLog   2>&1"); 
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {   
         say   "\t......$singleEnd_g[$i]";
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;  
         my $temp = $1; 
-        system("bowtie   --threads $numCores_g   -q  --chunkmbs 6400  --best   --sam   --phred33-quals  $Bowtie1_index_g    $input_g/$temp.fastq   $Bowtie_g/$temp.sam   >>$Bowtie_g/$temp.runLog   2>&1");                
+        system("bowtie   --threads $numCores_g   --chunkmbs 6400  --best   --sam   $Bowtie1_index_g    $input_g/$temp.fastq   $Bowtie_g/$temp.sam   >>$Bowtie_g/$temp.runLog   2>&1");                
 }
 }else{
 ($readLen_g  eq "yes")   or die;
@@ -548,7 +608,7 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-my $Bowtie2_g   = "$output_g/3_Trim_Bowtie2";  
+my $Bowtie2_g   = "$output_g/4_Trim_Bowtie2";  
 &myMakeDir($Bowtie2_g); 
 {  ## Start Trim_Bowtie2
 say   "\n\n\n\n\n\n##################################################################################################";
@@ -582,7 +642,7 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-my $subread_g  = "$output_g/4_Subread";  
+my $subread_g  = "$output_g/5_Subread";  
 &myMakeDir($subread_g);
 { ## Start subread
 say   "\n\n\n\n\n\n##################################################################################################";
@@ -598,13 +658,13 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
         open(tempFH, ">>", "$subread_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("subread-align  -T $numCores_g  -I 10  -B 1  -M $MM_g   --SAMoutput  -d 0  -D 800   -i $Subread_index_g   -r $input_g/$end1.fastq   -R  $input_g/$end2.fastq   -o  $subread_g/$temp.sam   -t 1  >>$subread_g/$temp.runLog  2>&1");               
+        system("subread-align  -T $numCores_g  -I 5  -B 1  -M $MM_g   --SAMoutput  -d 0  -D 800   -i $Subread_index_g   -r $input_g/$end1.fastq   -R  $input_g/$end2.fastq   -o  $subread_g/$temp.sam   -t 1  >>$subread_g/$temp.runLog  2>&1");               
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {  
         say   "\t......$singleEnd_g[$i]"; 
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die; 
         my $temp = $1; 
-        system("subread-align  -T $numCores_g  -I 10  -B 1  -M $MM_g   --SAMoutput   -i $Subread_index_g    -r $input_g/$temp.fastq    -o $subread_g/$temp.sam   -t 1    >>$subread_g/$temp.runLog   2>&1");       
+        system("subread-align  -T $numCores_g  -I 5  -B 1  -M $MM_g   --SAMoutput   -i $Subread_index_g    -r $input_g/$temp.fastq    -o $subread_g/$temp.sam   -t 1    >>$subread_g/$temp.runLog   2>&1");       
 }
 } ## End subread
 &myQC_BAM_1($subread_g);
@@ -615,33 +675,44 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-my $subread2_g  = "$output_g/5_Trim_Subread";  
-&myMakeDir($subread2_g);
-{ ## Start Trim_subread
+&myQC_BAM_2($BWA_g);
+&myQC_BAM_2($BWA2_g);
+&myQC_BAM_2($Bowtie_g);
+&myQC_BAM_2($Bowtie2_g);
+&myQC_BAM_2($subread_g);
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+my $Yara_g  = "$output_g/6_Yara";  
+&myMakeDir($Yara_g);
+{ ########## Start Yara
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using Trim_Subread ......";
-my $inputDir2 = "2-FASTQ";
+say   "Mapping reads to the reference genome by using Yara ......";
 for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {  
-        say   "\t......$pairedEnd_g[$i]";
-        say   "\t......$pairedEnd_g[$i+1]";
+        say    "\t......$pairedEnd_g[$i]";
+        say    "\t......$pairedEnd_g[$i+1]\n";
         $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
         $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
         my $temp = $1;   
         my $end1 = $temp."_1";
         my $end2 = $temp."_2";
         ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$subread2_g/paired-end-files.txt")  or  die;
+        open(tempFH, ">>", "$Yara_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("subread-align  -T $numCores_g  -I 10  -B 1  -M $MM_g   --SAMoutput  -d 0  -D 800      --trim5 $trim5_g  --trim3 $trim3_g          -i $Subread_index_g   -r $inputDir2/$end1.fastq   -R  $inputDir2/$end2.fastq   -o  $subread2_g/$temp.sam   -t 1  >>$subread2_g/$temp.runLog  2>&1");               
+        system("yara_mapper    --output-format sam   --output-file $Yara_g/$temp.sam   --error-rate 4  --secondary-alignments omit  --threads $numCores_g    $Yara_index_g  $input_g/$end1.fastq $input_g/$end2.fastq    >>$Yara_g/$temp.runLog   2>&1");                                                                                                                             
 }
-for (my $i=0; $i<=$#singleEnd_g; $i++) {  
-        say   "\t......$singleEnd_g[$i]"; 
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die; 
+for (my $i=0; $i<=$#singleEnd_g; $i++) {   
+        say   "\n\t......$singleEnd_g[$i]\n";
+        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;  
         my $temp = $1; 
-        system("subread-align  -T $numCores_g  -I 10  -B 1  -M $MM_g   --SAMoutput                    --trim5 $trim5_g  --trim3 $trim3_g          -i $Subread_index_g    -r $inputDir2/$temp.fastq    -o $subread2_g/$temp.sam   -t 1    >>$subread2_g/$temp.runLog   2>&1");       
+        system("yara_mapper  --output-format sam   --output-file $Yara_g/$temp.sam   --error-rate 4   --secondary-alignments omit  --threads $numCores_g    $Yara_index_g  $input_g/$temp.fastq    >>$Yara_g/$temp.runLog   2>&1");                                                          
 }
-} ## End Trim_subread
-&myQC_BAM_1($subread2_g);
+}  ########## End Yara
+&myQC_BAM_1($Yara_g);
 ###################################################################################################################################################################################################
 
 
@@ -649,16 +720,48 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-&myQC_BAM_2($BWA_g);
-&myQC_BAM_2($Bowtie_g);
-&myQC_BAM_2($Bowtie2_g);
-&myQC_BAM_2($subread_g);
-&myQC_BAM_2($subread2_g);
+my $Novoalign_g  = "$output_g/7_Novoalign";  
+&myMakeDir($Novoalign_g);
+{ ########## Start Novoalign
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Mapping reads to the reference genome by using Novoalign ......";
+for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {  
+        say    "\t......$pairedEnd_g[$i]";
+        say    "\t......$pairedEnd_g[$i+1]";
+        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
+        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
+        my $temp = $1;   
+        my $end1 = $temp."_1";
+        my $end2 = $temp."_2";
+        ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
+        open(tempFH, ">>", "$Novoalign_g/paired-end-files.txt")  or  die;
+        say  tempFH  "$end1,  $end2\n";
+        system("novoalign  -d $Novoalign_index_g      -f $input_g/$end1.fastq  $input_g/$end2.fastq   -i PE 250,150   -o SAM   -c 12   >$Novoalign_g/$temp.sam ");                                                                                                                                                                                         
+}
+for (my $i=0; $i<=$#singleEnd_g; $i++) {   
+        say   "\t......$singleEnd_g[$i]";
+        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;  
+        my $temp = $1; 
+        system("novoalign  -d $Novoalign_index_g      -f $input_g/$temp.fastq     -o SAM   -c 12    >$Novoalign_g/$temp.sam ");                                                                                                                                                                                       
+}
+}  ########## End Novoalign
+&myQC_BAM_1($Novoalign_g);
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+&myQC_BAM_2($Yara_g);
+&myQC_BAM_2($Novoalign_g);
 &myQC_BAM_3($BWA_g);
+&myQC_BAM_3($BWA2_g);
 &myQC_BAM_3($Bowtie_g);
 &myQC_BAM_3($Bowtie2_g);
 &myQC_BAM_3($subread_g);
-&myQC_BAM_3($subread2_g);
+&myQC_BAM_3($Yara_g);
+&myQC_BAM_3($Novoalign_g);
 ###################################################################################################################################################################################################
 
 
