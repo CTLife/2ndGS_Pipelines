@@ -1,8 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
-use  v5.18;
-## Perl5 version >= 5.18,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
+use  v5.20;
+## Perl5 version >= 5.20,   you can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
 ###################################################################################################################################################################################################
 
@@ -11,14 +11,19 @@ use  v5.18;
 
 
 ###################################################################################################################################################################################################
+my $input_g  = '';    
+my $output_g = '';     
+
+{
 ## Help Infromation
-my $HELP_g = '
+my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ by using SRA_Toolkit, and merge the two lanes of the same sample (merge technical replicates).
+        Step 1: Extract all compressed FASTQ files, or convert SRA to FASTQ format by using SRA_Toolkit, 
+                and merge the two lanes of the same sample (merge technical replicates).
                 And  assess the quality of the raw reads to identify possible sequencing errors or biases by using 12 softwares:
                 FastQC, MultiQC, fastq-tools, FaQCs, prinseq, fastqp, QC3, NGS_QC_Toolkit, ht2-stat in HTQC, Rqc, ShortRead and seqTools.  
 
@@ -34,9 +39,9 @@ my $HELP_g = '
         -help           Show this help message and exit.
 
         Required arguments:
-        -input inputDir        "inputDir" is the name of input folder that contains your fastq files or SRA files.  (no default)
+        -in inputDir        "inputDir" is the name of input folder that contains your fastq files or SRA files.  (no default)
 
-        -output outDir         "outDir" is the name of output folder that contains your running results (fastq format) of this step.  (no default)
+        -out outDir         "outDir" is the name of output folder that contains your running results (fastq format) of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines such as RASDA, MESDA and HISDA,
@@ -49,38 +54,38 @@ my $HELP_g = '
 ';
 
 ## Version Infromation
-my $version_g = "    The First Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.2, 2016-04-17.";
+my $version = "    The First Step of CISDA (ChIP-Seq Data Analyzer), version 0.7.3, 2016-06-01.";
 
 ## Keys and Values
-if ($#ARGV   == -1)   { say  "\n$HELP_g\n";  exit 0;  }       ## when there are no any command argumants.
-if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;    }       ## when the number of command argumants is odd.
+if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
+if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number of command argumants is odd.
 my %args = @ARGV;
 
 ## Initialize  Variables
-my $input_g  = '1-rawReads';     ## This is only an initialization value or suggesting value, not default value.
-my $output_g = '2-FASTQ';        ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '1-rawReads';     ## This is only an initialization value or suggesting value, not default value.
+$output_g = '2-FASTQ';        ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments 
-my $available_g = "   -version    -help    -in   -out  ";
-my $boole_g = 0;
+my $available = "   -version    -help    -in   -out  ";
+my $boole = 0;
 while( my ($key, $value) = each %args ) {
-    if ( ($key =~ m/^\-/) and ($available_g !~ m/\s$key\s/) ) {say    "\n\tCann't recognize $key";  $boole_g = 1; }
+    if ( ($key =~ m/^\-/) and ($available !~ m/\s$key\s/) ) {say    "\n\tCann't recognize $key";  $boole = 1; }
 }
-if($boole_g == 1) {
+if($boole == 1) {
     say  "\tThe Command Line Arguments are wrong!";
     say  "\tPlease see help message by using 'perl  CISDA1.pl  -help' \n";
     exit 0;
 }
 
 ## Get Arguments 
-if ( exists $args{'-version' }   )     { say  "\n$version_g\n";    exit 0; }
-if ( exists $args{'-help'    }   )     { say  "\n$HELP_g\n";       exit 0; }
-if ( exists $args{'-in'      }   )     { $input_g  = $args{'-in' };  }else{say   "\n -in  is required.\n";   say  "\n$HELP_g\n";    exit 0; }
-if ( exists $args{'-out'     }   )     { $output_g = $args{'-out'};  }else{say   "\n -out is required.\n";   say  "\n$HELP_g\n";    exit 0; }
+if ( exists $args{'-version' }   )     { say  "\n$version\n";    exit 0; }
+if ( exists $args{'-help'    }   )     { say  "\n$HELP\n";       exit 0; }
+if ( exists $args{'-in'      }   )     { $input_g  = $args{'-in' };  }else{say   "\n -in  is required.\n";   say  "\n$HELP\n";    exit 0; }
+if ( exists $args{'-out'     }   )     { $output_g = $args{'-out'};  }else{say   "\n -out is required.\n";   say  "\n$HELP\n";    exit 0; }
 
 ## Conditions
-$input_g  =~ m/^\S+$/    ||  die   "\n\n$HELP_g\n\n";
-$output_g =~ m/^\S+$/    ||  die   "\n\n$HELP_g\n\n";
+$input_g  =~ m/^\S+$/    ||  die   "\n\n$HELP\n\n";
+$output_g =~ m/^\S+$/    ||  die   "\n\n$HELP\n\n";
 
 ## Print Command Arguments to Standard Output
 say  "\n
@@ -89,6 +94,7 @@ say  "\n
                 Output Folder:  $output_g
         ###############################################################
 \n";
+}
 ###################################################################################################################################################################################################
 
 
@@ -111,7 +117,7 @@ my $output2_g = "$output_g/QC_Results";
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
+my $numCores_g   = 6;
 ###################################################################################################################################################################################################
 
 
@@ -195,7 +201,7 @@ say  "\n\t\tThere are $numGroup groups.";
 ###################################################################################################################################################################################################
 {
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Converting SRA files into FASTQ files or Extracting the compressed fastq files ......";
+say   "Converting SRA files into FASTQ files or extracting the compressed fastq files ......";
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         next unless $inputFiles_g[$i] !~ m/^[.]/;
         next unless $inputFiles_g[$i] !~ m/[~]$/;
@@ -347,15 +353,6 @@ sub  myQC_FASTQ_1  {
 
 
 ###################################################################################################################################################################################################
-&myQC_FASTQ_1($input_g);
-&myQC_FASTQ_1($output_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
 sub  myQC_FASTQ_2  {
     my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
@@ -379,6 +376,8 @@ sub  myQC_FASTQ_2  {
         system( "fastq-kmers   -k 3     $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.3mer     2>&1 " );
         system( "fastq-qual             $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.qual     2>&1 " );
         system( "fastq-uniq  --verbose  $dir1/$temp.fastq    >> $FastqTools/$temp/$temp.uniq     2>&1 " );
+        system( "head -n 250000   $FastqTools/$temp/$temp.uniq    > $FastqTools/$temp/$temp.uniq2 " );
+        system( "rm  $FastqTools/$temp/$temp.uniq" );
     }
 }
 ###################################################################################################################################################################################################
@@ -408,7 +407,7 @@ sub  myQC_FASTQ_3  {
         say    "\t......$temp";
         $temp =~ s/\.fastq$//  ||  die;
         system( "fastqp    --nreads 20000000   --kmer 4    --output $Fastqp/$temp  --type fastq   --median-qual 30     $dir1/$temp.fastq     >> $Fastqp/$temp.runLog     2>&1 " );
-        system( "FaQCs.pl     -prefix $temp     -t $numCores_g      -qc_only  -min_L 30    -d $FaQCs/$temp          -u $dir1/$temp.fastq     >> $FaQCs/$temp.runLog          2>&1" );
+        system( "FaQCs.pl     -prefix $temp     -t $numCores_g      -qc_only  -min_L 30    -d $FaQCs/$temp          -u $dir1/$temp.fastq     >> $FaQCs/$temp.runLog      2>&1"  );
     }
 }
 ###################################################################################################################################################################################################
@@ -450,6 +449,8 @@ sub  myQC_FASTQ_4  {
 
 
 ###################################################################################################################################################################################################
+&myQC_FASTQ_1($input_g);
+&myQC_FASTQ_1($output_g);
 &myQC_FASTQ_2($output_g);
 &myQC_FASTQ_3($output_g);
 &myQC_FASTQ_4($output_g);
@@ -466,7 +467,7 @@ say   "Detecting the quality of paired-end FASTQ files by using NGS_QC_Toolkit, 
 my $NGSQC_Toolkit = "$output2_g/7_NGSQC_Toolkit_PairedEnd";
 my $FaQCs         = "$output2_g/8_FaQCs_PairedEnd";
 my $HTQC          = "$output2_g/9_HTQC_PairedEnd";
-my $PRINSEQ       = "$output2_g/10_PRINSEQ_PairedEnd";  
+my $PRINSEQ       = "$output2_g/10_PRINSEQ_PairedEnd";   
 &myMakeDir($NGSQC_Toolkit); 
 &myMakeDir($FaQCs); 
 &myMakeDir($HTQC); 
@@ -486,13 +487,13 @@ for ( my $j=0; $j<=$#pairedEnd_g; $j=$j+2 ) {
     &myMakeDir("$FaQCs/$temp"); 
     &myMakeDir("$HTQC/$temp"); 
     &myMakeDir("$PRINSEQ/$temp"); 
-    system( "IlluQC_PRLL.pl      -pe $output_g/$temp1.fastq  $output_g/$temp2.fastq   N    A      -cpus $numCores_g     -onlyStat          -outputFolder $NGSQC_Toolkit/$temp           >> $NGSQC_Toolkit/$temp.runLog   2>&1" );
-    system( "FaQCs.pl     -prefix $temp     -t $numCores_g      -qc_only  -min_L 30    -d $FaQCs/$temp          -p $output_g/$temp1.fastq  $output_g/$temp2.fastq            >> $FaQCs/$temp.runLog          2>&1" );
-    system( "ht2-stat  -i $output_g/$temp1.fastq  $output_g/$temp2.fastq   -o  $HTQC/$temp    --pe     --encode sanger   --threads $numCores_g  >> $HTQC/$temp.runLog   2>&1" );
-    system( "prinseq-lite.pl   -out_format 1   -verbose  -fastq $output_g/$temp1.fastq  -fastq2 $output_g/$temp2.fastq   -graph_data $PRINSEQ/$temp/$temp.gd      >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog   2>&1" );
-    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                                  >> $PRINSEQ/$temp.stats_all   2>&1" );
+    system( "IlluQC_PRLL.pl      -pe $output_g/$temp1.fastq  $output_g/$temp2.fastq   N    A      -cpus $numCores_g     -onlyStat          -outputFolder $NGSQC_Toolkit/$temp   >> $NGSQC_Toolkit/$temp.runLog   2>&1" );
+    system( "FaQCs.pl     -prefix $temp     -t $numCores_g      -qc_only  -min_L 30    -d $FaQCs/$temp          -p $output_g/$temp1.fastq  $output_g/$temp2.fastq               >> $FaQCs/$temp.runLog           2>&1" );
+    system( "ht2-stat  -i $output_g/$temp1.fastq  $output_g/$temp2.fastq   -o  $HTQC/$temp    --pe     --encode sanger   --threads $numCores_g                                  >> $HTQC/$temp.runLog            2>&1" );
+    system( "prinseq-lite.pl   -out_format 1   -verbose  -fastq $output_g/$temp1.fastq  -fastq2 $output_g/$temp2.fastq   -graph_data $PRINSEQ/$temp/$temp.gd                    >> $PRINSEQ/$temp.runLog         2>&1" );
+    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -png_all    -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog      2>&1" );
+    system( "prinseq-graphs.pl   -i $PRINSEQ/$temp/$temp.gd   -html_all   -o $PRINSEQ/$temp/$temp                 >> $PRINSEQ/$temp.runLog      2>&1" );
+    system( "prinseq-lite.pl   -out_format 1  -verbose  -fastq $output_g/$temp.fastq    -stats_all                >> $PRINSEQ/$temp.stats_all   2>&1" );
     system( "rm   $output_g/*_prinseq_* " );
 }
 }
