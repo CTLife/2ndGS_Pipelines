@@ -45,8 +45,8 @@ Some rules are necessary for automatic NGS data processing, such as the names of
     5. In your work directory, you should create a folder named "0-Other", and put folder "R_SRC" and "Adapters" into the folder "0-Other".  
 
 
-Usage:
-     Step 1  by using RASDA1.pl, more details by "perl  RASDA1.pl  -help".
-     Step 2  by using RASDA2.pl, more details by "perl  RASDA2.pl  -help".
-     Step 3  by using RASDA3.pl, more details by "perl  RASDA3.pl  -help".
+###Usage:                       
+     Step 1  by using RASDA1.pl, more details by "perl  RASDA1.pl  -help".                      
+     Step 2  by using RASDA2.pl, more details by "perl  RASDA2.pl  -help".                       
+     Step 3  by using RASDA3.pl, more details by "perl  RASDA3.pl  -help".                                  
      ......
