@@ -3,75 +3,50 @@
 ###RNA-Seq Data Analyzer.
 
 You can run the scripts step by step or run one of them for a specific purpose.                  
-Please run `perl RASDA-N.pl -h` to know that what can the N-th script do.                         
+Please run `perl RASDA-N.pl -help` to know that what can the N-th script do.                         
 
 
 _____________________________________________________________________________________________________________________________
-In order to realize automatic NGS data processing, the format of file names used by the pipeline must be in fixed format for ease parsing. 
+Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA, FASTQ or compressed FASTQ format) must be fixed for ease parsing. 
+
+###All Rules for pipeline RASDA:
+    1. Raw sequencing reads can only be stored in SRA, FASTQ or compressed FASTQ files, because only SRA format, FASTQ format and compressed FASTQ format are supported. 
+       For compressed FASTQ format, there are only 7 compressed archive file formats are supported: bz2, gz, tar.gz, tar, rar, xz, zip. 
+       Their suffixes must be: ".bz2",  ".gz",  ".tar.gz",  ".tar",  ".rar",  ".xz",  ".zip".
+       RASDA can extract the compressed FASTQ files automatically by recognizing their suffixes.
+
+    2. The names of raw reads files (SRA, FASTQ or compressed FASTQ format) must be: 
+                                                                              groupName_fileDescription_Rep[1-9]_[1-2]_Lane[1-2].xxx 
+       groupName: a positive integer number. 
+                  One group only is one condition (one or more biological replicates) and has the same groupName.              
+       fileDescription: a string only contains number, English letters, decimal point and hyphen.
+                        That is to say,  fileDescription must match the regular expression pattern "[-.0-9A-Za-z]+" in Perl.
+       Rep[1-9]:  note biological replicates, it can only be Rep1, Rep2, Rep3, Rep4, Rep5, Rep6, Rep7, Rep8 or Rep9.
+       [1-2]:     note paired-end sequencing files, it can only be 1 or 2. And it is only for paired-end sequencing.  (Optional)
+       Lane[1-2]: note technical replicates, it can only be Lane1 or Lane2. (Optional)
+       xxx:       note file format, it can only be sra, fastq, fastq.bz2, fastq.gz, fastq.tar.gz, fastq.tar, fastq.rar, fastq.xz or fastq.zip.   
+
+    3. For biological replicats, only "_Rep[1-9]"  is different, others are same.
+       For Paired-end files,     only "_[1-2]"     is different, others are same.
+       For technical replicates, only "_Lane[1-2]" is different, others are same.
+
+    4.File name examples for 3 groups:
+                 1_RNAseq-AdultMouseHeart_Rep1.sra
+                 1_HRNAseq-AdultMouseHeart_Rep2.sra
+
+                 2_RNAseq-E12.5-MouseHeart_Rep1_Lane1.fastq.bz2
+                 2_RNAseq-E12.5-MouseHeart_Rep1_Lane2.fastq.bz2
+
+                 3_RNAseq-E17.5GATA4KO-Mouse-Lab_Rep1_1.fastq.tar
+                 3_RNAseq-E17.5GATA4KO-Mouse-Lab_Rep1_2.fastq.rar
+                 3_RNAseq-E17.5GATA4KO-Mouse-Lab_Rep2_1.fastq.tar
+                 3_RNAseq-E17.5GATA4KO-Mouse-Lab_Rep2_2.fastq.rar
+
+    5. In your work directory, you should create a folder named "0-Other", and put folder "R_SRC" and "Adapters" into the folder "0-Other".  
 
 
-###Rules for NGS pipeline RASDA:
-
-    1. Only SRA format and compressed FASTQ files can be used as input files. 
-       And the format of file name must be fixed, such as:
-                    SRA file:  [01-99]_Target_Treat_Space_Time_Other_Rep[1-9].sra
-
-       Compressed FASTQ file:  [01-99]_Target_Treat_Space_Time_Other_Rep[1-9]_[1-2]_Lane[1-2].fastq.bz2 
-                               [01-99]_Target_Treat_Space_Time_Other_Rep[1-9]_[1-2]_Lane[1-2].fastq.gz
-                               [01-99]_Target_Treat_Space_Time_Other_Rep[1-9]_[1-2]_Lane[1-2].fastq.tar.gz
-
-      Only seven compressed formats are supported, their suffixes:  
-                                      ".bz2",  ".gz",  ".tar.gz",  ".tar",  ".rar",  ".xz",  ".zip"
-      RASDA can uncompress the all compressed FASTQ files automatically by recognizing their suffixes.
-
-
-    2. File name: 
-       Number_Target_Treat_Space_Time_Other_RepNum(_[1-2]).xxx
-      [01-99]_Target_Treat_Space_Time_Other_Rep[1-9]_[1-2]_Lane[1-2].xxx.xxx 
-
-       Number: order of samples, 01~99.                                                       (It is same for biological or technical replicates.)
-       Target: such as H3K27ac, RNA_Pol_2, mRNA.                                              (It is same for biological or technical replicates.)
-       Treat:  such as sham, banding, normal, EEDKO.  You also can use "NA" or "NULL".        (It is same for biological or technical replicates.)
-       Space: organ, tissue or cell type.                                                     (It is same for biological or technical replicates.)
-       Time: such as  adult, E12.5.                                                           (It is same for biological or technical replicates.)
-       Other: other informations of this sample, You also can use "NA" or "NULL".             (It is same for biological or technical replicates.)
-       RepNum: Rep[1-9], biological replicates.                                               (It is same for technical replicates.)
-       [1-2]: only for paired-end sequencing. (Optional)   
-       Lane[1-2]: Technical replicates. (Optional)
-
-       All of them only can be:  "0-9",   "A-Z",   "a-z",    ".",     "-"
-
-       For instance: 
-       01_mRNA_Hand2as_CM-6_L8-I20006_shenLab_Rep1_1.fastq.gz,     
-       01_mRNA_Hand2as_CM-6_L8-I20006_shenLab_Rep1_2.fastq.gz,    
-       02_mm_mRNA_adult_cardiomyocyte_SRR1614298_Rep2.sra,    
-       03_CM_2014NC_E12.5_RNAseq_Gata4KO_Rep1.sra, 
-
-    3. The first step of all scripts is checking file name by using regular expression, such as: 
-        $pattern = "[-.0-9A-Za-z]"
-         m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])_?([1-2]?)\.fastq$/
-         m/^(\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9])(_[1-2])?_Lane[1-2]\.fastq\.bz2$/
-         m/^((\d{2})_($pattern)_($pattern)_($pattern)_($pattern)_($pattern)_(Rep[1-9]))(_[1-2])?(_Lane[1-2])?(\.fastq)?\.(\S+)$/
-
-    4. Quality statistics: first by FastQC, after it finished, then run other  quality statistic softwares.
-
-    5. For biological replicats, only "_Rep[1-9]"    is different, others are same.
-
-    6. For techniche replicates, only "(_Lane[1-2])" is different, others are same.
-
-    7. For Paired end files,     only "(_[1-2])"     is different, others are same.
-
-
-
-
-###Usage:
-     Step 1  by using RASDA-1.pl, more details by "perl  RASDA-1.pl  -h".
-     Step 2  by using RASDA-2.pl, more details by "perl  RASDA-2.pl  -h".
+Usage:
+     Step 1  by using RASDA1.pl, more details by "perl  RASDA1.pl  -help".
+     Step 2  by using RASDA2.pl, more details by "perl  RASDA2.pl  -help".
+     Step 3  by using RASDA3.pl, more details by "perl  RASDA3.pl  -help".
      ......
-
-                                                  
-___________________________________________________________________________________________________________________
-###To use pipeline RASDA, the recent versions of these softwares must be available in your Linux OS:
-
-
-
