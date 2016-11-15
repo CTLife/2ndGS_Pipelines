@@ -4,10 +4,16 @@
 
 + `CISDA`: ChIP-Seq Data Analyzer (also contains MNase-Seq, DNase-Seq, ChIP-exo and all ChIPseq-like data.)                                              
                                                                   
-+ `MESDA`: MethylC-Seq Data Analyzer (also contains Bisulfite Sequencing and Single-cell BS-seq data.)                         
-                       
++ `MESDA`: MethylC-Seq Data Analyzer (also contains Bisulfite Sequencing and Single-cell BS-seq data.)     
+                                                                     
++ `MeDIP`: MeDIP-seq and hMeDIP-seq data analysis.                       
+                                                                   
 + `RASDA`: RNA-Seq Data Analyzer  
-                                       
+                                      
++ `small_RASDA` : small or micro RNA-seq data analysis.                          
+                                                                                          
++ `long_RASDA` : long non-coding RNA-seq data analysis.                                     
+                                                                                                                   
 + `HISDA`: Hi-C  Data Analyzer            
                                                                
                                                                
