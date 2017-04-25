@@ -1,4 +1,5 @@
-#2ndGS_Pipelines                                                          
+2ndGS_Pipelines
+---------------     
 ###Perl 5 and R source codes for next generation (the second generation) sequencing data analysis by integrating lots of open-source softwares.
                                                              
 
