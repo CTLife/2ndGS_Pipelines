@@ -1,14 +1,14 @@
-#CISDA 
-###ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and all ChIPseq-like data.)           
+# CISDA                  
+### ChIP-Seq Data Analyzer (also contains MNase-seq, DNase-seq, ChIP-exo and all ChIPseq-like data.)           
 You can run the scripts step by step or run one of them for a specific purpose.                                           
 Please run `perl CISDAn.pl -help` to know that what can the n-th script do.                    
                                    
-#[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
+# [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
                                                        
 Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. 
 
-###All Rules for NGS pipeline CISDA:
+### All Rules for NGS pipeline CISDA:
     1. Raw sequencing reads can only be stored in SRA or compressed FASTQ files, because only SRA format and compressed FASTQ format are supported. 
        For compressed FASTQ format, there are only 7 compressed archive file formats are supported: bz2, gz, tar.gz, tar, rar, xz, zip. 
        Their suffixes must be: ".bz2",  ".gz",  ".tar.gz",  ".tar",  ".rar",  ".xz",  ".zip".
