@@ -58,9 +58,9 @@ Some rules are necessary for automatic NGS data processing, such as the names of
 
 
 ### Usage:                                            
-     Step 1  by using CISDA1.pl, more details by "perl  CISDA1.pl  -h".
-     Step 2  by using CISDA2.pl, more details by "perl  CISDA2.pl  -h".
-     Step 3  by using CISDA3.pl, more details by "perl  CISDA3.pl  -h".
+     Step 1  by using CISDA1.pl, more details by "perl  CISDA1.pl  -help".
+     Step 2  by using CISDA2.pl, more details by "perl  CISDA2.pl  -help".
+     Step 3  by using CISDA3.pl, more details by "perl  CISDA3.pl  -help".
      ......
 
 
