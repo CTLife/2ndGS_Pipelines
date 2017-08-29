@@ -54,10 +54,10 @@ Some rules are necessary for automatic NGS data processing, such as the names of
                  3_Input-Mouse-Lab_Rep1_2_Lane1.fastq.xz
                  3_Input-Mouse-Lab_Rep1_2_Lane2.fastq.zip
 
-    5. In your work directory, you should create a folder named "0-Other", and put folder "R_SRC" and "Adapters" into the folder "0-Other".                   
+    5. In your work directory, you should create a folder named "0-Other",  and put folder "Adapters",  "R_SRC", "Shortcuts", "SRC_Log" and "TXT_Files" and  into the folder "0-Other".                     
 
 
-###Usage:                                            
+### Usage:                                            
      Step 1  by using CISDA1.pl, more details by "perl  CISDA1.pl  -h".
      Step 2  by using CISDA2.pl, more details by "perl  CISDA2.pl  -h".
      Step 3  by using CISDA3.pl, more details by "perl  CISDA3.pl  -h".
