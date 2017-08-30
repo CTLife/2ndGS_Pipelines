@@ -7,27 +7,28 @@ Perl 5 and R source codes for next generation (the second generation) sequencing
                                                                   
 + `BSDA`:  Bisulfite Sequencing (BS-Seq) Data Analyzer (such as WGBS, RRBS, MethylC-seq and Single-cell BS-seq data).     
                                                                      
-+ `MeDIP`: MeDIP-seq and hMeDIP-seq Data Analyze.                       
++ `MeDIP`: MeDIP-seq and hMeDIP-seq Data Analyzer.                       
                                                                    
 + `RASDA`: RNA-Seq Data Analyzer.  
                                       
-+ `small_RASDA` : small or micro RNA-seq Data Analyze.                          
++ `small_RASDA` : small or micro RNA-seq Data Analyzer.                          
                                                                                           
-+ `long_RASDA` : long non-coding RNA-seq Data Analyze.                                     
++ `long_RASDA` : long non-coding RNA-seq Data Analyzer.                                     
                                                                                                                    
 + `HISDA`: Hi-C Data Analyzer.               
                                
 + `starCISDA`: small-scale TELP-assisted rapid ChIP-Seq Data Analyzer.   
                                                                
                                                                                     
-###  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
-                                               
-[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                   
+#####  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
+                                                                            
+[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)               
+                                     
 ---------------------------------------------------------------------------------------------                                                                     
-To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS.          
+To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS:           
 https://github.com/CTLife/Top10                                                            
                                                                                            
                                                                                                         
 ---------------------------------------------------------------------------------
-### License: The GNU General Public License v3.0                    
+##### License: The GNU General Public License v3.0                    
                                                                          
