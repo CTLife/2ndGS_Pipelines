@@ -5,22 +5,22 @@ Perl 5 and R source codes for next generation (the second generation) sequencing
 
 + `CISDA`: ChIP-Seq Data Analyzer (also contains MNase-Seq, DNase-Seq, ChIP-exo and all ChIPseq-like data).                                              
                                                                   
-+ `BSDA`:  Bisulfite Sequencing (BS-Seq) Analyzer (such as WGBS, RRBS, MethylC-seq and Single-cell BS-seq data).     
++ `BSDA`:  Bisulfite Sequencing (BS-Seq) Data Analyzer (such as WGBS, RRBS, MethylC-seq and Single-cell BS-seq data).     
                                                                      
-+ `MeDIP`: MeDIP-seq and hMeDIP-seq data analysis.                       
++ `MeDIP`: MeDIP-seq and hMeDIP-seq Data Analyze.                       
                                                                    
 + `RASDA`: RNA-Seq Data Analyzer.  
                                       
-+ `small_RASDA` : small or micro RNA-seq data analysis.                          
++ `small_RASDA` : small or micro RNA-seq Data Analyze.                          
                                                                                           
-+ `long_RASDA` : long non-coding RNA-seq data analysis.                                     
++ `long_RASDA` : long non-coding RNA-seq Data Analyze.                                     
                                                                                                                    
-+ `HISDA`: Hi-C  Data Analyzer.               
++ `HISDA`: Hi-C Data Analyzer.               
                                
 + `starCISDA`: small-scale TELP-assisted rapid ChIP-Seq Data Analyzer.   
                                                                
                                                                                     
-  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
+###  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                  
                                                
 [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                   
 ---------------------------------------------------------------------------------------------                                                                     
