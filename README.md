@@ -1,4 +1,4 @@
-# 2ndGS_Pipelines
+2ndGS_Pipelines
 ---------------     
 Perl 5 and R source codes for next generation (the second generation) sequencing data analysis by integrating lots of open-source softwares.
 ---------------                                                                  
@@ -22,10 +22,12 @@ Perl 5 and R source codes for next generation (the second generation) sequencing
                                                                                     
 #####  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                                                                                              
 [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)               
-                                                                                
----------------------------------------------------------------------------------------------                                                                     
+                                                                                                                          
+---------------------------------------------------------------------------------------------  
+          
 To use all the above 4 pipelines, the recent versions of these softwares must be available in your Linux OS:           
-https://github.com/CTLife/Top10                                                                                                                                                                                                                                                              
+https://github.com/CTLife/Top10      
+                          
 ---------------------------------------------------------------------------------------------
                                            
 ##### License: The GNU General Public License v3.0                    
