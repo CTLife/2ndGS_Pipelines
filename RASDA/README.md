@@ -1,6 +1,6 @@
 
-#RASDA
-###RNA-Seq Data Analyzer.
+# RASDA
+### RNA-Seq Data Analyzer.
 
 You can run the scripts step by step or run one of them for a specific purpose.                  
 Please run `perl RASDA-N.pl -help` to know that what can the N-th script do.                         
@@ -9,7 +9,7 @@ Please run `perl RASDA-N.pl -help` to know that what can the N-th script do.
 _____________________________________________________________________________________________________________________________
 Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA, FASTQ or compressed FASTQ format) must be fixed for ease parsing. 
 
-###All Rules for pipeline RASDA:
+### All Rules for pipeline RASDA:
     1. Raw sequencing reads can only be stored in SRA, FASTQ or compressed FASTQ files, because only SRA format, FASTQ format and compressed FASTQ format are supported. 
        For compressed FASTQ format, there are only 7 compressed archive file formats are supported: bz2, gz, tar.gz, tar, rar, xz, zip. 
        Their suffixes must be: ".bz2",  ".gz",  ".tar.gz",  ".tar",  ".rar",  ".xz",  ".zip".
@@ -45,7 +45,7 @@ Some rules are necessary for automatic NGS data processing, such as the names of
     5. In your work directory, you should create a folder named "0-Other", and put folder "R_SRC" and "Adapters" into the folder "0-Other".  
 
 
-###Usage:                       
+### Usage:                       
      Step 1  by using RASDA1.pl, more details by "perl  RASDA1.pl  -help".                      
      Step 2  by using RASDA2.pl, more details by "perl  RASDA2.pl  -help".                       
      Step 3  by using RASDA3.pl, more details by "perl  RASDA3.pl  -help".                                  
