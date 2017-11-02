@@ -15,7 +15,7 @@ use  v5.22;
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
 my $input_g  = '';  ## such as "12A-MACS2/1_Trim_BWAmem/1-Peaks/run10"
-my $output_g = '';  ## such as "13A-IDR/1_Trim_BWAmem/1-Peaks/run10"
+my $output_g = '';  ## such as "13A-IDR/1_Trim_BWAmem/1-Peaks/run10"                
 
 {
 ## Help Infromation
@@ -24,8 +24,8 @@ my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         Welcome to use starCISDA (small-scale TELP-assisted rapid ChIP–seq Data Analyzer), version 0.9.0, 2017-10-01.
         starCISDA is a Pipeline for Single-end and Paired-end small-scale TELP-assisted rapid ChIP–seq Data Analysis by Integrating Lots of Softwares.
-                                                            
-        Step 12: Caculate Irreproducible Discovery Rate (IDR) based on the ouptuts of MACS2 (narrowPeak or broadPeak format). 
+
+        Step 12: Caculate Irreproducible Discovery Rate (IDR) based on the ouptuts of MACS2 (narrowPeak or broadPeak format).
                  https://github.com/nboley/idr
 
         Usage:
@@ -117,7 +117,7 @@ sub myMakeDir  {
     if ( !( -e $path) )  { mkdir $path  ||  die; }
 }
 
-my $output2_g = "$output_g/QC_Results";   
+my $output2_g = "$output_g/QC_Results";
 &myMakeDir($output_g);
 &myMakeDir($output2_g);
 
@@ -169,22 +169,22 @@ say   "Caculating Irreproducible Discovery Rate (IDR) ......";
 {
 
 my $temp = "1_A-KD17031177-15-R1-PCGF1";
-my $rep1 = $temp . "_Rep1/$temp" . "_Rep1_peaks.broadPeak";    
+my $rep1 = $temp . "_Rep1/$temp" . "_Rep1_peaks.broadPeak";
 my $rep2 = "1_A-KD17031177-16-R1-PCGF1_Rep2/1_A-KD17031177-16-R1-PCGF1_Rep2_peaks.broadPeak";
-&myMakeDir("$output_g/$temp"); 
-system("idr  --samples  $input_g/$rep1    $input_g/$rep2     --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");                                                                        
+&myMakeDir("$output_g/$temp");
+system("idr  --samples  $input_g/$rep1    $input_g/$rep2     --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");
 
 
 $temp = "1_20161206WY-3-3-Ctrl-F1-H3K27me3";
-$rep1 = $temp . "_Rep1/$temp" . "_Rep1_peaks.broadPeak";    
+$rep1 = $temp . "_Rep1/$temp" . "_Rep1_peaks.broadPeak";
 $rep2 = "1_20161206WY-3-4-KO-F9-H3K27me3_Rep1/1_20161206WY-3-4-KO-F9-H3K27me3_Rep1_peaks.broadPeak";
-&myMakeDir("$output_g/$temp"); 
-system("idr  --samples  $input_g/$rep1    $input_g/$rep2    --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");                                                                        
+&myMakeDir("$output_g/$temp");
+system("idr  --samples  $input_g/$rep1    $input_g/$rep2    --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");
 
 
 }
 ###################################################################################################################################################################################################
-## system("idr  --samples  $input_g/$rep1    $input_g/$rep2    --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");                                                                        
+## system("idr  --samples  $input_g/$rep1    $input_g/$rep2    --input-file-type broadPeak    --output-file  $output_g/$temp/idrValues.txt   --soft-idr-threshold  0.05      --plot       > $output_g/$temp/$temp.runLog    2>&1");
 
 
 
@@ -195,7 +195,7 @@ say   "\n\n\n\n\n\n#############################################################
 say   "\tJob Done! Cheers! \n\n\n\n\n";
 
 
- 
 
-  
+
+
 ## END
