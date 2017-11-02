@@ -6,6 +6,7 @@ use  v5.22;
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
+## This step is not neccesary.
 ###################################################################################################################################################################################################
 
 
