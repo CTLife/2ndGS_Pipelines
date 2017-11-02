@@ -25,7 +25,7 @@ Perl 5 and R source codes for next generation (the second generation) sequencing
                                                                                                                           
 ---------------------------------------------------------------------------------------------  
           
-To use all the above pipelines, the recent versions of these softwares must be available in your Linux OS:           
+To use all the above pipelines, the recent versions of some softwares must be available in your Linux OS:           
 https://github.com/CTLife/Top10      
                           
 ---------------------------------------------------------------------------------------------
