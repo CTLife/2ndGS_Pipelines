@@ -2,7 +2,6 @@
 use  strict;
 use  warnings;
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -22,13 +21,40 @@ my $output_g = '';  ## such as "4-rawBAM"
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         BSDA is a Pipeline for Single-end and Paired-end BS-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 3: Mapping reads to the reference genome by using 2 softwares (mappers or aligners): Bismark, Biscuit.
-                Assess the quality of BAM files to identify possible sequencing errors or biases by using 10 softwares:
-                SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, deepTools, PRESEQ, Picard, goleft and phantompeakqualtools.
-                And aggregate the results from FastQC, Last, Picard, Samtools, Preseq, Qualimap, goleft analyses across many samples into a single report by using MultiQC.
+        Step 3: Mapping reads to the reference genome by using 5 softwares (mappers or aligners): 
+                Bismark, Biscuit, BSseeker2, Walt and Last.
+
+                And assess the quality of BAM files to identify possible mapping errors or biases by using 11 softwares:
+                SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, deepTools, PRESEQ, Picard, goleft and Bamtools.
+                And aggregate the results from SAMtools, FastQC, Qualimap,  Preseq, Picard,  goleft, Bamtools, Bismark,
+                bismark2report and bismark2summary analyses across many samples into a single report by using MultiQC.
+
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script. 
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,   5.22.1 
+                        Bismark,   0.19.0
+                        Biscuit,   0.2.2
+                        BSseeker2, 2.1.5
+                        Walt,      1.0
+                        Last,      916
+
+                        SAMtools,  1.6   
+                        Subread,   1.6.0
+                        FASTQC,    0.11.6     
+                        SAMstat,   1.5.1        
+                        qualimap,  2.2.1   
+                        deepTools, 2.5.4    
+                        PRESEQ,    2.0.1    
+                        Picard,    2.17.1    
+                        goleft,    0.1.16
+                        Bamtools,  2.5.1 
+                        MultiQC,   1.3        
 
         Usage:
                perl  BSDA3.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
@@ -58,7 +84,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Third Step of BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 3rd Step of BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -100,7 +126,7 @@ say  "\n
                 Reference Genome:  $genome_g
                 Input       Path:  $input_g
                 Output      Path:  $output_g
-        ###############################################################
+        ##########################################################
 \n";
 }
 ###################################################################################################################################################################################################
@@ -135,32 +161,13 @@ my $numCores_g   = 4;
 
 ###################################################################################################################################################################################################
 ## Context specific:
-my  $commonPath_g      = "/home/yp/.MyProgramFiles/4_ChIPseq/5-Mapping";
-
-my  $BWA_index_g       = "$commonPath_g/bwa/RefGenomes/$genome_g/$genome_g";
-my  $Bowtie2_index_g   = "$commonPath_g/bowtie2/RefGenomes/$genome_g/$genome_g";
-my  $BWA_ensembl_index_g = "$commonPath_g/bwa/RefGenomes/$genome_g.ensembl/$genome_g.ensembl";
-my  $Bowtie2_ensembl_index_g   = "$commonPath_g/bowtie2/RefGenomes/$genome_g.ensembl/$genome_g.ensembl";
-
-my  $Novoalign_index_g = "$commonPath_g/novocraft/RefGenomes/$genome_g/$genome_g";
-my  $Subread_index_g   = "$commonPath_g/subread/RefGenomes/$genome_g/$genome_g";
-my  $GSNAP_index_g     = "RefGenomes/$genome_g/$genome_g/$genome_g";
-my  $BBMap_index_g     = "/home/yp/.MyProgramFiles/4_ChIPseq/3-Remove-Correct/bbmap/RefGenomes/$genome_g";
-my  $Stampy_index_g    = "$commonPath_g/stampy/RefGenomes/$genome_g/$genome_g";
-my  $NGM_index_g       = "$commonPath_g/NextGenMap/RefGenomes/Shortcuts/$genome_g/$genome_g.fasta";
-
-
-
-my  $commonPath2_g      = "/home/yp/.MyProgramFiles/6-BSseq";
-
+my  $commonPath2_g     = "/media/yp/biox1/.MyProgramFiles/6-BSseq";
 my  $Lambda_index_g    = "$commonPath2_g/Bismark/RefGenomes/Shortcuts/OtherGenomes/Lambda";
 my  $Bismark_index_g   = "$commonPath2_g/Bismark/RefGenomes/Shortcuts/$genome_g/$genome_g";
-my  $Last_index_g      = "$commonPath2_g/Last/RefGenomes/$genome_g";
+my  $Last_index_g      = "$commonPath2_g/last/RefGenomes/$genome_g";
 my  $biscuit_index_g   = "$commonPath2_g/biscuit/RefGenomes/$genome_g/$genome_g";
-my  $bwameth_index_g   = "$commonPath2_g/bwa-meth/RefGenomes/Shortcuts/$genome_g/$genome_g";
+my  $walt_index_g      = "$commonPath2_g/walt/RefGenomes/$genome_g/$genome_g";
 my  $BSseeker2_index_g = "$commonPath2_g/BSseeker2/bs_utils/reference_genomes/$genome_g.fasta";
-
-my  $fasta_g           = "/home/yp/.RefGenomes/Shortcuts/$genome_g/$genome_g.fasta";
 ###################################################################################################################################################################################################
 
 
@@ -192,30 +199,30 @@ sub fullPathApp  {
 }
 
 my  $Picard_g = &fullPathApp("picard.jar");
-my  $phantompeakqualtools_g = &fullPathApp("run_spp.R");
 
-
+&printVersion("perl -v");
 &printVersion("bismark   --version");
+&printVersion("bismark2report    --version");
+&printVersion("bismark2summary   --version");
 &printVersion("lastal    --version");
 &printVersion("last-bisulfite-paired.sh");
 &printVersion("last-bisulfite.sh");
 &printVersion("bs_seeker2-align.py  --version");
-&printVersion("gsnap --version");
-&printVersion("ngm -h");
-&printVersion("bwameth.py   --version");
 &printVersion("biscuit");
+&printVersion("walt -v");
 
-&printVersion("samtools");
+&printVersion("samtools  --version");
 &printVersion("fastqc    -v");
 &printVersion("samstat   -v");
-&printVersion("Rscript  $phantompeakqualtools_g");
 &printVersion("preseq");
 &printVersion("qualimap  -v");
 &printVersion("multiqc   --version");
 &printVersion("propmapped");     ## in subread
 &printVersion("qualityScores");  ## in subread
 &printVersion("goleft  -v");
+&printVersion("deeptools --version"); 
 &printVersion("plotFingerprint --version"); 
+&printVersion("bamtools --version"); 
 
 &printVersion("java  -jar  $Picard_g   CollectIndependentReplicateMetrics  --version");
 &printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
@@ -339,24 +346,28 @@ sub  myQC_BAM_1  {
     my $FastQC    = "$QCresults/2_FastQC";
     my $qualimap  = "$QCresults/3_qualimap";
     my $samstat   = "$QCresults/4_samstat";
-    my $MultiQC1  = "$QCresults/5_MultiQC_FastQC";
-    my $MultiQC2  = "$QCresults/5_MultiQC_qualimap";
-    my $MultiQC3  = "$QCresults/5_MultiQC_SAMtools";
+    my $Bamtools  = "$QCresults/5_Bamtools";
+    my $MultiQC1  = "$QCresults/6_MultiQC1_FastQC";
+    my $MultiQC2  = "$QCresults/6_MultiQC2_qualimap";
+    my $MultiQC3  = "$QCresults/6_MultiQC3_SAMtools";
+    my $MultiQC4  = "$QCresults/6_MultiQC4_Bamtools";
 
     &myMakeDir($QCresults);
     &myMakeDir($SAMtools);
     &myMakeDir($FastQC);
     &myMakeDir($qualimap);
     &myMakeDir($samstat);
+    &myMakeDir($Bamtools);
     &myMakeDir($MultiQC1);
     &myMakeDir($MultiQC2);
     &myMakeDir($MultiQC3);
+    &myMakeDir($MultiQC4);
 
     opendir(my $FH_Files, $dir1) || die;
     my @Files = readdir($FH_Files);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat, Bamtools and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.sam$/;
         next unless $Files[$i] !~ m/^[.]/;
@@ -372,11 +383,14 @@ sub  myQC_BAM_1  {
         system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=16G   >> $qualimap/$temp.runLog    2>&1" );
         system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");
         system( "rm   $dir1/$temp.sam" );
+        system( "bamtools   count    -in  $dir1/$temp.bam      > $Bamtools/bamtools_count.$temp.txt  ");
+        system( "bamtools   stats    -in  $dir1/$temp.bam      > $Bamtools/bamtools_stats.$temp.txt  ");   
     }
 
     system( "multiqc    --title FastQC     --verbose  --export   --outdir $MultiQC1          $FastQC            >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
     system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC2          $qualimap          >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
     system( "multiqc    --title SAMtools   --verbose  --export   --outdir $MultiQC3          $SAMtools          >> $MultiQC3/MultiQC.SAMtools.runLog   2>&1" );
+    system( "multiqc    --title BAMtools   --verbose  --export   --outdir $MultiQC4          $Bamtools          >> $MultiQC4/MultiQC.BAMtools.runLog   2>&1" );
 }
 ###################################################################################################################################################################################################
 
@@ -388,24 +402,22 @@ sub  myQC_BAM_1  {
 sub  myQC_BAM_2  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $Fingerprint    = "$QCresults/6_Fingerprint";
-    my $Fingerprint2   = "$QCresults/7_Fingerprint2";
-    my $goleft         = "$QCresults/8_goleft";
-    my $phantompeak    = "$QCresults/9_phantompeakqualtools";
+    my $Fingerprint    = "$QCresults/7_Fingerprint";
+    my $Fingerprint2   = "$QCresults/8_Fingerprint2";
+    my $goleft         = "$QCresults/9_goleft";
     my $MultiQC1       = "$QCresults/10_MultiQC_goleft";
 
     &myMakeDir($QCresults);
     &myMakeDir($Fingerprint);
     &myMakeDir($Fingerprint2);
     &myMakeDir($goleft);
-    &myMakeDir($phantompeak);
     &myMakeDir($MultiQC1);
 
     opendir(my $FH_Files, $dir1) || die;
     my @Files = readdir($FH_Files);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft , phantompeakqualtools and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
@@ -417,8 +429,6 @@ sub  myQC_BAM_2  {
         system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint2/$temp.pdf   --plotTitle $temp   --outRawCounts  $Fingerprint2/$temp.cov  --outQualityMetrics $Fingerprint2/$temp.Metrics.txt  --numberOfProcessors $numCores_g   --binSize 5000   >> $Fingerprint2/$temp.runLog   2>&1");                                   
         system("goleft   covstats    $dir1/$temp.bam  > $goleft/$temp.covstats " );
         system("goleft   indexcov  --sex chrX,chrY  -d $goleft/$temp  $dir1/$temp.bam  > $goleft/$temp.indexcov.runLog      2>&1" );
-        &myMakeDir("$phantompeak/$temp");
-        system("Rscript    $phantompeakqualtools_g    -c=$dir1/$temp.bam   -p=$numCores_g   -odir=$phantompeak/$temp    -savd=$phantompeak/$temp/rdatafile.RData     -savp=$phantompeak/$temp/plotdatafile.pdf   -out=$phantompeak/$temp/resultfile.txt   >> $phantompeak/$temp.runLog   2>&1");
     }
     system("sleep 5s");
     system( "multiqc    --title goleft    --verbose  --export   --outdir $MultiQC1          $goleft     >> $MultiQC1/MultiQC.goleft.runLog    2>&1" );
@@ -493,15 +503,13 @@ sub  myQC_BAM_4  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
     my $SubreadUti= "$QCresults/14_SubreadUti";
-
     &myMakeDir("$QCresults");
     &myMakeDir("$SubreadUti");
-
     opendir(my $DH_map, $dir1) || die;
     my @mapFiles = readdir($DH_map);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of bam files by using Subreads utilities and goleft ......";
+    say   "Detecting the quality of bam files by using Subreads utilities ......";
     for (my $i=0; $i<=$#mapFiles; $i++) {
            next unless $mapFiles[$i] =~ m/\.bam$/;
            next unless $mapFiles[$i] !~ m/^[.]/;
@@ -523,13 +531,14 @@ sub  myQC_BAM_4  {
 
  
 
-
 ###################################################################################################################################################################################################
-my $lambda_2_g  = "$output_g/0_ToLambda";
+my $lambda_2_g     = "$output_g/1A_ToLambda";
+my $lambda_SE_2_g  = "$output_g/1B_ToLambda_unmapped_SE";
 &myMakeDir($lambda_2_g);
+&myMakeDir($lambda_SE_2_g);
 { ## Start bismark
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using bismark (ToLambda_Raw) ......";
+say   "Mapping reads to the reference genome by using bismark (Mapping To the Lambda Genome) ......";
 for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         say    "\t......$pairedEnd_g[$i]";
         say    "\t......$pairedEnd_g[$i+1]";
@@ -542,14 +551,14 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         open(tempFH, ">>", "$lambda_2_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
         &myMakeDir("$lambda_2_g/$temp");
-        &myMakeDir("$lambda_2_g/$end1.unpaired");
-        &myMakeDir("$lambda_2_g/$end2.unpaired");
-        system("bismark   --output_dir $lambda_2_g/$temp     --sam  --basename $temp   --bowtie2  -p $numCores_g       $Lambda_index_g    -1 $input_g/$end1.fastq    -2 $input_g/$end2.fastq    >  $lambda_2_g/$temp.runLog   2>&1");
-        system("bismark   --output_dir $lambda_2_g/$end1.unpaired     --sam  --basename $end1.unpaired   --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end1.unpaired.fastq     >  $lambda_2_g/$end1.unpaired.runLog   2>&1");
-        system("bismark   --output_dir $lambda_2_g/$end2.unpaired     --pbat    --sam  --basename $end2.unpaired   --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end2.unpaired.fastq     >  $lambda_2_g/$end2.unpaired.runLog   2>&1");
+        system("bismark  --maxins 600  --unmapped   --output_dir $lambda_2_g/$temp     --sam  --basename $temp   --bowtie2  -p $numCores_g       $Lambda_index_g    -1 $input_g/$end1.fastq    -2 $input_g/$end2.fastq    >  $lambda_2_g/$temp.runLog   2>&1");
         system("mv   $lambda_2_g/$temp/*.sam     $lambda_2_g/$temp.sam" );  
-        system("mv   $lambda_2_g/$end1.unpaired/*.sam     $lambda_2_g/$end1.unpaired.sam" );  
-        system("mv   $lambda_2_g/$end2.unpaired/*.sam     $lambda_2_g/$end2.unpaired.sam" );  
+        my $unmapped1 = "$lambda_2_g/$temp/$temp"."_unmapped_reads_1.fq.gz"; 
+        my $unmapped2 = "$lambda_2_g/$temp/$temp"."_unmapped_reads_2.fq.gz";         
+        system("bismark     --output_dir  $lambda_SE_2_g    --sam  --basename $end1   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped1     >  $lambda_SE_2_g/$end1.runLog   2>&1");
+        system("bismark     --output_dir  $lambda_SE_2_g    --sam  --basename $end2   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped2     >  $lambda_SE_2_g/$end2.runLog   2>&1");
+        system("rm  $unmapped1");
+        system("rm  $unmapped2");
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {
         say   "\t......$singleEnd_g[$i]";
@@ -561,7 +570,7 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 } ## End bismark
 
 &myQC_BAM_1($lambda_2_g);
-
+&myQC_BAM_1($lambda_SE_2_g);
 ###################################################################################################################################################################################################
 
 
@@ -569,8 +578,10 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-my $bismark2_g  = "$output_g/1_Bismark";
+my $bismark2_g     = "$output_g/2A_Bismark";
+my $bismark2_SE_g  = "$output_g/2B_Bismark_unmapped_SE";
 &myMakeDir($bismark2_g);
+&myMakeDir($bismark2_SE_g);
 { ## Start bismark
 say   "\n\n\n\n\n\n##################################################################################################";
 say   "Mapping reads to the reference genome by using bismark ......";
@@ -586,26 +597,26 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         open(tempFH, ">>", "$bismark2_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
         &myMakeDir("$bismark2_g/$temp");
-        &myMakeDir("$bismark2_g/$end1.unpaired");
-        &myMakeDir("$bismark2_g/$end2.unpaired");
-        system("bismark   --output_dir $bismark2_g/$temp     --sam  --basename $temp   --bowtie2  -p $numCores_g       $Bismark_index_g    -1 $input_g/$end1.fastq    -2 $input_g/$end2.fastq    >  $bismark2_g/$temp.runLog   2>&1");
-        system("bismark   --output_dir $bismark2_g/$end1.unpaired     --sam  --basename $end1.unpaired   --bowtie2  -p $numCores_g       $Bismark_index_g    $input_g/$end1.unpaired.fastq     >  $bismark2_g/$end1.unpaired.runLog   2>&1");
-        system("bismark   --output_dir $bismark2_g/$end2.unpaired    --pbat  --sam  --basename $end2.unpaired   --bowtie2  -p $numCores_g       $Bismark_index_g    $input_g/$end2.unpaired.fastq     >  $bismark2_g/$end2.unpaired.runLog   2>&1");
-        system("mv   $bismark2_g/$temp/*.sam     $bismark2_g/$temp.sam" );  
-        system("mv   $bismark2_g/$end1.unpaired/*.sam     $bismark2_g/$end1.unpaired.sam" );  
-        system("mv   $bismark2_g/$end2.unpaired/*.sam     $bismark2_g/$end2.unpaired.sam" );  
+        system("bismark   --maxins 600  --unmapped    --output_dir $bismark2_g/$temp     --sam  --basename $temp   --bowtie2  -p $numCores_g       $Bismark_index_g    -1 $input_g/$end1.fastq    -2 $input_g/$end2.fastq    >  $bismark2_g/$temp.runLog   2>&1");
+        system("mv   $bismark2_g/$temp/*.sam     $bismark2_g/$temp.sam" ); 
+        my $unmapped1 = "$bismark2_g/$temp/$temp"."_unmapped_reads_1.fq.gz"; 
+        my $unmapped2 = "$bismark2_g/$temp/$temp"."_unmapped_reads_2.fq.gz";         
+        system("bismark     --output_dir  $bismark2_SE_g    --sam  --basename $end1   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped1     >  $bismark2_SE_g/$end1.runLog   2>&1");
+        system("bismark     --output_dir  $bismark2_SE_g    --sam  --basename $end2   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped2     >  $bismark2_SE_g/$end2.runLog   2>&1");
+        system("rm  $unmapped1");
+        system("rm  $unmapped2");   
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {
         say   "\t......$singleEnd_g[$i]";
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
         my $temp = $1;
-        system("bismark   --output_dir  $bismark2_g/$temp    --sam  --basename $temp   --bowtie2  -p $numCores_g        $Bismark_index_g     $input_g/$temp.fastq      >  $bismark2_g/$temp.runLog   2>&1");
+        system("bismark     --output_dir  $bismark2_g/$temp    --sam  --basename $temp   --bowtie2  -p $numCores_g        $Bismark_index_g     $input_g/$temp.fastq      >  $bismark2_g/$temp.runLog   2>&1");
         system("mv   $bismark2_g/$temp/*.sam     $bismark2_g/$temp.sam" );  
 }
 } ## End bismark
 
 &myQC_BAM_1($bismark2_g);
-
+&myQC_BAM_1($bismark2_SE_g);   
 ###################################################################################################################################################################################################
 
 
@@ -613,11 +624,11 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 
 ###################################################################################################################################################################################################
-my $bismark2_SE_g  = "$output_g/2_Bismark_SE";
-&myMakeDir($bismark2_SE_g);
+my $BSseeker2_g  = "$output_g/3_BSseeker2";
+&myMakeDir($BSseeker2_g);
 { ## Start bismark
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using bismark ......";
+say   "Mapping reads to the reference genome by using BSseeker2 ......";
 for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         say    "\t......$pairedEnd_g[$i]";
         say    "\t......$pairedEnd_g[$i+1]";
@@ -627,79 +638,25 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         my $end1 = $temp."_1";
         my $end2 = $temp."_2";
         ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$bismark2_SE_g/paired-end-files.txt")  or  die;
+        open(tempFH, ">>", "$BSseeker2_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        &myMakeDir("$bismark2_SE_g/$end1");
-        &myMakeDir("$bismark2_SE_g/$end2");
-        &myMakeDir("$bismark2_SE_g/$end1.unpaired");
-        &myMakeDir("$bismark2_SE_g/$end2.unpaired");
-        system("bismark   --output_dir $bismark2_SE_g/$end1                     --sam  --basename $end1            --bowtie2  -p $numCores_g       $Bismark_index_g     $input_g/$end1.fastq              >  $bismark2_SE_g/$end1.runLog   2>&1");
-        system("bismark   --output_dir $bismark2_SE_g/$end2             --pbat  --sam  --basename $end2            --bowtie2  -p $numCores_g       $Bismark_index_g     $input_g/$end2.fastq              >  $bismark2_SE_g/$end2.runLog   2>&1");
-        system("bismark   --output_dir $bismark2_SE_g/$end1.unpaired            --sam  --basename $end1.unpaired   --bowtie2  -p $numCores_g       $Bismark_index_g     $input_g/$end1.unpaired.fastq     >  $bismark2_SE_g/$end1.unpaired.runLog   2>&1");
-        system("bismark   --output_dir $bismark2_SE_g/$end2.unpaired    --pbat  --sam  --basename $end2.unpaired   --bowtie2  -p $numCores_g       $Bismark_index_g     $input_g/$end2.unpaired.fastq     >  $bismark2_SE_g/$end2.unpaired.runLog   2>&1");
-        system("mv   $bismark2_SE_g/$end1/*.sam              $bismark2_SE_g/$end1.sam" );  
-        system("mv   $bismark2_SE_g/$end2/*.sam              $bismark2_SE_g/$end2.sam" );  
-        system("mv   $bismark2_SE_g/$end1.unpaired/*.sam     $bismark2_SE_g/$end1.unpaired.sam" );  
-        system("mv   $bismark2_SE_g/$end2.unpaired/*.sam     $bismark2_SE_g/$end2.unpaired.sam" );  
+        system("bs_seeker2-align.py  --input=$input_g/$end1.fastq              --rrbs    --aligner=bowtie2   --genome=$genome_g.fasta   --output-format=sam  --output=$BSseeker2_g/$end1.sam  --bt2-p $numCores_g   >  $BSseeker2_g/$end1.runLog   2>&1 ");
+        system("Antisense.py  -i $input_g/$end2.fastq  -o $input_g/$end2.antisense.fastq");
+        system("bs_seeker2-align.py  --input=$input_g/$end2.antisense.fastq    --rrbs    --aligner=bowtie2   --genome=$genome_g.fasta   --output-format=sam  --output=$BSseeker2_g/$end2.sam  --bt2-p $numCores_g   >  $BSseeker2_g/$end2.runLog   2>&1 ");
+        system("samtools  merge  --output-fmt SAM  --threads  $numCores_g    $BSseeker2_g/$temp.sam   $BSseeker2_g/$end1.sam  $BSseeker2_g/$end1.sam ");
+        system("rm  $BSseeker2_g/$end1.sam");
+        system("rm  $BSseeker2_g/$end2.sam");
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {
         say   "\t......$singleEnd_g[$i]";
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
         my $temp = $1;
-        system("bismark   --output_dir  $bismark2_SE_g/$temp    --sam  --basename $temp   --bowtie2  -p $numCores_g        $Bismark_index_g     $input_g/$temp.fastq      >  $bismark2_SE_g/$temp.runLog   2>&1");
-        system("mv   $bismark2_SE_g/$temp/*.sam     $bismark2_SE_g/$temp.sam" );  
+        system("bs_seeker2-align.py  --input=$input_g/$temp.fastq              --rrbs    --aligner=bowtie2   --genome=$genome_g.fasta   --output-format=sam  --output=$BSseeker2_g/$temp.sam   --bt2-p $numCores_g  >  $BSseeker2_g/$temp.runLog   2>&1 ");
 }
 } ## End bismark
-
-&myQC_BAM_1($bismark2_SE_g);
+&myQC_BAM_1($BSseeker2_g);
 ###################################################################################################################################################################################################
 
-
-
-###################################################################################################################################################################################################
-my $lambda_3_g  = "$output_g/3_ToLambda_SE";
-&myMakeDir($lambda_3_g);
-
-{ ## Start bismark
-
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using bismark (ToLambda_Raw, SE Mode) ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$lambda_3_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        &myMakeDir("$lambda_3_g/$end1");
-        &myMakeDir("$lambda_3_g/$end2");
-        &myMakeDir("$lambda_3_g/$end1.unpaired");
-        &myMakeDir("$lambda_3_g/$end2.unpaired");
-        system("bismark   --output_dir $lambda_3_g/$end1                        --sam  --basename $end1            --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end1.fastq              >  $lambda_3_g/$end1.runLog   2>&1");
-        system("bismark   --output_dir $lambda_3_g/$end2              --pbat    --sam  --basename $end2            --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end2.fastq              >  $lambda_3_g/$end2.runLog   2>&1");
-        system("bismark   --output_dir $lambda_3_g/$end1.unpaired               --sam  --basename $end1.unpaired   --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end1.unpaired.fastq     >  $lambda_3_g/$end1.unpaired.runLog   2>&1");
-        system("bismark   --output_dir $lambda_3_g/$end2.unpaired     --pbat    --sam  --basename $end2.unpaired   --bowtie2  -p $numCores_g       $Lambda_index_g    $input_g/$end2.unpaired.fastq     >  $lambda_3_g/$end2.unpaired.runLog   2>&1");
-        system("mv   $lambda_3_g/$end1/*.sam              $lambda_3_g/$end1.sam" );  
-        system("mv   $lambda_3_g/$end2/*.sam              $lambda_3_g/$end2.sam" );  
-        system("mv   $lambda_3_g/$end1.unpaired/*.sam     $lambda_3_g/$end1.unpaired.sam" );  
-        system("mv   $lambda_3_g/$end2.unpaired/*.sam     $lambda_3_g/$end2.unpaired.sam" );  
-}
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\t......$singleEnd_g[$i]";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("bismark   --output_dir  $lambda_3_g/$temp    --sam  --basename $temp   --bowtie2  -p $numCores_g       $Lambda_index_g     $input_g/$temp.fastq      >  $lambda_3_g/$temp.runLog   2>&1");
-        system("mv   $lambda_3_g/$temp/*.sam     $lambda_3_g/$temp.sam" );  
-}
-
-} ## End bismark
-
-&myQC_BAM_1($lambda_3_g);
-###################################################################################################################################################################################################
 
 
 
@@ -721,13 +678,13 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
         open(tempFH, ">>", "$biscuit_g/paired-end-files.txt")  or  die;
         say  tempFH  "$end1,  $end2\n";
-        system("biscuit align       -t $numCores_g   -L 2,2    -T 0    $biscuit_index_g    $input_g/$end1.fastq     $input_g/$end2.fastq   > $biscuit_g/$temp.sam ");
+        system("biscuit align       -t $numCores_g   -L 5,5    -T 10    $biscuit_index_g    $input_g/$end1.fastq     $input_g/$end2.fastq   > $biscuit_g/$temp.sam ");
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {
         say   "\t......$singleEnd_g[$i]";
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
         my $temp = $1;
-        system("biscuit align       -t $numCores_g   -L 2,2    -T 0    $biscuit_index_g    $input_g/$temp.fastq  > $biscuit_g/$temp.sam");
+        system("biscuit align       -t $numCores_g   -L 5,5    -T 10    $biscuit_index_g    $input_g/$temp.fastq  > $biscuit_g/$temp.sam");
 }
 } ## End bismark
 &myQC_BAM_1($biscuit_g);
@@ -739,15 +696,15 @@ for (my $i=0; $i<=$#singleEnd_g; $i++) {
 
 ###################################################################################################################################################################################################
 &myQC_BAM_2($bismark2_g);
-&myQC_BAM_2($bismark2_SE_g);
+&myQC_BAM_2($BSseeker2_g);
 &myQC_BAM_2($biscuit_g);
 
 &myQC_BAM_3($bismark2_g);
-&myQC_BAM_3($bismark2_SE_g);
+&myQC_BAM_3($BSseeker2_g);
 &myQC_BAM_3($biscuit_g);
 
 &myQC_BAM_4($bismark2_g);
-&myQC_BAM_4($bismark2_SE_g);
+&myQC_BAM_4($BSseeker2_g);
 &myQC_BAM_4($biscuit_g);
 ###################################################################################################################################################################################################
 
