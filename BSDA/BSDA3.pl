@@ -555,8 +555,8 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         system("mv   $lambda_2_g/$temp/*.sam     $lambda_2_g/$temp.sam" );  
         my $unmapped1 = "$lambda_2_g/$temp/$temp"."_unmapped_reads_1.fq.gz"; 
         my $unmapped2 = "$lambda_2_g/$temp/$temp"."_unmapped_reads_2.fq.gz";         
-        system("bismark     --output_dir  $lambda_SE_2_g    --sam  --basename $end1   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped1     >  $lambda_SE_2_g/$end1.runLog   2>&1");
-        system("bismark     --output_dir  $lambda_SE_2_g    --sam  --basename $end2   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped2     >  $lambda_SE_2_g/$end2.runLog   2>&1");
+        system("bismark     --output_dir  $lambda_SE_2_g             --sam  --basename $end1   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped1     >  $lambda_SE_2_g/$end1.runLog   2>&1");
+        system("bismark     --output_dir  $lambda_SE_2_g     --pbat  --sam  --basename $end2   --bowtie2  -p $numCores_g        $Lambda_index_g     $unmapped2     >  $lambda_SE_2_g/$end2.runLog   2>&1");
         system("rm  $unmapped1");
         system("rm  $unmapped2");
 }
@@ -601,8 +601,8 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         system("mv   $bismark2_g/$temp/*.sam     $bismark2_g/$temp.sam" ); 
         my $unmapped1 = "$bismark2_g/$temp/$temp"."_unmapped_reads_1.fq.gz"; 
         my $unmapped2 = "$bismark2_g/$temp/$temp"."_unmapped_reads_2.fq.gz";         
-        system("bismark     --output_dir  $bismark2_SE_g    --sam  --basename $end1   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped1     >  $bismark2_SE_g/$end1.runLog   2>&1");
-        system("bismark     --output_dir  $bismark2_SE_g    --sam  --basename $end2   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped2     >  $bismark2_SE_g/$end2.runLog   2>&1");
+        system("bismark     --output_dir  $bismark2_SE_g             --sam  --basename $end1   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped1     >  $bismark2_SE_g/$end1.runLog   2>&1");
+        system("bismark     --output_dir  $bismark2_SE_g     --pbat  --sam  --basename $end2   --bowtie2  -p $numCores_g        $Bismark_index_g     $unmapped2     >  $bismark2_SE_g/$end2.runLog   2>&1");
         system("rm  $unmapped1");
         system("rm  $unmapped2");   
 }
