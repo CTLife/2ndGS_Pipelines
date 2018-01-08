@@ -98,6 +98,12 @@ my $numCores_g = 4;
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 
+
+&myMakeDir("$output_g/MultiQC");
+&myMakeDir("$output_g/bismark2report");
+system( "multiqc   --ignore QC_Results  --module bismark   --title Bismark     --verbose  --export   --outdir $output_g/MultiQC       $input_g      >> $output_g/MultiQC.Bismark.runLog     2>&1" );
+
+
 open(FH1, ">", "$output_g/bismark_summary_PE.txt" ) or die "$!"; 
 print  FH1  "Sample_Name\tTotal_Sequence_Pairs \tUnique_Best_Hit\tUnique_Best_Hit_Ratio \tNo_Alignments\tNo_Alignments_Ratio\t" .      ##6
             "Multi_Mapped\tMulti_Mapped_Ratio\t not_Extracted\tnot_Extracted_Ratio\t Total_Fragments  \tTotal_Cs\t" .                  ##6                   
@@ -119,6 +125,7 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         my $file1 = "$input_g/$inputFiles_g[$i]/$inputFiles_g[$i]"."_PE_report.txt";  
         open(tempFH1, "<",   $file1)   or die;
         my @lines1 = <tempFH1>; 
+        system( "bismark2report   --dir  $output_g/bismark2report   --alignment_report $file1  > $output_g/bismark2report/$inputFiles_g[$i].runLog 2>&1 " );   
 
         my $Sample_1               = $inputFiles_g[$i];
         my $TotalSeqPairs_2        = "NA";
@@ -222,7 +229,6 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
 }
 
 print "\n\nNumber of samples: $numFiles\n\n\n";
-
 
 
 
