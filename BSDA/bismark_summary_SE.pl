@@ -98,7 +98,7 @@ my $numCores_g = 4;
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 
-open(FH1, ">", "$output_g/bismark_summary_PE.txt" ) or die "$!"; 
+open(FH1, ">", "$output_g/bismark_summary_SE.txt" ) or die "$!"; 
 print  FH1  "Sample_Name\tTotal_Sequence_Pairs \tUnique_Best_Hit\tUnique_Best_Hit_Ratio \tNo_Alignments\tNo_Alignments_Ratio\t" .      ##6
             "Multi_Mapped\tMulti_Mapped_Ratio\t not_Extracted\tnot_Extracted_Ratio\t Total_Fragments  \tTotal_Cs\t" .                  ##6                   
             "mCpG\tmCHG\tmCHH\tmC_unknown\tmCH\tmC_all \tun_mCpG\tun_mCHG\tun_mCHH\tun_mC_unknown\tun_mCH\tun_mC_all\t" .              ##12
