@@ -2,7 +2,6 @@
 use  strict;
 use  warnings;
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -14,25 +13,34 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "6-BAMPE/1_Bismark"
-my $output_g = '';  ## such as "7-MeExtract/1_Bismark"
+my $input_g  = '';  ## such as "6-BAMPE/2A_Bismark"
+my $output_g = '';  ## such as "7-callMethylation/2A_Bismark"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         BSDA is a Pipeline for Single-end and Paired-end BS-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
         Step 6: Extracts the methylation call for every single C analysed by using bismark_methylation_extractor.
                 The script bismark2report uses a Bismark alignment report, and optionally further reports of the Bismark suite 
                 such as deduplication, methylation extractor (splitting) or M-bias reports to generate a graphical HTML report page. 
 
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script.
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,      5.22.1
+                        bismark_methylation_extractor, 0.19.0     
+                        bismark2report, 0.19.0
+
         Usage:
                perl  BSDA6.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  BSDA6.pl   -genome hg38   -in 6-BAMPE/1_Bismark   -out 7-MeExtract/1_Bismark    > BSDA6.runLog
+               perl  BSDA6.pl   -genome hg38   -in 6-BAMPE/2A_Bismark   -out 7-callMethylation/2A_Bismark    > BSDA6.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -57,7 +65,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The 6th Step of BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 6th Step of BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -65,9 +73,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                    ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '6-BAMPE/1_Bismark';       ## This is only an initialization value or suggesting value, not default value.
-$output_g = '7-MeExtract/1_Bismark';   ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                           ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '6-BAMPE/2A_Bismark';             ## This is only an initialization value or suggesting value, not default value.
+$output_g = '7-callMethylation/2A_Bismark';   ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -125,7 +133,10 @@ my $output2_g = "$output_g/QC_Results";
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
+my $numCores_g   = 8;
+
+my $genomeFolder_g = "/media/yp/biox1/.RefGenomes/Shortcuts2/$genome_g";
+
 my @array1_g = split(/\//,  $input_g);
 my $subDir_g = $array1_g[1];
 say("\nsubDir: $subDir_g");
@@ -146,19 +157,6 @@ sub printVersion  {
     system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
-
-sub fullPathApp  {
-    my $software = $_[0];
-    say($software);
-    system("which   $software  > yp_my_temp_1.$software.txt");
-    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
-    my @fullPath1 = <tempFH>;
-    ($#fullPath1 == 0)  or  die;
-    system("rm  yp_my_temp_1.$software.txt");
-    $fullPath1[0] =~ s/\n$//  or  die;
-    return($fullPath1[0]);
-}
-
 
 &printVersion("bismark_methylation_extractor   --version");
 &printVersion("bismark2report   --version");
@@ -247,14 +245,18 @@ for (my $i=0; $i<=$#BAMfiles_g; $i++) {
     my $temp = $BAMfiles_g[$i]; 
     $temp =~ s/\.bam$//  ||  die; 
     say   "\t......$BAMfiles_g[$i]";
-    #&myMakeDir("$output2_g/bismark2summary_results");
-    #system( "bismark2summary   --basename  $output2_g/bismark2summary_results/$temp   --title $temp    5-rawBAM/$subDir_g/$temp.bam    >>  $output2_g/$temp.bismark2summary.runLog    2>&1  " );
     &myMakeDir("$output_g/$temp");    
-    system("bismark_methylation_extractor  --report    --output $output_g/$temp   --gzip   --bedGraph   --buffer_size 16G       $input_g/$temp.bam   >>  $output2_g/$temp.runLog    2>&1");                                       
     &myMakeDir("$output2_g/bismark2report_results");
     my $align_report = "4-rawBAM/$subDir_g/$temp/$temp" . "_PE_report.txt";
     my $split_report = "$output_g/$temp/$temp" . "_splitting_report.txt"; 
-    system("  bismark2report   --dir  $output2_g/bismark2report_results    --alignment_report  $align_report   --splitting_report  $split_report       --mbias_report  $output_g/$temp/$temp.M-bias.txt   >>  $output2_g/$temp.bismark2report.runLog    2>&1 ");                              
+    if ( !( -e $align_report) )  { 
+        $align_report = "4-rawBAM/$subDir_g/$temp" . "_SE_report.txt"; 
+        system("bismark_methylation_extractor   --ignore 3   --ignore_3prime 2    --report   --output $output_g/$temp    --gzip      --parallel $numCores_g    --bedGraph   --CX     $input_g/$temp.bam   >>  $output2_g/$temp.runLog    2>&1");                                                                          
+        system("bismark2report   --dir  $output2_g/bismark2report_results    --alignment_report  $align_report   --splitting_report  $split_report       --mbias_report  $output_g/$temp/$temp.M-bias.txt   >>  $output2_g/$temp.bismark2report.runLog    2>&1 ");   
+    }else{
+        system("bismark_methylation_extractor   --ignore 3  --ignore_r2 3   --ignore_3prime 0    --ignore_3prime_r2 2   --report   --output $output_g/$temp    --gzip      --parallel $numCores_g    --bedGraph   --CX     $input_g/$temp.bam   >>  $output2_g/$temp.runLog    2>&1");                                                                          
+        system("bismark2report   --dir  $output2_g/bismark2report_results    --alignment_report  $align_report   --splitting_report  $split_report       --mbias_report  $output_g/$temp/$temp.M-bias.txt   >>  $output2_g/$temp.bismark2report.runLog    2>&1 ");   
+    }                       
 }
 ###################################################################################################################################################################################################
 
@@ -268,6 +270,6 @@ say   "\tJob Done! Cheers! \n\n\n\n\n";
 
 
 
-
+  
 
 ## END
