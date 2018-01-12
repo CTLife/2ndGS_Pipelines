@@ -1,13 +1,15 @@
 # BSDA                  
 ### BS-Seq Data Analyzer (Such as RRBS, MethylC-seq and PBAT Data.)           
-You can run the scripts step by step or run one of them for a specific purpose.                                           
-Please run `perl BSDAn.pl -help` to know that what can the n-th script do.    
-Some parameters are optimized for RRBS, please change the parameters of BSDA3.pl,BSDA4.pl and BSDA5.pl for processing WGBS data.    
+You can run the scripts step by step or run one of them for a specific purpose.  
+Each script is able to work independently of all others.          
+Please run `perl BSDAn.pl -help` to know that what can the n-th script do.  
+                                                          
+Some parameters are optimized for RRBS, please change the parameters of BSDA3.pl,BSDA4.pl and BSDA5.pl for processing WGBS data. For instance, the parameters of TrimeGalore, Bismark, BSseeker2 and Picard MarkDuplicates are diffrent for RRBS, MethylC-seq and PBAT.    
                                    
 # [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
                                                        
-Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. 
+Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. The fixed pattern of file name also gives you a clear mind for your lots of samples.
 
 ### All Rules for NGS pipeline BSDA:
     1. Raw sequencing reads can only be stored in SRA or compressed FASTQ files, because only SRA format and compressed FASTQ format are supported. 
