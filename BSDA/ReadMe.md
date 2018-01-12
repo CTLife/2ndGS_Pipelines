@@ -1,7 +1,8 @@
 # BSDA                  
 ### BS-Seq Data Analyzer (Such as RRBS, MethylC-seq and PBAT.)           
 You can run the scripts step by step or run one of them for a specific purpose.                                           
-Please run `perl BSDAn.pl -help` to know that what can the n-th script do.                    
+Please run `perl BSDAn.pl -help` to know that what can the n-th script do.    
+Some parameters are optimized for RRBS, please change some parameters of BSDA3.pl,BSDA4.pl and BSDA5.pl for processing WGBS data.    
                                    
 # [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
