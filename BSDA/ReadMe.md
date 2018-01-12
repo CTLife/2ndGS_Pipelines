@@ -11,7 +11,7 @@ ________________________________________________________________________________
                                                        
 Some rules are necessary for automatic NGS data processing, such as the names of raw reads files (SRA or compressed FASTQ format) must be fixed for ease parsing. The fixed pattern of file name also gives you a clear mind for your lots of samples.
 
-### All Rules for NGS pipeline BSDA:
+### All Rules for NGS Data Analysis Pipeline BSDA:
     1. Raw sequencing reads can only be stored in SRA or compressed FASTQ files, because only SRA format and compressed FASTQ format are supported. 
        For compressed FASTQ format, there are only 7 compressed archive file formats are supported: bz2, gz, tar.gz, tar, rar, xz, zip. 
        Their suffixes must be: ".bz2",  ".gz",  ".tar.gz",  ".tar",  ".rar",  ".xz",  ".zip".
