@@ -2,7 +2,6 @@
 use  strict;
 use  warnings;
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -14,25 +13,33 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "8-bedGraph/1_Bismark"
-my $output_g = '';  ## such as "9-BigWig/1_Bismark"
+my $input_g  = '';  ## such as "8-bedGraph-Bismark"
+my $output_g = '';  ## such as "9-Me-BigWig-Bismark"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         BSDA is a Pipeline for Single-end and Paired-end BS-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 8: Convert bedGraph to bigwig by using bedGraphToBigWig.
-                Only reads density will be computed, no extend and no shift.
-                So single-end and paired-end reads will not be distinguished.   
+        Step 8: This script generates a cytosine methylation report for a genome of interest.
+                Convert bedGraph to bigwig by using bedGraphToBigWig.
+
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script.
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,      5.22.1
+                        coverage2cytosine, 0.19.0   
+                        bedGraphToBigWig, v4  
 
         Usage:
                perl  BSDA8.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  BSDA8.pl   -genome hg38   -in 8-bedGraph/1_Bismark   -out 9-BigWig/1_Bismark    > BSDA8.runLog
+               perl  BSDA8.pl   -genome hg38   -in 8-bedGraph-Bismark   -out 9-Me-BigWig-Bismark    > BSDA8.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -45,7 +52,7 @@ my $HELP = '
 
         -in inputDir        "inputDir" is the name of input path that contains your BAM files.  (no default)
 
-        -out outDir         "outDir" is the name of output path that contains your running results (bigwig files) of this step.  (no default)
+        -out outDir         "outDir" is the name of output path that contains your running results of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines, please visit https://github.com/CTLife/2ndGS_Pipelines
@@ -57,7 +64,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The 8th Step of BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 8th Step of BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -65,9 +72,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                   ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '8-bedGraph/1_Bismark';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '9-BigWig/1_Bismark';     ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                  ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '8-bedGraph-Bismark';    ## This is only an initialization value or suggesting value, not default value.
+$output_g = '9-Me-BigWig-Bismark';   ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -117,47 +124,16 @@ sub myMakeDir  {
     if ( !( -e $path) )  { system("mkdir  -p  $path"); }
     if ( !( -e $path) )  { mkdir $path  ||  die; }
 }
-
-my $output2_g = "$output_g/QC_Results";
+   
+my $genomeFolder_g = "/media/yp/biox1/.RefGenomes/Shortcuts2/$genome_g";  
+my $chromSize_g    = "$genomeFolder_g/$genome_g.chrom.sizes";
+my $BAMpath_g      = "5-finalBAM/2A_Bismark";
 &myMakeDir($output_g);
-&myMakeDir($output2_g);
 
-opendir(my $DH_input_g, "4-rawBAM/1_Bismark" )  ||  die;
+opendir(my $DH_input_g, $BAMpath_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Checking all the necessary softwares in this step......" ;
-
-sub printVersion  {
-    my $software = $_[0];
-    system("echo    '##############################################################################'  >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("echo    '#########$software'                                                              >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-}
-
-sub fullPathApp  {
-    my $software = $_[0];
-    say($software);
-    system("which   $software  > yp_my_temp_1.$software.txt");
-    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
-    my @fullPath1 = <tempFH>;
-    ($#fullPath1 == 0)  or  die;
-    system("rm  yp_my_temp_1.$software.txt");
-    $fullPath1[0] =~ s/\n$//  or  die;
-    return($fullPath1[0]);
-}
-
-&printVersion("bedtools   --version");
-&printVersion("bedGraphToBigWig");
+my $numCores_g   = 8;
 ###################################################################################################################################################################################################
 
 
@@ -175,7 +151,7 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         next unless $inputFiles_g[$i] !~ m/^[.]/;
         next unless $inputFiles_g[$i] !~ m/[~]$/;
         next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
-        next unless $inputFiles_g[$i] !~ m/unpaired/;
+        next unless $inputFiles_g[$i] !~ m/^unpaired/;
         say   "\t......$inputFiles_g[$i]" ;
         my $temp = $inputFiles_g[$i];
         $groupFiles[++$#groupFiles] = $inputFiles_g[$i];
@@ -207,71 +183,148 @@ say  "\n\t\tThere are $numGroup groups.";
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting bam files in input folder ......";
-
-my @bamfiles_g = ();
-
-open(seqFiles_FH, ">", "$output2_g/bam-Files.txt")  or  die; 
+say   "Detecting BAM files in input folder ......";
+my @BAMfiles_g = ();
+{
+open(seqFiles_FH, ">", "$output_g/BAM-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
     next unless $inputFiles_g[$i] =~ m/\.bam$/;
     next unless $inputFiles_g[$i] !~ m/^[.]/;
     next unless $inputFiles_g[$i] !~ m/[~]$/;
-    next unless $inputFiles_g[$i] !~ m/unpaired/;
-    next unless $inputFiles_g[$i] !~ m/^removed_/;
+    next unless $inputFiles_g[$i] !~ m/^unpaired/;
     say    "\t......$inputFiles_g[$i]"; 
     $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
-    $bamfiles_g[$#bamfiles_g+1] =  $inputFiles_g[$i];
-    say        "\t\t\t\tbam file:  $inputFiles_g[$i]\n";
-    say   seqFiles_FH  "bam file:  $inputFiles_g[$i]\n";
+    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
 }
 
 say   seqFiles_FH  "\n\n\n\n\n";  
-say   seqFiles_FH  "All bam files:@bamfiles_g\n\n\n";
-say        "\t\t\t\tAll bam files:@bamfiles_g\n\n";
-my $num1 = $#bamfiles_g + 1;
-say seqFiles_FH   "\nThere are $num1 bam files.\n";
-say         "\t\t\t\tThere are $num1 bam files.\n";
-
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-{
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Convert bedGraph to BigWig ......";
-for (my $i=0; $i<=$#bamfiles_g; $i++) {
-    my $temp = $bamfiles_g[$i]; 
-    $temp =~ s/\.bam$//  ||  die; 
-    say   "\t......$bamfiles_g[$i]";
-
-    &myMakeDir("$output_g/1-allCs"); 
-    system("gunzip  --stdout    $input_g/1-allCs/$temp.allCs.bedGraph.gz   >  $input_g/1-allCs/$temp.allCs.bedGraph");
-    system("cat  $input_g/1-allCs/$temp.allCs.bedGraph  | sed '1d' | sort  -k1,1  -k2,2n     >  $input_g/1-allCs/$temp.allCs.sorted.bedGraph");
-    system("bedGraphToBigWig  $input_g/1-allCs/$temp.allCs.sorted.bedGraph   0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes      $output_g/1-allCs/$temp.allCs.bw ");    
-
-    &myMakeDir("$output_g/2-CpG"); 
-    system("gunzip  --stdout    $input_g/2-CpG/$temp.CpG.bedGraph.gz   >  $input_g/2-CpG/$temp.CpG.bedGraph");
-    system("cat   $input_g/2-CpG/$temp.CpG.bedGraph    | sed '1d' | sort  -k1,1  -k2,2n    >  $input_g/2-CpG/$temp.CpG.sorted.bedGraph");
-    system("bedGraphToBigWig  $input_g/2-CpG/$temp.CpG.sorted.bedGraph   0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes      $output_g/2-CpG/$temp.CpG.bw "); 
-   
-    &myMakeDir("$output_g/3-NonCpG"); 
-    system("gunzip  --stdout    $input_g/3-NonCpG/$temp.NonCpG.bedGraph.gz   >  $input_g/3-NonCpG/$temp.NonCpG.bedGraph");
-    system("cat   $input_g/3-NonCpG/$temp.NonCpG.bedGraph   | sed '1d' | sort  -k1,1  -k2,2n     >  $input_g/3-NonCpG/$temp.NonCpG.sorted.bedGraph");  
-    system("bedGraphToBigWig  $input_g/3-NonCpG/$temp.NonCpG.sorted.bedGraph   0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes      $output_g/3-NonCpG/$temp.NonCpG.bw ");   
- 
-    &myMakeDir("$output_g/4-CHG"); 
-    system("gunzip  --stdout    $input_g/4-CHG/$temp.CHG.bedGraph.gz   >  $input_g/4-CHG/$temp.CHG.bedGraph ");
-    system("cat   $input_g/4-CHG/$temp.CHG.bedGraph   | sed '1d' | sort  -k1,1  -k2,2n     >  $input_g/4-CHG/$temp.CHG.sorted.bedGraph");  
-    system("bedGraphToBigWig  $input_g/4-CHG/$temp.CHG.sorted.bedGraph   0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes      $output_g/4-CHG/$temp.CHG.bw ");    
-
-    &myMakeDir("$output_g/5-CHH"); 
-    system("gunzip  --stdout    $input_g/5-CHH/$temp.CHH.bedGraph.gz   >  $input_g/5-CHH/$temp.CHH.bedGraph");
-    system("cat   $input_g/5-CHH/$temp.CHH.bedGraph  | sed '1d' | sort  -k1,1  -k2,2n     >  $input_g/5-CHH/$temp.CHH.sorted.bedGraph");  
-    system("bedGraphToBigWig  $input_g/5-CHH/$temp.CHH.sorted.bedGraph   0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes      $output_g/5-CHH/$temp.CHH.bw ");    
+say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
+say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
+my $num1 = $#BAMfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 BAM files.\n";
+say         "\t\t\t\tThere are $num1 BAM files.\n";
 }
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Start bedGraphToBigWig ......";
+
+my $dir1  = "$output_g/1_CHG_OB_bigwig";
+my $dir2  = "$output_g/2_CHG_OT_bigwig";
+my $dir3  = "$output_g/3_CHH_OB_bigwig";
+my $dir4  = "$output_g/4_CHH_OT_bigwig";
+my $dir5  = "$output_g/5_CpG_OB_bigwig";
+my $dir6  = "$output_g/6_CpG_OT_bigwig";
+my $dir7  = "$output_g/7_CH_OB_bigwig";
+my $dir8  = "$output_g/8_CH_OT_bigwig";
+my $dir9  = "$output_g/9_CHG_bigwig";
+my $dir10 = "$output_g/10_CHH_bigwig";
+my $dir11 = "$output_g/11_CpG_bigwig";
+my $dir12 = "$output_g/12_CH_bigwig";
+&myMakeDir($dir1); 
+&myMakeDir($dir2); 
+&myMakeDir($dir3); 
+&myMakeDir($dir4); 
+&myMakeDir($dir5); 
+&myMakeDir($dir6); 
+&myMakeDir($dir7); 
+&myMakeDir($dir8); 
+&myMakeDir($dir9); 
+&myMakeDir($dir10); 
+&myMakeDir($dir11); 
+&myMakeDir($dir12); 
+
+for (my $i=0; $i<=$#BAMfiles_g; $i++) {
+    my $temp = $BAMfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$temp";
+
+    system("gunzip  --stdout    $input_g/1_CHG_OB/$temp.CHG_OB.bedGraph.gz   >  $input_g/1_CHG_OB/$temp.CHG_OB.bedGraph");
+    system("cat  $input_g/1_CHG_OB/$temp.CHG_OB.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/1_CHG_OB/$temp.CHG_OB.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/1_CHG_OB/$temp.CHG_OB.sorted.bedGraph   $chromSize_g      $dir1/$temp.CHG_OB.bw ");    
+    system("rm   $input_g/1_CHG_OB/$temp.CHG_OB.bedGraph");
+
+    system("gunzip  --stdout    $input_g/2_CHG_OT/$temp.CHG_OT.bedGraph.gz   >  $input_g/2_CHG_OT/$temp.CHG_OT.bedGraph");
+    system("cat  $input_g/2_CHG_OT/$temp.CHG_OT.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/2_CHG_OT/$temp.CHG_OT.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/2_CHG_OT/$temp.CHG_OT.sorted.bedGraph   $chromSize_g      $dir2/$temp.CHG_OT.bw ");    
+    system("rm   $input_g/2_CHG_OT/$temp.CHG_OT.bedGraph");
+
+    system("gunzip  --stdout    $input_g/3_CHH_OB/$temp.CHH_OB.bedGraph.gz   >  $input_g/3_CHH_OB/$temp.CHH_OB.bedGraph");
+    system("cat  $input_g/3_CHH_OB/$temp.CHH_OB.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/3_CHH_OB/$temp.CHH_OB.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/3_CHH_OB/$temp.CHH_OB.sorted.bedGraph   $chromSize_g      $dir3/$temp.CHH_OB.bw ");    
+    system("rm   $input_g/3_CHH_OB/$temp.CHH_OB.bedGraph");
+
+    system("gunzip  --stdout    $input_g/4_CHH_OT/$temp.CHH_OT.bedGraph.gz   >  $input_g/4_CHH_OT/$temp.CHH_OT.bedGraph");
+    system("cat  $input_g/4_CHH_OT/$temp.CHH_OT.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/4_CHH_OT/$temp.CHH_OT.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/4_CHH_OT/$temp.CHH_OT.sorted.bedGraph   $chromSize_g      $dir4/$temp.CHH_OT.bw ");    
+    system("rm   $input_g/4_CHH_OT/$temp.CHH_OT.bedGraph");
+
+    system("gunzip  --stdout    $input_g/5_CpG_OB/$temp.CpG_OB.bedGraph.gz   >  $input_g/5_CpG_OB/$temp.CpG_OB.bedGraph");
+    system("cat  $input_g/5_CpG_OB/$temp.CpG_OB.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/5_CpG_OB/$temp.CpG_OB.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/5_CpG_OB/$temp.CpG_OB.sorted.bedGraph   $chromSize_g      $dir5/$temp.CpG_OB.bw ");    
+    system("rm   $input_g/5_CpG_OB/$temp.CpG_OB.bedGraph");
+
+    system("gunzip  --stdout    $input_g/6_CpG_OT/$temp.CpG_OT.bedGraph.gz   >  $input_g/6_CpG_OT/$temp.CpG_OT.bedGraph");
+    system("cat  $input_g/6_CpG_OT/$temp.CpG_OT.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/6_CpG_OT/$temp.CpG_OT.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/6_CpG_OT/$temp.CpG_OT.sorted.bedGraph   $chromSize_g      $dir6/$temp.CpG_OT.bw ");    
+    system("rm   $input_g/6_CpG_OT/$temp.CpG_OT.bedGraph");
+
+    system("gunzip  --stdout    $input_g/7_CH_OB/$temp.CH_OB.bedGraph.gz   >  $input_g/7_CH_OB/$temp.CH_OB.bedGraph");
+    system("cat  $input_g/7_CH_OB/$temp.CH_OB.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/7_CH_OB/$temp.CH_OB.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/7_CH_OB/$temp.CH_OB.sorted.bedGraph   $chromSize_g      $dir7/$temp.CH_OB.bw ");    
+    system("rm   $input_g/7_CH_OB/$temp.CH_OB.bedGraph");
+
+    system("gunzip  --stdout    $input_g/8_CH_OT/$temp.CH_OT.bedGraph.gz   >  $input_g/8_CH_OT/$temp.CH_OT.bedGraph");
+    system("cat  $input_g/8_CH_OT/$temp.CH_OT.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/8_CH_OT/$temp.CH_OT.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/8_CH_OT/$temp.CH_OT.sorted.bedGraph   $chromSize_g      $dir8/$temp.CH_OT.bw ");    
+    system("rm   $input_g/8_CH_OT/$temp.CH_OT.bedGraph");
+
+    system("gunzip  --stdout    $input_g/9_CHG/$temp.CHG.bedGraph.gz   >  $input_g/9_CHG/$temp.CHG.bedGraph");
+    system("cat  $input_g/9_CHG/$temp.CHG.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/9_CHG/$temp.CHG.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/9_CHG/$temp.CHG.sorted.bedGraph   $chromSize_g      $dir9/$temp.CHG.bw ");    
+    system("rm   $input_g/9_CHG/$temp.CHG.bedGraph");
+
+    system("gunzip  --stdout    $input_g/10_CHH/$temp.CHH.bedGraph.gz   >  $input_g/10_CHH/$temp.CHH.bedGraph");
+    system("cat  $input_g/10_CHH/$temp.CHH.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/10_CHH/$temp.CHH.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/10_CHH/$temp.CHH.sorted.bedGraph   $chromSize_g      $dir10/$temp.CHH.bw ");    
+    system("rm   $input_g/10_CHH/$temp.CHH.bedGraph");
+
+    system("gunzip  --stdout    $input_g/11_CpG/$temp.CpG.bedGraph.gz   >  $input_g/11_CpG/$temp.CpG.bedGraph");
+    system("cat  $input_g/11_CpG/$temp.CpG.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/11_CpG/$temp.CpG.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/11_CpG/$temp.CpG.sorted.bedGraph   $chromSize_g      $dir11/$temp.CpG.bw ");    
+    system("rm   $input_g/11_CpG/$temp.CpG.bedGraph");
+
+    system("gunzip  --stdout    $input_g/12_CH/$temp.CH.bedGraph.gz   >  $input_g/12_CH/$temp.CH.bedGraph");
+    system("cat  $input_g/12_CH/$temp.CH.bedGraph    | sed '1d' |  sort  -k1,1  -k2,2n     >  $input_g/12_CH/$temp.CH.sorted.bedGraph");
+    system("bedGraphToBigWig  $input_g/12_CH/$temp.CH.sorted.bedGraph   $chromSize_g      $dir12/$temp.CH.bw ");    
+    system("rm   $input_g/12_CH/$temp.CH.bedGraph");
+             
+}
+###################################################################################################################################################################################################
+
+
+ 
+
+
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Start coverage2cytosine ......";
+
+my $dir13 = "$output_g/13_CX_MeReport";   
+&myMakeDir($dir13);   
+
+for (my $i=0; $i<=$#BAMfiles_g; $i++) {
+    my $temp = $BAMfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$temp";
+    system("coverage2cytosine   --gzip   --genome_folder $genomeFolder_g  --CX_context    --output  $dir13/$temp    $input_g/13_CX/$temp.CX.bismark.cov.gz   >  $dir13/$temp.runLog  2>&1 ");                                                    
 }
 ###################################################################################################################################################################################################
 
@@ -285,6 +338,6 @@ say   "\tJob Done! Cheers! \n\n\n\n\n";
 
 
 
-
+  
 
 ## END
