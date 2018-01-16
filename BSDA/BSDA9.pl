@@ -2,7 +2,6 @@
 use  strict;
 use  warnings;
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -14,23 +13,31 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "9-BigWig/1_Bismark/1-allCs"
-my $output_g = '';  ## such as "10-DeepTools/1_Bismark/1-allCs"
+my $input_g  = '';  ## such as "7-callMethylation"
+my $output_g = '';  ## such as "10-coveredSites-Bismark"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         BSDA is a Pipeline for Single-end and Paired-end BS-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 9: Analyze all the bigwig files by using deepTools.  
+        Step 9: This script generates some figures for the correlation of number of covered C sites and reads.
+
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script.
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl, 5.22.1
+                        R,    3.4.3
 
         Usage:
                perl  BSDA9.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  BSDA9.pl   -genome hg38   -in 9-BigWig/1_Bismark/1-allCs   -out 10-DeepTools/1_Bismark/1-allCs    > BSDA9.runLog
+               perl  BSDA9.pl   -genome hg38   -in 7-callMethylation   -out 10-coveredSites-Bismark    > BSDA9.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -41,7 +48,7 @@ my $HELP = '
         Required arguments:
         -genome RefGenome   "RefGenome" is the short name of your reference genome, such as "mm10", "ce11", "hg38".    (no default)
 
-        -in inputDir        "inputDir" is the name of input path that contains your bigwig files.  (no default)
+        -in inputDir        "inputDir" is the name of input path that contains your input files.  (no default)
 
         -out outDir         "outDir" is the name of output path that contains your running results of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
@@ -55,7 +62,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The 9th Step of BSDA (BS-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 9th Step of BSDA (BS-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -63,9 +70,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                            ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '9-BigWig/1_Bismark/1-allCs';      ## This is only an initialization value or suggesting value, not default value.
-$output_g = '10-DeepTools/1_Bismark/1-allCs';  ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                      ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '7-callMethylation';         ## This is only an initialization value or suggesting value, not default value.
+$output_g = '10-coveredSites-Bismark';   ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -115,48 +122,16 @@ sub myMakeDir  {
     if ( !( -e $path) )  { system("mkdir  -p  $path"); }
     if ( !( -e $path) )  { mkdir $path  ||  die; }
 }
-
-$output_g = "$output_g/1-before-computeMatrix";
-my $output2_g = "$output_g/QC_Results";   
+   
+my $genomeFolder_g = "/media/yp/biox1/.RefGenomes/Shortcuts2/$genome_g";  
+my $chromSize_g    = "$genomeFolder_g/$genome_g.chrom.sizes";
+my $BAMpath_g      = "5-finalBAM/2A_Bismark";
 &myMakeDir($output_g);
-&myMakeDir($output2_g);
 
-opendir(my $DH_input_g, $input_g)  ||  die;
+opendir(my $DH_input_g, $BAMpath_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Checking all the necessary softwares in this step......" ;
-
-sub printVersion  {
-    my $software = $_[0];
-    system("echo    '##############################################################################'  >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("echo    '#########$software'                                                              >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-    system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
-}
-
-sub fullPathApp  {
-    my $software = $_[0];
-    say($software);
-    system("which   $software  > yp_my_temp_1.$software.txt");
-    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
-    my @fullPath1 = <tempFH>;
-    ($#fullPath1 == 0)  or  die;
-    system("rm  yp_my_temp_1.$software.txt");
-    $fullPath1[0] =~ s/\n$//  or  die;
-    return($fullPath1[0]);
-}
-
-&printVersion("deeptools --version");
-
+my $numCores_g   = 8;
 ###################################################################################################################################################################################################
 
 
@@ -170,7 +145,7 @@ say   "Checking all the input file names ......";
 my @groupFiles = ();
 my $fileNameBool = 1;
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
-        next unless $inputFiles_g[$i] =~ m/\.bw$/;
+        next unless $inputFiles_g[$i] =~ m/\.bam$/;
         next unless $inputFiles_g[$i] !~ m/^[.]/;
         next unless $inputFiles_g[$i] !~ m/[~]$/;
         next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
@@ -179,7 +154,8 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         my $temp = $inputFiles_g[$i];
         $groupFiles[++$#groupFiles] = $inputFiles_g[$i];
         $temp =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/   or  die   "wrong-1: ## $temp ##";
-        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(.+)\.bw$/) {
+        $temp =~ m/_(Rep[1-9])\.bam$/   or  die   "wrong-2: ## $temp ##";
+        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.bam$/) {
              $fileNameBool = 0;
         }
 }
@@ -205,33 +181,28 @@ say  "\n\t\tThere are $numGroup groups.";
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting bigwig files in input folder ......";
-my @BWfiles_g = ();
+say   "Detecting BAM files in input folder ......";
+my @BAMfiles_g = ();
 {
-open(seqFiles_FH, ">", "$output2_g/BW-Files.txt")  or  die; 
+open(seqFiles_FH, ">", "$output_g/BAM-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
-    next unless $inputFiles_g[$i] =~ m/\.bw$/;
+    next unless $inputFiles_g[$i] =~ m/\.bam$/;
     next unless $inputFiles_g[$i] !~ m/^[.]/;
     next unless $inputFiles_g[$i] !~ m/[~]$/;
     next unless $inputFiles_g[$i] !~ m/^unpaired/;
     say    "\t......$inputFiles_g[$i]"; 
-    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;  
-    $BWfiles_g[$#BWfiles_g+1] =  $inputFiles_g[$i];
-    say        "\t\t\t\tBW file:  $inputFiles_g[$i]\n";
-    say   seqFiles_FH  "BW file:  $inputFiles_g[$i]\n";
+    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
+    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
 }
 
 say   seqFiles_FH  "\n\n\n\n\n";  
-say   seqFiles_FH  "All BW files:@BWfiles_g\n\n\n";
-say        "\t\t\t\tAll BW files:@BWfiles_g\n\n";
-my $num1 = $#BWfiles_g + 1;
-say seqFiles_FH   "\nThere are $num1 BW files.\n";
-say         "\t\t\t\tThere are $num1 BW files.\n";
-}
-
-my @BWfiles_g2 =  @BWfiles_g;
-for ( my $i=0; $i<=$#BWfiles_g; $i++ ) { 
-   $BWfiles_g[$i] = "$input_g/$BWfiles_g[$i]";
+say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
+say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
+my $num1 = $#BAMfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 BAM files.\n";
+say         "\t\t\t\tThere are $num1 BAM files.\n";
 }
 ###################################################################################################################################################################################################
 
@@ -240,28 +211,57 @@ for ( my $i=0; $i<=$#BWfiles_g; $i++ ) {
 
 
 ###################################################################################################################################################################################################
-{
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Using deepTools ......";
-    system("multiBigwigSummary bins   --bwfiles @BWfiles_g    --binSize 10000   --numberOfProcessors $numCores_g    --outRawCounts  $output_g/1-RawCounts.txt   --outFileName $output_g/1-results.npz    >> $output_g/1-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/1-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_g/2-heatmap_pearson.pdf       --outFileCorMatrix $output_g/2-heatmap_pearson.txt         --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_g/2-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/1-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_g/3-heatmap_spearman.pdf      --outFileCorMatrix $output_g/3-heatmap_spearman.txt        --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_g/3-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/1-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_g/4-scatterplot_pearson.pdf   --outFileCorMatrix $output_g/4-scatterplot_pearson.txt     --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_g/4-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/1-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_g/5-scatterplot_spearman.pdf  --outFileCorMatrix $output_g/5-scatterplot_spearman.txt    --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_g/5-runLog.txt   2>&1");                               
+say   "Generating bedGraph and figures ......";
 
-    system("multiBigwigSummary bins   --bwfiles @BWfiles_g    --binSize 5000   --numberOfProcessors $numCores_g    --outRawCounts  $output_g/6-RawCounts.txt   --outFileName $output_g/6-results.npz    >> $output_g/6-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/6-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_g/7-heatmap_pearson.pdf        --outFileCorMatrix $output_g/7-heatmap_pearson.txt          --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/7-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/6-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_g/8-heatmap_spearman.pdf       --outFileCorMatrix $output_g/8-heatmap_spearman.txt         --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/8-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/6-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_g/9-scatterplot_pearson.pdf    --outFileCorMatrix $output_g/9-scatterplot_pearson.txt      --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/9-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/6-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_g/10-scatterplot_spearman.pdf  --outFileCorMatrix $output_g/10-scatterplot_spearman.txt    --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/10-runLog.txt  2>&1");                               
+my $dir1 = "$output_g/1_CHG_cov1Reads";
+my $dir2 = "$output_g/2_CHH_cov1Reads";
+my $dir3 = "$output_g/3_CpG_cov1Reads";
+&myMakeDir($dir1); 
+&myMakeDir($dir2); 
+&myMakeDir($dir3); 
 
-    system("multiBigwigSummary bins   --bwfiles @BWfiles_g    --binSize 1000   --numberOfProcessors $numCores_g    --outRawCounts  $output_g/11-RawCounts.txt   --outFileName $output_g/11-results.npz    >> $output_g/11-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/11-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_g/12-heatmap_pearson.pdf        --outFileCorMatrix $output_g/12-heatmap_pearson.txt          --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/12-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/11-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_g/13-heatmap_spearman.pdf       --outFileCorMatrix $output_g/13-heatmap_spearman.txt         --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/13-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/11-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_g/14-scatterplot_pearson.pdf    --outFileCorMatrix $output_g/14-scatterplot_pearson.txt      --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/14-runLog.txt   2>&1");                               
-    system("plotCorrelation -in $output_g/11-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_g/15-scatterplot_spearman.pdf   --outFileCorMatrix $output_g/15-scatterplot_spearman.txt     --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_g/15-runLog.txt  2>&1");                               
+my $dir1a = "$output_g/1_CHG_readsDis_mC";
+my $dir2a = "$output_g/2_CHH_readsDis_mC";
+my $dir3a = "$output_g/3_CpG_readsDis_mC";
+&myMakeDir($dir1a); 
+&myMakeDir($dir2a); 
+&myMakeDir($dir3a); 
+
+for (my $i=0; $i<=$#BAMfiles_g; $i++) {
+    my $temp = $BAMfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$temp";
+
+    my $SE1 = $temp;
+    my $SE2 = $temp;
+    $SE1 =~ s/_Rep/-end1_Rep/ or die;
+    $SE2 =~ s/_Rep/-end2_Rep/ or die;
+    my $PE_dir  = "$input_g/2A_Bismark/$temp";
+    my $SE1_dir = "$input_g/2B_Bismark_unmapped_SE/$SE1";
+    my $SE2_dir = "$input_g/2B_Bismark_unmapped_SE/$SE2";
+   
+    system("bismark2bedGraph   --output  $temp.CHG.bedGraph       --dir $dir1   --cutoff 1    --CX_context    --buffer_size  10G      $PE_dir/CHG_*       $SE1_dir/CHG_*         $SE2_dir/CHG_*        >  $dir1/$temp.runLog  2>&1 ");    
+    system("bismark2bedGraph   --output  $temp.CHH.bedGraph       --dir $dir2   --cutoff 1    --CX_context    --buffer_size  10G      $PE_dir/CHH_*       $SE1_dir/CHH_*         $SE2_dir/CHH_*        >  $dir2/$temp.runLog  2>&1 ");    
+    system("bismark2bedGraph   --output  $temp.CpG.bedGraph       --dir $dir3   --cutoff 1    --CX_context    --buffer_size  10G      $PE_dir/CpG_*       $SE1_dir/CpG_*         $SE2_dir/CpG_*        >  $dir3/$temp.runLog  2>&1 ");                          
+
+    system("gunzip  --stdout    $dir1/$temp.CHG.bismark.cov.gz        >  $dir1/$temp.CHG.bismark.cov");
+    system("gunzip  --stdout    $dir2/$temp.CHH.bismark.cov.gz        >  $dir2/$temp.CHH.bismark.cov");
+    system("gunzip  --stdout    $dir3/$temp.CpG.bismark.cov.gz        >  $dir3/$temp.CpG.bismark.cov");
+         
+    &myMakeDir("$dir1a/$temp" ); 
+    &myMakeDir("$dir2a/$temp" ); 
+    &myMakeDir("$dir3a/$temp" ); 
+ 
+    system("Rscript   BSDA9.R   $dir1   $temp.CHG.bismark.cov    $dir1a/$temp   ");         
+    system("Rscript   BSDA9.R   $dir2   $temp.CHH.bismark.cov    $dir2a/$temp   ");         
+    system("Rscript   BSDA9.R   $dir3   $temp.CpG.bismark.cov    $dir3a/$temp   ");  
+
+    system("rm  -rf  $dir1/$temp.CHG.bismark.cov");     
+    system("rm  -rf  $dir2/$temp.CHH.bismark.cov");     
+    system("rm  -rf  $dir3/$temp.CpG.bismark.cov");     
 }
-###################################################################################################################################################################################################    
+###################################################################################################################################################################################################
 
 
 
@@ -272,7 +272,7 @@ say   "\n\n\n\n\n\n#############################################################
 say   "\tJob Done! Cheers! \n\n\n\n\n";
 
 
- 
 
   
+
 ## END
