@@ -4,7 +4,7 @@ You can run the scripts step by step or run one of them for a specific purpose.
 Each script is able to work independently of all others.          
 Please run `perl BSDAn.pl -help` to know that what can the n-th script do.  
                                                           
-Some parameters are optimized for RRBS, please change the parameters of BSDA3.pl,BSDA4.pl and BSDA5.pl for processing WGBS data. For instance, the parameters of TrimGalore, Bismark, BSseeker2 and Picard MarkDuplicates are different for analyzing RRBS, MethylC-seq and PBAT data.    
+Some parameters are optimized for RRBS, please change the parameters of BSDA3.pl, BSDA4.pl and BSDA5.pl for processing WGBS data. For instance, the parameters of TrimGalore, Bismark, BSseeker2 and Picard MarkDuplicates are different for analyzing RRBS, MethylC-seq and PBAT data.    
                                    
 # [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)                                                                                                                                                
 __________________________________________________________________________________________________________________      
