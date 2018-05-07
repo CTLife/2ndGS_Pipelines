@@ -14,28 +14,50 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "4-finalFASTQ"
-my $output_g = '';  ## such as "5-rawBAM"
+my $input_g  = '';  ## such as "4-rawBAM/3A_STAR"
+my $output_g = '';  ## such as "5-finalBAM/3A_STAR"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 4: Mapping reads to the reference transcriptome or genome by using 10 softwares (mappers or aligners):
-                    Kallisto, Salmon, STAR, HISAT2, RSEM; BBMap, RapMap, Subjunc, Novoalign, GSNAP.
-                Assess the quality of BAM files to identify possible sequencing errors or biases by using 13 softwares:
-                    SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, PRESEQ, Picard, goleft, deepTools, phantompeakqualtools, QoRTs, RNA-SeQC and RSeQC.
-                And aggregate the results from Kallisto, Salmon, STAR, FastQC, Picard, Samtools, Preseq, Qualimap, goleft, RNA-SeQC and RSeQC analyses
-                across many samples into a single report by using MultiQC.
+        Step 4: Only the mapped reads with MAPQ>20 are retained and reads on chr_random, chr_alt, chrUn and chrM, all of them are removed.
+
+                And assess the quality of BAM files to identify possible mapping errors or biases by using 14 softwares:
+                SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, deepTools, PRESEQ, Picard, goleft, Bamtools, QoRTs, RSeQC and RNA-SeQC.
+                And aggregate the results from SAMtools, FastQC, Qualimap,  Preseq, Picard,  goleft and Bamtools 
+                analyses across many samples into a single report by using MultiQC.
+
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script. 
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,      5.22.1 
+                        SAMtools,  1.8   
+                        Subread,   1.6.1
+                        FASTQC,    0.11.7     
+                        SAMstat,   1.5.1        
+                        qualimap,  2.2.1   
+                        deepTools, 3.0.2    
+                        PRESEQ,    2.0.1    
+                        Picard,    2.17.1  
+                        goleft,    0.1.16
+                        Bamtools,  2.5.1  
+                        QoRTs,     1.3.0 
+                        RSeQC,     2.6.4   ## such as  tin.py, geneBody_coverage.py
+                        RNA-SeQC,  1.1.9 
+                        MultiQC,   1.5        
+
 
         Usage:
                perl  RASDA4.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  RASDA4.pl   -genome hg38   -in 4-finalFASTQ   -out 5-rawBAM    > RASDA4.runLog  2>&1
+               perl  RASDA4.pl   -genome hg38   -in 4-rawBAM/3A_STAR   -out 5-finalBAM/3A_STAR    > RASDA4.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -46,7 +68,7 @@ my $HELP = '
         Required arguments:
         -genome RefGenome   "RefGenome" is the short name of your reference genome, such as "mm10", "ce11", "hg38".    (no default)
 
-        -in inputDir        "inputDir" is the name of input path that contains your FASTQ files.  (no default)
+        -in inputDir        "inputDir" is the name of input path that contains your BAM files.  (no default)
 
         -out outDir         "outDir" is the name of output path that contains your running results (BAM files) of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
@@ -60,7 +82,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Fourth Step of RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The Fifth Step of RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -68,9 +90,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';           ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '4-finalFASTQ';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '5-rawBAM';       ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '4-rawBAM/3A_STAR';    ## This is only an initialization value or suggesting value, not default value.
+$output_g = '5-finalBAM/3A_STAR';  ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -129,48 +151,6 @@ opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
 my $numCores_g   = 4;
-
-my  $trim5_g  = 30;   ## bp
-my  $trim3_g  = 30;   ## bp
-
-###################################################################################################################################################################################################
-
-
-
-
-
-## Kallisto, Salmon, STAR, HISAT2, RSEM; BBMap, RapMap, Subjunc, Novoalign, GSNAP.
-###################################################################################################################################################################################################
-## Context specific:
-my  $commonPath_g      = "/media/yp/ProgramFiles/.MyProgramFiles/4_ChIPseq/5-Mapping";
-
-my  $BWA_index_g       = "$commonPath_g/bwa/RefGenomes/$genome_g/$genome_g";
-my  $Bowtie2_index_g   = "$commonPath_g/bowtie2/RefGenomes/$genome_g/$genome_g";
-my  $BWA_ensembl_index_g = "$commonPath_g/bwa/RefGenomes/$genome_g.ensembl/$genome_g.ensembl";
-my  $Bowtie2_ensembl_index_g   = "$commonPath_g/bowtie2/RefGenomes/$genome_g.ensembl/$genome_g.ensembl";
-
-my  $Novoalign_index_g = "$commonPath_g/novocraft/RefGenomes/$genome_g/$genome_g";
-my  $Subread_index_g   = "$commonPath_g/subread/RefGenomes/$genome_g/$genome_g";
-my  $GSNAP_index_g     = "RefGenomes/$genome_g/$genome_g/$genome_g";
-my  $BBMap_index_g     = "/media/yp/ProgramFiles/.MyProgramFiles/4_ChIPseq/3-Remove-Correct/bbmap/RefGenomes/$genome_g";
-my  $Stampy_index_g    = "$commonPath_g/stampy/RefGenomes/$genome_g/$genome_g";
-my  $NGM_index_g       = "$commonPath_g/NextGenMap/RefGenomes/Shortcuts/$genome_g/$genome_g.fasta";
-
-
-
-my  $commonPath2_g      = "/media/yp/ProgramFiles/.MyProgramFiles/5-RNAseq";
-
-my  $Kallisto_index_g  = "$commonPath2_g/kallisto/RefGenomes/$genome_g/$genome_g.RefSeq";
-my  $Salmon_index_g    = "$commonPath2_g/Salmon/RefGenomes/$genome_g/$genome_g.RefSeq";
-my  $STAR_index_g      = "$commonPath2_g/STAR/RefGenomes/$genome_g";
-my  $HISAT2_index_g    = "$commonPath2_g/hisat2/RefGenomes/$genome_g/$genome_g";
-my  $RSEM_index_g      = "$commonPath2_g/RSEM/RefGenomes/$genome_g/$genome_g.RefSeq";
-my  $RapMap_index_g    = "$commonPath2_g/RapMap/RefGenomes/$genome_g/$genome_g.RefSeq";
-
-my  $Kallisto_ensembl_index_g  = "$commonPath2_g/kallisto/RefGenomes/$genome_g.ensembl.cDNA/$genome_g.ensembl.cDNA";
-my  $Salmon_ensembl_index_g    = "$commonPath2_g/Salmon/RefGenomes/$genome_g.ensembl.cDNA/$genome_g.ensembl.cDNA";
-my  $RSEM_ensembl_index_g      = "$commonPath2_g/RSEM/RefGenomes/$genome_g.ensembl.cDNA/$genome_g.ensembl.cDNA";
-my  $RapMap_ensembl_index_g    = "$commonPath2_g/RapMap/RefGenomes/$genome_g.ensembl.cDNA/$genome_g.ensembl.cDNA";
 ###################################################################################################################################################################################################
 
 
@@ -202,26 +182,12 @@ sub fullPathApp  {
 }
 
 my  $Picard_g = &fullPathApp("picard.jar");
-my  $phantompeakqualtools_g = &fullPathApp("run_spp.R");
 my  $QoRTs_g = &fullPathApp("QoRTs.jar");
 my  $RNASeQC_g = &fullPathApp("RNA-SeQC.jar");
-
-
-&printVersion("kallisto");
-&printVersion("salmon");
-&printVersion("STAR    --version");
-&printVersion("hisat2  --version");
-&printVersion("rsem-calculate-expression --version");
-&printVersion("rapmap");
-&printVersion("subjunc -v");
-&printVersion("novoalign --version");
-&printVersion("gsnap --version");
-&printVersion("bbmap.sh -h");
 
 &printVersion("samtools");
 &printVersion("fastqc    -v");
 &printVersion("samstat   -v");
-&printVersion("Rscript  $phantompeakqualtools_g");
 &printVersion("preseq");
 &printVersion("qualimap  -v");
 &printVersion("multiqc   --version");
@@ -271,7 +237,7 @@ say   "Checking all the input file names ......";
 my @groupFiles = ();
 my $fileNameBool = 1;
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
-        next unless $inputFiles_g[$i] =~ m/\.fastq$/;
+        next unless $inputFiles_g[$i] =~ m/\.bam$/;
         next unless $inputFiles_g[$i] !~ m/^[.]/;
         next unless $inputFiles_g[$i] !~ m/[~]$/;
         next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
@@ -280,8 +246,8 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         my $temp = $inputFiles_g[$i];
         $groupFiles[++$#groupFiles] = $inputFiles_g[$i];
         $temp =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/   or  die   "wrong-1: ## $temp ##";
-        $temp =~ m/_(Rep[1-9])\.fastq$/  or  $temp =~ m/_(Rep[1-9])_?([1-2]?)\.fastq$/   or  die   "wrong-2: ## $temp ##";
-        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.fastq$/) {
+        $temp =~ m/_(Rep[1-9])\.bam$/   or  die   "wrong-2: ## $temp ##";
+        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.bam$/) {
              $fileNameBool = 0;
         }
 }
@@ -307,50 +273,29 @@ say  "\n\t\tThere are $numGroup groups.";
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting single-end and paired-end FASTQ files in input folder ......";     ## The fastq files are same between input folder and ouput folder.
-my @singleEnd_g   = ();
-my @pairedEnd_g   = ();
-open(seqFiles_FH_g, ">", "$output2_g/singleEnd-pairedEnd-Files.txt")  or  die;
-for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
-    next unless $inputFiles_g[$i] =~ m/\.fastq$/;
+say   "Detecting BAM files in input folder ......";
+my @BAMfiles_g = ();
+{
+open(seqFiles_FH, ">", "$output2_g/BAM-Files.txt")  or  die; 
+for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
+    next unless $inputFiles_g[$i] =~ m/\.bam$/;
     next unless $inputFiles_g[$i] !~ m/^[.]/;
     next unless $inputFiles_g[$i] !~ m/[~]$/;
     next unless $inputFiles_g[$i] !~ m/^unpaired/;
-    next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
-    say    "\t......$inputFiles_g[$i]";
-    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])_?([1-2]?)\.fastq$/   or  die;
-    if ($inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.fastq$/) {   ## sinlge end sequencing files.
-        $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.fastq$/  or  die;
-        $singleEnd_g[$#singleEnd_g+1] =  $inputFiles_g[$i];
-        say         "\t\t\t\tSingle-end sequencing files: $inputFiles_g[$i]\n";
-        say  seqFiles_FH_g  "Single-end sequencing files: $inputFiles_g[$i]\n";
-    }else{     ## paired end sequencing files.
-        $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])_([1-2])\.fastq$/  or  die;
-        if ($inputFiles_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/) { ## The two files of one paired sequencing sample are always side by side.
-            my $temp = $1;
-            my $end1 = $temp."_1.fastq";
-            my $end2 = $temp."_2.fastq";
-            (-e  "$input_g/$end1")  or die;
-            (-e  "$input_g/$end2")  or die;
-            $pairedEnd_g[$#pairedEnd_g+1] =  $end1;
-            $pairedEnd_g[$#pairedEnd_g+1] =  $end2;
-            say        "\t\t\t\tPaired-end sequencing files: $end1,  $end2\n";
-            say seqFiles_FH_g  "Paired-end sequencing files: $end1,  $end2\n";
-        }
-    }
+    say    "\t......$inputFiles_g[$i]"; 
+    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
+    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
 }
-( ($#pairedEnd_g+1)%2 == 0 )  or die;
-say   seqFiles_FH_g  "\n\n\n\n\n";
-say   seqFiles_FH_g  "All single-end sequencing files:@singleEnd_g\n\n\n";
-say   seqFiles_FH_g  "All paired-end sequencing files:@pairedEnd_g\n\n\n";
-say          "\t\t\t\tAll single-end sequencing files:@singleEnd_g\n\n";
-say          "\t\t\t\tAll paired-end sequencing files:@pairedEnd_g\n\n";
-my $numSingle_g = $#singleEnd_g + 1;
-my $numPaired_g = $#pairedEnd_g + 1;
-say seqFiles_FH_g   "\nThere are $numSingle_g single-end sequencing files.\n";
-say seqFiles_FH_g   "\nThere are $numPaired_g paired-end sequencing files.\n";
-say           "\t\t\t\tThere are $numSingle_g single-end sequencing files.\n";
-say           "\t\t\t\tThere are $numPaired_g paired-end sequencing files.\n";
+
+say   seqFiles_FH  "\n\n\n\n\n";  
+say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
+say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
+my $num1 = $#BAMfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 BAM files.\n";
+say         "\t\t\t\tThere are $num1 BAM files.\n";
+}
 ###################################################################################################################################################################################################
 
 
@@ -363,47 +308,37 @@ sub  myQC_BAM_1  {
     my $QCresults = "$dir1/QC_Results";
     my $SAMtools  = "$QCresults/1_SAMtools";
     my $FastQC    = "$QCresults/2_FastQC";
-    my $qualimap0  = "$QCresults/3_qualimap_BAM";
-    my $qualimap1 = "$QCresults/3_qualimap_RNA1_PE";
-    my $qualimap2 = "$QCresults/3_qualimap_RNA2_SE";
-    my $qualimap3 = "$QCresults/3_qualimap_RNA3_PE_ensembl";
-    my $qualimap4 = "$QCresults/3_qualimap_RNA4_SE_ensembl";
+    my $qualimap  = "$QCresults/3_qualimap";
     my $samstat   = "$QCresults/4_samstat";
-
-    my $MultiQC1  = "$QCresults/5_MultiQC_FastQC";
-    my $MultiQC2  = "$QCresults/5_MultiQC_qualimap0";
-    my $MultiQC3  = "$QCresults/5_MultiQC_SAMtools";
-    my $MultiQC5A = "$QCresults/5_MultiQC_qualimap_RNA1_PE";
-    my $MultiQC5B = "$QCresults/5_MultiQC_qualimap_RNA2_EE";
-    my $MultiQC5C = "$QCresults/5_MultiQC_qualimap_RNA3_PE_ensembl";
-    my $MultiQC5D = "$QCresults/5_MultiQC_qualimap_RNA4_SE_ensembl";
+    my $Bamtools  = "$QCresults/5_Bamtools";
+    my $MultiQC1  = "$QCresults/6_MultiQC1_FastQC";
+    my $MultiQC2  = "$QCresults/6_MultiQC2_qualimap";
+    my $MultiQC3  = "$QCresults/6_MultiQC3_SAMtools";
+    my $MultiQC4  = "$QCresults/6_MultiQC4_Bamtools";
+    my $MultiQC5  = "$QCresults/6_MultiQC5_Aligner";
 
     &myMakeDir($QCresults);
     &myMakeDir($SAMtools);
     &myMakeDir($FastQC);
-    &myMakeDir($qualimap0);
-    &myMakeDir($qualimap1);
-    &myMakeDir($qualimap2);
-    #&myMakeDir($qualimap3);
-    #&myMakeDir($qualimap4);
+    &myMakeDir($qualimap);
     &myMakeDir($samstat);
-
+    &myMakeDir($Bamtools);
     &myMakeDir($MultiQC1);
     &myMakeDir($MultiQC2);
     &myMakeDir($MultiQC3);
-    &myMakeDir($MultiQC5A);
-    &myMakeDir($MultiQC5B);
-    #&myMakeDir($MultiQC5C);
-    #&myMakeDir($MultiQC5D);
+    &myMakeDir($MultiQC4);
+    &myMakeDir($MultiQC5);
 
     opendir(my $FH_Files, $dir1) || die;
     my @Files = readdir($FH_Files);
+
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat, Bamtools and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.sam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.sam$//  ||  die;
@@ -412,23 +347,18 @@ sub  myQC_BAM_1  {
         system("samtools  flagstat        $dir1/$temp.bam      >>$SAMtools/$temp.flagstat      2>&1");
         system(`samtools  idxstats        $dir1/$temp.bam      >>$SAMtools/$temp.idxstats      2>&1`);
         system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam                   >> $FastQC/$temp.runLog      2>&1" );
-        system( "qualimap  bamqc   -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap0/$temp   --java-mem-size=16G   >> $qualimap0/$temp.runLog    2>&1" );
-        system( "qualimap  rnaseq  -bam $dir1/$temp.bam   -gtf 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF     -oc $temp.computed_counts   --paired   -outdir $qualimap1/$temp   --java-mem-size=16G   >> $qualimap1/$temp.runLog    2>&1" );
-        system( "qualimap  rnaseq  -bam $dir1/$temp.bam   -gtf 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF     -oc $temp.computed_counts              -outdir $qualimap2/$temp   --java-mem-size=16G   >> $qualimap2/$temp.runLog    2>&1" );
-        #system( "qualimap  rnaseq  -bam $dir1/$temp.bam   -gtf 0-Other/Shortcuts/$genome_g/$genome_g.ensembl.cDNA.GTF     -oc $temp.computed_counts   --paired   -outdir $qualimap3/$temp   --java-mem-size=16G   >> $qualimap3/$temp.runLog    2>&1" );
-        #system( "qualimap  rnaseq  -bam $dir1/$temp.bam   -gtf 0-Other/Shortcuts/$genome_g/$genome_g.ensembl.cDNA.GTF     -oc $temp.computed_counts              -outdir $qualimap4/$temp   --java-mem-size=16G   >> $qualimap4/$temp.runLog    2>&1" );
+        system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=16G   >> $qualimap/$temp.runLog    2>&1" );
         system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");
         system( "rm   $dir1/$temp.sam" );
+        system( "bamtools   count    -in  $dir1/$temp.bam      > $Bamtools/bamtools_count.$temp.txt  ");
+        system( "bamtools   stats    -in  $dir1/$temp.bam      > $Bamtools/bamtools_stats.$temp.txt  ");   
     }
 
     system( "multiqc    --title FastQC     --verbose  --export   --outdir $MultiQC1          $FastQC            >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
-    system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC2          $qualimap0         >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
+    system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC2          $qualimap          >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
     system( "multiqc    --title SAMtools   --verbose  --export   --outdir $MultiQC3          $SAMtools          >> $MultiQC3/MultiQC.SAMtools.runLog   2>&1" );
-
-    system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC5A         $qualimap1         >> $MultiQC5A/MultiQC.qualimap.runLog   2>&1" );
-    system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC5B         $qualimap2         >> $MultiQC5B/MultiQC.qualimap.runLog   2>&1" );
-    #system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC5C         $qualimap3         >> $MultiQC5C/MultiQC.qualimap.runLog   2>&1" );
-    #system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC5D         $qualimap4         >> $MultiQC5D/MultiQC.qualimap.runLog   2>&1" );
+    system( "multiqc    --title BAMtools   --verbose  --export   --outdir $MultiQC4          $Bamtools          >> $MultiQC4/MultiQC.BAMtools.runLog   2>&1" );
+    system( "multiqc    --title Aligner    --verbose  --export   --outdir $MultiQC5    --ignore QC_Results   $dir1   >> $MultiQC5/MultiQC.Aligner.runLog    2>&1" );
 }
 ###################################################################################################################################################################################################
 
@@ -440,37 +370,34 @@ sub  myQC_BAM_1  {
 sub  myQC_BAM_2  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $Fingerprint    = "$QCresults/6_Fingerprint";
-    my $Fingerprint2   = "$QCresults/7_Fingerprint2";
-    my $goleft         = "$QCresults/8_goleft";
-    my $phantompeak    = "$QCresults/9_phantompeakqualtools";
+    my $Fingerprint    = "$QCresults/7_Fingerprint";
+    my $Fingerprint2   = "$QCresults/8_Fingerprint2";
+    my $goleft         = "$QCresults/9_goleft";
     my $MultiQC1       = "$QCresults/10_MultiQC_goleft";
 
     &myMakeDir($QCresults);
     &myMakeDir($Fingerprint);
     &myMakeDir($Fingerprint2);
     &myMakeDir($goleft);
-    &myMakeDir($phantompeak);
     &myMakeDir($MultiQC1);
 
     opendir(my $FH_Files, $dir1) || die;
     my @Files = readdir($FH_Files);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft , phantompeakqualtools and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.bam$//  ||  die;
-        system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint/$temp.pdf    --plotTitle $temp   --outRawCounts  $Fingerprint/$temp.cov   --outQualityMetrics $Fingerprint/$temp.Metrics.txt   --numberOfProcessors $numCores_g   --binSize 500    >> $Fingerprint/$temp.runLog    2>&1");                           
-        system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint2/$temp.pdf   --plotTitle $temp   --outRawCounts  $Fingerprint2/$temp.cov  --outQualityMetrics $Fingerprint2/$temp.Metrics.txt  --numberOfProcessors $numCores_g   --binSize 5000   >> $Fingerprint2/$temp.runLog   2>&1");                                   
+        system("plotFingerprint --bamfiles $dir1/$temp.bam     --numberOfSamples 1000000    --plotFile $Fingerprint/$temp.pdf    --plotTitle $temp   --outRawCounts  $Fingerprint/$temp.cov   --outQualityMetrics $Fingerprint/$temp.Metrics.txt   --numberOfProcessors $numCores_g   --binSize 500    >> $Fingerprint/$temp.runLog    2>&1");                           
+        system("plotFingerprint --bamfiles $dir1/$temp.bam     --numberOfSamples 1000000    --plotFile $Fingerprint2/$temp.pdf   --plotTitle $temp   --outRawCounts  $Fingerprint2/$temp.cov  --outQualityMetrics $Fingerprint2/$temp.Metrics.txt  --numberOfProcessors $numCores_g   --binSize 5000   >> $Fingerprint2/$temp.runLog   2>&1");                                   
         system("goleft   covstats    $dir1/$temp.bam  > $goleft/$temp.covstats " );
         system("goleft   indexcov  --sex chrX,chrY  -d $goleft/$temp  $dir1/$temp.bam  > $goleft/$temp.indexcov.runLog      2>&1" );
-        &myMakeDir("$phantompeak/$temp");
-        system("Rscript    $phantompeakqualtools_g    -c=$dir1/$temp.bam   -p=$numCores_g   -odir=$phantompeak/$temp    -savd=$phantompeak/$temp/rdatafile.RData     -savp=$phantompeak/$temp/plotdatafile.pdf   -out=$phantompeak/$temp/resultfile.txt   >> $phantompeak/$temp.runLog   2>&1");
     }
     system("sleep 5s");
     system( "multiqc    --title goleft    --verbose  --export   --outdir $MultiQC1          $goleft     >> $MultiQC1/MultiQC.goleft.runLog    2>&1" );
@@ -506,6 +433,7 @@ sub  myQC_BAM_3  {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.bam$//  ||  die;
@@ -545,19 +473,18 @@ sub  myQC_BAM_4  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
     my $SubreadUti= "$QCresults/14_SubreadUti";
-
     &myMakeDir("$QCresults");
     &myMakeDir("$SubreadUti");
-
     opendir(my $DH_map, $dir1) || die;
     my @mapFiles = readdir($DH_map);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of bam files by using Subreads utilities and goleft ......";
+    say   "Detecting the quality of bam files by using Subreads utilities ......";
     for (my $i=0; $i<=$#mapFiles; $i++) {
            next unless $mapFiles[$i] =~ m/\.bam$/;
            next unless $mapFiles[$i] !~ m/^[.]/;
            next unless $mapFiles[$i] !~ m/[~]$/;
+           next unless $mapFiles[$i] !~ m/^removed_/;
            my $temp = $mapFiles[$i];
            $temp =~ s/\.bam$//  ||  die;
            say   "\t......$mapFiles[$i]";
@@ -573,7 +500,7 @@ sub  myQC_BAM_4  {
 
 
 
-
+ 
 
 ###################################################################################################################################################################################################
 sub  myQC_BAM_RNA  {
@@ -601,6 +528,7 @@ sub  myQC_BAM_RNA  {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.bam$//  ||  die;
@@ -638,36 +566,51 @@ sub  myQC_BAM_RNA  {
 
 
 ###################################################################################################################################################################################################
-my $Kallisto_1A_g   = "$output_g/1A_Kallisto";
-&myMakeDir($Kallisto_1A_g);
-{ ########## Start Kallisto
+sub myFilterSAM  {
+    my $folder  = $_[0];  ## input and output dir
+    my $filePre = $_[1];  ## prefix of name of input and out file
+    open(FILE1, "<", "$folder/$filePre.t.sam")          or die "$!";                    
+    open(FILE2, ">", "$folder/$filePre.sam")            or die "$!";  
+    open(FILE3, ">", "$folder/removed_$filePre.sam")    or die "$!";  
+    my $n1 = 0; ## all reads
+    my $n2 = 0; ## kept reads
+    my $n3 = 0; ## removed reads
+    while (my $line1=<FILE1>) {
+        if ($line1 =~ m/^@/) {
+            print  FILE2  $line1   ;  
+            print  FILE3  $line1   ;  
+        }else{
+            $line1 =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+/  or die;
+            my $chr = $3;
+            $n1++;
+            if( $chr =~ m/(chrM)|(chrUn_)|(chr\S+_random)|(chr\S+_alt)/ ) {
+                 print  FILE3  $line1;  $n3++; 
+            }else{
+                 print  FILE2  $line1;  $n2++; 
+            } 
+        }
+    }
+    print      "\t\tall reads in $filePre: $n1\n";
+    print     "\t\tkept reads in $filePre: $n2\n";
+    print  "\t\tremoved reads in $filePre: $n3\n\n\n";
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using Kallisto ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH,  ">>",  "$Kallisto_1A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("kallisto quant  --threads=$numCores_g       --index=$Kallisto_index_g    --output-dir=$Kallisto_1A_g/$temp    $input_g/$end1.fastq  $input_g/$end2.fastq    >>$Kallisto_1A_g/$temp.runLog  2>&1 ");
+say   "Removing some reads ......";
+for (my $i=0; $i<=$#BAMfiles_g; $i++) {
+    my $temp = $BAMfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$BAMfiles_g[$i]";
+    system(`samtools  view   -h    --threads $numCores_g    -q 20    -o $output_g/$temp.t.sam   $input_g/$temp.bam    >> $output2_g/$temp.runLog     2>&1  `);  
+    &myFilterSAM($output_g, $temp); 
+    system("rm   $output_g/$temp.t.sam"); 
 }
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("kallisto quant  --threads=$numCores_g   --single    -l 250    -s 100    --index=$Kallisto_index_g    --output-dir=$Kallisto_1A_g/$temp    $input_g/$temp.fastq    >>$Kallisto_1A_g/$temp.runLog  2>&1");
-}
-
-&myMakeDir("$output2_g/1A_MultiQC_Kallisto");
-system( "multiqc    --title Kallisto        --verbose  --export   --outdir $output2_g/1A_MultiQC_Kallisto        $Kallisto_1A_g     >> $output2_g/1A_MultiQC_Kallisto/MultiQC.Kallisto.runLog    2>&1" );
-
-}  ########## End Kallisto
 ###################################################################################################################################################################################################
 
 
@@ -675,600 +618,11 @@ system( "multiqc    --title Kallisto        --verbose  --export   --outdir $outp
 
 
 ###################################################################################################################################################################################################
-my $Kallisto_1B_g   = "$output_g/1B_Kallisto_ensembl";
-&myMakeDir($Kallisto_1B_g);
-{ ########## Start Kallisto
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using Kallisto ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH,  ">>",  "$Kallisto_1B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("kallisto quant  --threads=$numCores_g       --index=$Kallisto_ensembl_index_g    --output-dir=$Kallisto_1B_g/$temp    $input_g/$end1.fastq  $input_g/$end2.fastq    >>$Kallisto_1B_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("kallisto quant  --threads=$numCores_g   --single    -l 250    -s 100    --index=$Kallisto_ensembl_index_g    --output-dir=$Kallisto_1B_g/$temp    $input_g/$temp.fastq    >>$Kallisto_1B_g/$temp.runLog  2>&1");
-}
-
-&myMakeDir("$output2_g/1B_MultiQC_Kallisto");
-system( "multiqc    --title Kallisto        --verbose  --export   --outdir $output2_g/1B_MultiQC_Kallisto        $Kallisto_1B_g     >> $output2_g/1B_MultiQC_Kallisto/MultiQC.Kallisto.runLog    2>&1" );
-
-}  ########## End Kallisto
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $Salmon_2A_g   = "$output_g/2A_Salmon";
-&myMakeDir($Salmon_2A_g);
-{ ########## Start Salmon
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using Salmon ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$Salmon_2A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("salmon quant  --threads $numCores_g   --libType IU      --index $Salmon_index_g    --output $Salmon_2A_g/$temp    --mates1 $input_g/$end1.fastq  --mates2 $input_g/$end2.fastq    >>$Salmon_2A_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("salmon quant  --threads $numCores_g    --libType U      --index $Salmon_index_g    --output $Salmon_2A_g/$temp    --unmatedReads $input_g/$temp.fastq      >>$Salmon_2A_g/$temp.runLog  2>&1 ");
-}
-
-&myMakeDir("$output2_g/2A_MultiQC_Salmon");
-system( "multiqc    --title Salmon        --verbose  --export   --outdir $output2_g/2A_MultiQC_Salmon        $Salmon_2A_g     >> $output2_g/2A_MultiQC_Salmon/MultiQC.Salmon.runLog    2>&1" );
-
-}  ########## End Salmon
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $Salmon_2B_g   = "$output_g/2B_Salmon_ensembl";
-&myMakeDir($Salmon_2B_g);
-{ ########## Start Salmon
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using Salmon ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$Salmon_2B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("salmon quant  --threads $numCores_g   --libType IU      --index $Salmon_ensembl_index_g    --output $Salmon_2B_g/$temp    --mates1 $input_g/$end1.fastq  --mates2 $input_g/$end2.fastq    >>$Salmon_2B_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("salmon quant  --threads $numCores_g    --libType U      --index $Salmon_ensembl_index_g    --output $Salmon_2B_g/$temp    --unmatedReads $input_g/$temp.fastq      >>$Salmon_2B_g/$temp.runLog  2>&1 ");
-}
-
-&myMakeDir("$output2_g/2B_MultiQC_Salmon");
-system( "multiqc    --title Salmon        --verbose  --export   --outdir $output2_g/2B_MultiQC_Salmon        $Salmon_2B_g     >> $output2_g/2B_MultiQC_Salmon/MultiQC.Salmon.runLog    2>&1" );
-
-}  ########## End Salmon
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $STAR_3A_g   = "$output_g/3A_STAR";
-&myMakeDir($STAR_3A_g);
-
-{ ########## Start STAR
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using STAR ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$STAR_3A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("STAR  --runMode alignReads    --runThreadN $numCores_g    --sjdbGTFfile 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF    --quantMode   GeneCounts    --outFileNamePrefix  $STAR_3A_g/$temp.   --genomeDir $STAR_index_g  --readFilesIn $input_g/$end1.fastq  $input_g/$end2.fastq   >>$STAR_3A_g/$temp.runLog  2>&1 ");
-        system("rename  s/Aligned.out.sam/sam/   $STAR_3A_g/*Aligned.out.sam");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("STAR  --runMode alignReads   --runThreadN $numCores_g    --sjdbGTFfile 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF     --quantMode   GeneCounts     --outFileNamePrefix  $STAR_3A_g/$temp.   --genomeDir $STAR_index_g  --readFilesIn $input_g/$temp.fastq   >>$STAR_3A_g/$temp.runLog  2>&1 ");
-        system("rename  s/Aligned.out.sam/sam/   $STAR_3A_g/*Aligned.out.sam");
-}
-
-&myMakeDir("$output2_g/3A_MultiQC_STAR");
-system( "multiqc    --title STAR        --verbose  --export   --outdir $output2_g/3A_MultiQC_STAR        $STAR_3A_g     >> $output2_g/3A_MultiQC_STAR/MultiQC.STAR.runLog    2>&1" );
-
-}  ########## End STAR
-
-&myQC_BAM_1($STAR_3A_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $STAR_3B_g   = "$output_g/3B_Trim_STAR";
-&myMakeDir($STAR_3B_g);
-
-{ ########## Start STAR
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using STAR ......";
-my $inputDir2 = "2-mergedFASTQ";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$STAR_3B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("STAR  --runMode alignReads    --runThreadN $numCores_g    --sjdbGTFfile 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF    --quantMode   GeneCounts       --clip3pNbases $trim3_g    --clip5pNbases $trim5_g    --outFileNamePrefix  $STAR_3B_g/$temp.   --genomeDir $STAR_index_g  --readFilesIn $inputDir2/$end1.fastq  $inputDir2/$end2.fastq   >>$STAR_3B_g/$temp.runLog  2>&1 ");
-        system("rename  s/Aligned.out.sam/sam/   $STAR_3B_g/*Aligned.out.sam");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("STAR  --runMode alignReads   --runThreadN $numCores_g    --sjdbGTFfile 0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF     --quantMode   GeneCounts        --clip3pNbases $trim3_g    --clip5pNbases $trim5_g    --outFileNamePrefix  $STAR_3B_g/$temp.   --genomeDir $STAR_index_g  --readFilesIn $inputDir2/$temp.fastq   >>$STAR_3B_g/$temp.runLog  2>&1 ");
-        system("rename  s/Aligned.out.sam/sam/   $STAR_3B_g/*Aligned.out.sam");
-}
-
-&myMakeDir("$output2_g/3B_MultiQC_STAR");
-system( "multiqc    --title STAR        --verbose  --export   --outdir $output2_g/3B_MultiQC_STAR        $STAR_3B_g     >> $output2_g/3B_MultiQC_STAR/MultiQC.STAR.runLog    2>&1" );
-
-}  ########## End STAR
-
-&myQC_BAM_1($STAR_3B_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $HISAT2_4A_g   = "$output_g/4A_HISAT2";
-&myMakeDir($HISAT2_4A_g);
-
-{ ########## Start HISAT2
-say   "\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using HISAT2 ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$HISAT2_4A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("hisat2         --threads $numCores_g   -q   --phred33   --end-to-end    -x $HISAT2_index_g    -1 $input_g/$end1.fastq        -2 $input_g/$end2.fastq     -S $HISAT2_4A_g/$temp.sam    >>$HISAT2_4A_g/$temp.runLog  2>&1");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\t......$singleEnd_g[$i]";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("hisat2        --threads $numCores_g   -q   --phred33   --end-to-end    -x $HISAT2_index_g    -U $input_g/$temp.fastq                                    -S $HISAT2_4A_g/$temp.sam    >>$HISAT2_4A_g/$temp.runLog  2>&1");
-}
-
-}  ########## End HISAT2
-
-&myQC_BAM_1($HISAT2_4A_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $HISAT2_4B_g   = "$output_g/4B_Trim_HISAT2";
-&myMakeDir($HISAT2_4B_g);
-
-{ ########## Start HISAT2
-say   "\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using HISAT2 ......";
-my $inputDir2 = "2-mergedFASTQ";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$HISAT2_4B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("hisat2         --threads $numCores_g   --sp 2,0   -q   --phred33   --end-to-end    -x $HISAT2_index_g   --trim5 $trim5_g  --trim3 $trim3_g    -1 $inputDir2/$end1.fastq        -2 $inputDir2/$end2.fastq     -S $HISAT2_4B_g/$temp.sam    >>$HISAT2_4B_g/$temp.runLog  2>&1");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\t......$singleEnd_g[$i]";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("hisat2        --threads $numCores_g   --sp 2,0   -q   --phred33   --end-to-end    -x $HISAT2_index_g   --trim5 $trim5_g  --trim3 $trim3_g    -U $inputDir2/$temp.fastq                                    -S $HISAT2_4B_g/$temp.sam    >>$HISAT2_4B_g/$temp.runLog  2>&1");
-}
-
-}  ########## End HISAT2
-
-&myQC_BAM_1($HISAT2_4B_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $RSEM_5A_g   = "$output_g/5A_RSEM";
-&myMakeDir($RSEM_5A_g);
-{ ########## Start RSEM
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using RSEM ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$RSEM_5A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("rsem-calculate-expression  -p $numCores_g  --paired-end      --bowtie2    --estimate-rspd   --append-names    $input_g/$end1.fastq  $input_g/$end2.fastq   $RSEM_index_g    $RSEM_5A_g/$temp    >>$RSEM_5A_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("rsem-calculate-expression  -p $numCores_g  --fragment-length-mean 250    --fragment-length-sd 100     --bowtie2    --estimate-rspd   --append-names    $input_g/$temp.fastq     $RSEM_index_g    $RSEM_5A_g/$temp    >>$RSEM_5A_g/$temp.runLog  2>&1 ");
-}
-
-}  ########## End RSEM
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $RSEM_5B_g   = "$output_g/5B_RSEM_ensembl";
-&myMakeDir($RSEM_5B_g);
-{ ########## Start RSEM
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using RSEM ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$RSEM_5B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("rsem-calculate-expression  -p $numCores_g  --paired-end      --bowtie2    --estimate-rspd   --append-names    $input_g/$end1.fastq  $input_g/$end2.fastq   $RSEM_ensembl_index_g    $RSEM_5B_g/$temp    >>$RSEM_5B_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("rsem-calculate-expression  -p $numCores_g  --fragment-length-mean 250    --fragment-length-sd 100     --bowtie2    --estimate-rspd   --append-names    $input_g/$temp.fastq     $RSEM_ensembl_index_g    $RSEM_5B_g/$temp    >>$RSEM_5B_g/$temp.runLog  2>&1 ");
-}
-
-}  ########## End RSEM
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-&myQC_BAM_RNA($STAR_3A_g);
-&myQC_BAM_RNA($STAR_3B_g);
-&myQC_BAM_RNA($HISAT2_4A_g);
-&myQC_BAM_RNA($HISAT2_4B_g);
-
-&myQC_BAM_2($STAR_3A_g);
-&myQC_BAM_2($STAR_3B_g);
-&myQC_BAM_2($HISAT2_4A_g);
-&myQC_BAM_2($HISAT2_4B_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $BBMap_g  = "$output_g/6_BBMap";
-&myMakeDir($BBMap_g);
-{ ########## Start BBMap
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using BBMap ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$BBMap_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("bbmap.sh     path=$BBMap_index_g       out=$BBMap_g/$temp.sam  maxindel=200000  local=t           threads=$numCores_g   in=$input_g/$end1.fastq  in2=$input_g/$end2.fastq   -Xmx26g >>$BBMap_g/$temp.runLog   2>&1");
-}
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("bbmap.sh      path=$BBMap_index_g        out=$BBMap_g/$temp.sam   maxindel=200000    local=t         threads=$numCores_g   in=$input_g/$temp.fastq   -Xmx26g  >>$BBMap_g/$temp.runLog   2>&1");
-}
-}  ########## End BBMap
-&myQC_BAM_1($BBMap_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $RapMap_7A_g   = "$output_g/7A_RapMap";
-&myMakeDir($RapMap_7A_g);
-{ ########## Start RapMap
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using RapMap ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$RapMap_7A_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("rapmap   quasimap  --numThreads $numCores_g   --maxNumHits 5      --index $RapMap_index_g    --output $RapMap_7A_g/$temp.sam    -1 $input_g/$end1.fastq  -2 $input_g/$end2.fastq    >>$RapMap_7A_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("rapmap   quasimap  --numThreads $numCores_g    --maxNumHits 5      --index $RapMap_index_g    --output $RapMap_7A_g/$temp.sam    -r $input_g/$temp.fastq      >>$RapMap_7A_g/$temp.runLog  2>&1 ");
-}
-
-}  ########## End RapMap
-&myQC_BAM_1($RapMap_7A_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $RapMap_7B_g   = "$output_g/7B_RapMap_ensembl";
-&myMakeDir($RapMap_7B_g);
-{ ########## Start RapMap
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference transcriptome by using RapMap ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\n\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$RapMap_7B_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,   $end2\n";
-        system("rapmap   quasimap  --numThreads $numCores_g   --maxNumHits 5      --index $RapMap_ensembl_index_g    --output $RapMap_7B_g/$temp.sam    -1 $input_g/$end1.fastq  -2 $input_g/$end2.fastq    >>$RapMap_7B_g/$temp.runLog  2>&1 ");
-}
-
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("rapmap   quasimap  --numThreads $numCores_g    --maxNumHits 5      --index $RapMap_ensembl_index_g    --output $RapMap_7B_g/$temp.sam    -r $input_g/$temp.fastq      >>$RapMap_7B_g/$temp.runLog  2>&1 ");
-}
-
-}  ########## End RapMap
-&myQC_BAM_1($RapMap_7B_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $subread_g  = "$output_g/8_Subjunc";
-&myMakeDir($subread_g);
-{ ## Start subread
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using Subread ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say   "\t......$pairedEnd_g[$i]";
-        say   "\t......$pairedEnd_g[$i+1]";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$subread_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("subjunc  -T $numCores_g  -I 15  --multiMapping  -B 1  -M 6   --SAMoutput  -d 10  -D 800   -i $Subread_index_g   -r $input_g/$end1.fastq   -R  $input_g/$end2.fastq   -o  $subread_g/$temp.sam     >>$subread_g/$temp.runLog  2>&1");
-}
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\t......$singleEnd_g[$i]";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("subjunc  -T $numCores_g  -I 15  --multiMapping  -B 1  -M 6   --SAMoutput   -i $Subread_index_g    -r $input_g/$temp.fastq    -o $subread_g/$temp.sam        >>$subread_g/$temp.runLog   2>&1");
-}
-} ## End subread
-&myQC_BAM_1($subread_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $GSNAP_g  = "$output_g/9_GSNAP";
-&myMakeDir($GSNAP_g);
-{ ########## Start GSNAP
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using GSNAP ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]\n";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq" eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$GSNAP_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("gsnap    --db=$GSNAP_index_g    --nthreads=$numCores_g   --novelsplicing=1  --output-file=$GSNAP_g/$temp.sam   $input_g/$end1.fastq  $input_g/$end2.fastq    >>$GSNAP_g/$temp.runLog   2>&1");
-}
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\n\t......$singleEnd_g[$i]\n";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("gsnap    --db=$GSNAP_index_g    --nthreads=$numCores_g   --novelsplicing=1  --output-file=$GSNAP_g/$temp.sam       $input_g/$temp.fastq    >>$GSNAP_g/$temp.runLog   2>&1");
-}
-}  ########## End GSNAP
-&myQC_BAM_1($GSNAP_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-my $Novoalign_g  = "$output_g/10_Novoalign";
-&myMakeDir($Novoalign_g);
-{ ########## Start Novoalign
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Mapping reads to the reference genome by using Novoalign ......";
-for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
-        say    "\t......$pairedEnd_g[$i]";
-        say    "\t......$pairedEnd_g[$i+1]";
-        $pairedEnd_g[$i]   =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_1\.fastq$/   or  die;
-        $pairedEnd_g[$i+1] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))_2\.fastq$/   or  die;
-        my $temp = $1;
-        my $end1 = $temp."_1";
-        my $end2 = $temp."_2";
-        ("$end2.fastq"  eq  $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$Novoalign_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("novoalign  -a  -r Random  -d $Novoalign_index_g      -f $input_g/$end1.fastq  $input_g/$end2.fastq    -o SAM         > $Novoalign_g/$temp.sam   2> $Novoalign_g/$temp.alignment_stats.txt ");
-}
-for (my $i=0; $i<=$#singleEnd_g; $i++) {
-        say   "\t......$singleEnd_g[$i]";
-        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die;
-        my $temp = $1;
-        system("novoalign  -a  -r Random   -d $Novoalign_index_g      -f $input_g/$temp.fastq     -o SAM         > $Novoalign_g/$temp.sam   2> $Novoalign_g/$temp.alignment_stats.txt ");
-}
-}  ########## End Novoalign
-&myQC_BAM_1($Novoalign_g);
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-&myQC_BAM_RNA($BBMap_g);
-&myQC_BAM_RNA($RapMap_7A_g);
-&myQC_BAM_RNA($RapMap_7B_g);
-&myQC_BAM_RNA($subread_g);
-&myQC_BAM_RNA($GSNAP_g);
-&myQC_BAM_RNA($Novoalign_g);
-
-&myQC_BAM_2($BBMap_g);
-&myQC_BAM_2($RapMap_7A_g);
-&myQC_BAM_2($RapMap_7B_g);
-&myQC_BAM_2($subread_g);
-&myQC_BAM_2($GSNAP_g);
-&myQC_BAM_2($Novoalign_g);
-
-
-&myQC_BAM_3($STAR_3A_g);
-&myQC_BAM_3($STAR_3B_g);
-&myQC_BAM_3($HISAT2_4A_g);
-&myQC_BAM_3($HISAT2_4B_g);
-&myQC_BAM_3($BBMap_g);
-&myQC_BAM_3($RapMap_7A_g);
-&myQC_BAM_3($RapMap_7B_g);
-&myQC_BAM_3($subread_g);
-&myQC_BAM_3($GSNAP_g);
-&myQC_BAM_3($Novoalign_g);
-
-&myQC_BAM_4($STAR_3A_g);
-&myQC_BAM_4($STAR_3B_g);
-&myQC_BAM_4($HISAT2_4A_g);
-&myQC_BAM_4($HISAT2_4B_g);
-&myQC_BAM_4($BBMap_g);
-&myQC_BAM_4($RapMap_7A_g);
-&myQC_BAM_4($RapMap_7B_g);
-&myQC_BAM_4($subread_g);
-&myQC_BAM_4($GSNAP_g);
-&myQC_BAM_4($Novoalign_g);
-
+&myQC_BAM_1($output_g);
+&myQC_BAM_RNA($output_g);
+&myQC_BAM_2($output_g);
+&myQC_BAM_3($output_g); 
+&myQC_BAM_4($output_g); 
 ###################################################################################################################################################################################################
 
 
