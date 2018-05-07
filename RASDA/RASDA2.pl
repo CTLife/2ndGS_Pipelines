@@ -1,8 +1,8 @@
 #!/usr/bin/env  perl5
 use  strict;
 use  warnings;
+use  File::Copy;  
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -13,27 +13,47 @@ use  v5.22;
 
 
 ###################################################################################################################################################################################################
-my $genome_g = '';  ## such as "hg38", "ce11", "mm10".    
-my $input_g  = '';  ## such as "2-mergedFASTQ"   
-my $output_g = '';  ## such as "3-rmDupFASTQ"
+my $input_g  = '';  ## such as "2-rawFASTQ"   
+my $output_g = '';  ## such as "3-finalFASTQ"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
 
-        Step 2: Discard optical and PCR duplicates by using ParDRe and Clumpify in BBMap.
-                And  assess the quality of the raw reads to identify possible sequencing errors or biases by using 12 softwares:
-                FastQC, fastq-tools, bbcountunique.sh in BBMap, AfterQC, FaQCs, fastqp, FastQ_Screen, PRINSEQ, QC3, seqTools, ShortRead and Rqc. 
-                And aggregate the results from FastQC or FastQ_Screen analyses across many samples into a single report by using MultiQC.         
+        Step 2: Remove adaptors and PCR primers, trim and filter the reads by using TrimGalore and fastp.
+
+                And  assess the quality of the raw reads to identify possible sequencing errors or biases by using 8 softwares:
+                FastQC, fastp, bbcountunique.sh in BBMap, fastq-tools, FastQ_Screen, fastqp and PRINSEQ. 
+                And aggregate the results from FastQC and FastQ_Screen analyses across many samples into a single report 
+                by using MultiQC.
+     
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script. 
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,   5.22.1 
+                        cutadapt, 1.16
+                        TrimGalore, 0.4.5
+
+                        FastQC, 0.11.7
+                        fastp,  0.12.6
+                        bbcountunique.sh in BBMap, 37.98
+                        fastq-tools,   0.8
+                        FastQ_Screen,  0.11.4 
+                        fastqp,        0.3.2
+                        PRINSEQ,       0.20.4   
+                        MultiQC,       1.5    
+       
 
         Usage:
-               perl  RASDA2.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
+               perl  RASDA2.pl    [-version]    [-help]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  RASDA2.pl   -genome hg38   -in 2-mergedFASTQ   -out 3-rmDupFASTQ    > RASDA2.runLog  
+               perl  RASDA2.pl   -in 2-rawFASTQ   -out 3-finalFASTQ    > RASDA2.runLog  
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -42,8 +62,6 @@ my $HELP = '
         -help           Show this help message and exit.
 
         Required arguments:
-        -genome RefGenome   "RefGenome" is the short name of your reference genome, such as "hg38", "ce11", "mm10".    (no default)
-
         -in inputDir        "inputDir" is the name of input path that contains your FASTQ files.  (no default)
 
         -out outDir         "outDir" is the name of output path that contains your running results (fastq files) of this step.  (no default)
@@ -58,7 +76,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Second Step of RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 2nd Step of RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -66,12 +84,11 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';           ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '2-mergedFASTQ';  ## This is only an initialization value or suggesting value, not default value.
-$output_g = '3-rmDupFASTQ';   ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '2-rawFASTQ';      ## This is only an initialization value or suggesting value, not default value.
+$output_g = '3-finalFASTQ';    ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments 
-my $available = "   -version    -help   -genome   -in   -out  ";
+my $available = "   -version    -help   -in   -out  ";
 my $boole = 0;
 while( my ($key, $value) = each %args ) {
     if ( ($key =~ m/^\-/) and ($available !~ m/\s$key\s/) ) {say    "\n\tCann't recognize $key";  $boole = 1; }
@@ -85,21 +102,18 @@ if($boole == 1) {
 ## Get Arguments 
 if ( exists $args{'-version' }   )     { say  "\n$version\n";    exit 0; }
 if ( exists $args{'-help'    }   )     { say  "\n$HELP\n";       exit 0; }
-if ( exists $args{'-genome'  }   )     { $genome_g = $args{'-genome'  }; }else{say   "\n -genome is required.\n";   say  "\n$HELP\n";    exit 0; }
 if ( exists $args{'-in'      }   )     { $input_g  = $args{'-in'      }; }else{say   "\n -in     is required.\n";   say  "\n$HELP\n";    exit 0; }
 if ( exists $args{'-out'     }   )     { $output_g = $args{'-out'     }; }else{say   "\n -out    is required.\n";   say  "\n$HELP\n";    exit 0; }
 
 ## Conditions
-$genome_g =~ m/^\S+$/    ||  die   "\n\n$HELP\n\n";
 $input_g  =~ m/^\S+$/    ||  die   "\n\n$HELP\n\n";
 $output_g =~ m/^\S+$/    ||  die   "\n\n$HELP\n\n";
 
 ## Print Command Arguments to Standard Output
 say  "\n
         ################ Arguments ###############################
-                Reference Genome:  $genome_g
-                Input       Path:  $input_g
-                Output      Path:  $output_g
+                Input   Path:  $input_g
+                Output  Path:  $output_g
         ###############################################################
 \n";
 }
@@ -112,11 +126,6 @@ say  "\n
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
 say   "Running ......";
-
-## These files must be available:
-my $Rqc_g        = "0-Other/R_SRC/Rqc.R";
-my $seqTools_g   = "0-Other/R_SRC/seqTools.R";
-my $ShortRead_g  = "0-Other/R_SRC/ShortRead.R";
 
 sub myMakeDir  {
     my $path = $_[0];
@@ -131,7 +140,7 @@ my $output2_g = "$output_g/QC_Results";
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
 my $pattern_g    = "[-.0-9A-Za-z]+";
-my $numCores_g   = 4;
+my $numCores_g   = 8;
 ###################################################################################################################################################################################################
 
 
@@ -152,20 +161,18 @@ sub printVersion  {
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
 
-&printVersion(" ParDRe  -h ");
-&printVersion(" clumpify.sh  -h ");
+&printVersion(" cutadapt      --version ");
+&printVersion(" trim_galore   --version ");
 
-&printVersion(" fastqc        --version ");
-&printVersion(" multiqc       --version ");
-&printVersion(" fastq-uniq    --version ");
-&printVersion(" fastq_screen  --version ");
-&printVersion(" after.py      --version ");
-&printVersion(" FaQCs.pl         -h ");  
-&printVersion(" fastqp           -h ");
-&printVersion(" qc3.pl           -h ");
-&printVersion(" prinseq-lite.pl  -h ");
+&printVersion(" fastqc           --version ");
+&printVersion(" fastp            --version ");
 &printVersion(" bbcountunique.sh -h ");
-
+&printVersion(" bbmap.sh         --version ");
+&printVersion(" fastq-uniq       --version ");
+&printVersion(" fastq_screen     --version ");
+&printVersion(" fastqp           -h ");
+&printVersion(" prinseq-lite.pl  -version ");
+&printVersion(" multiqc          --version ");
 }
 ###################################################################################################################################################################################################
 
@@ -269,7 +276,9 @@ say           "\t\t\t\tThere are $numPaired_g paired-end sequencing files.\n";
 ###################################################################################################################################################################################################
 {
 say    "\n\n\n\n\n\n##################################################################################################";
-say    "Remove duplicates with clumpify.sh in BBMap and ParDRe ......"; 
+say    "Filtering the reads by using trim_galore ......"; 
+&myMakeDir("$output2_g/trim_galore");          
+
 for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         $pairedEnd_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])_1\.fastq$/   or  die;
         $pairedEnd_g[$i] =~ m/^(\S+)_1.fastq$/ or die;
@@ -279,21 +288,49 @@ for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
         say   "\t......$end1";
         say   "\t......$end2";
         ($end2 eq $pairedEnd_g[$i+1])  or  die;
-        open(tempFH, ">>", "$output2_g/paired-end-files.txt")  or  die;
-        say  tempFH  "$end1,  $end2\n";
-        system("clumpify.sh  in=$input_g/$end1  in2=$input_g/$end2    out=$output_g/clumpify.$end1  out2=$output_g/clumpify.$end2     dedupe=t   optical=t  dupedist=40  -Xmx20g  >> $output2_g/$temp.clumpify.runLog  2>&1");                                                   
-        system("ParDRe  -i $output_g/clumpify.$end1  -p $output_g/clumpify.$end2    -o  $output_g/$end1  -r $output_g/$end2     -t $numCores_g   -d 40    >> $output2_g/$temp.ParDRe.runLog  2>&1");                                                   
-        system( "rm   $output_g/clumpify.* " );
+        system("trim_galore  --quality 20   --phred33  --length 20       --output_dir  $output2_g/trim_galore    --paired  $input_g/$end1  $input_g/$end2          >> $output2_g/trim_galore/$temp.runLog  2>&1"); 
+        my $end1a = $temp."_1_val_1.fq";
+        my $end2a = $temp."_2_val_2.fq";        
+        move("$output2_g/trim_galore/$end1a",  "$output_g/$end1");
+        move("$output2_g/trim_galore/$end2a",  "$output_g/$end2");
 }
 for (my $i=0; $i<=$#singleEnd_g; $i++) {   
         say   "\t......$singleEnd_g[$i]" ;
         $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die; 
         my $temp = $1; 
-        system("clumpify.sh  in=$input_g/$temp.fastq    out=$output_g/clumpify.$temp.fastq      dedupe=t   optical=t   dupedist=40  -Xmx20g >> $output2_g/$temp.clumpify.runLog  2>&1");  
-        system("ParDRe  -i $output_g/clumpify.$temp.fastq    -o  $output_g/$temp.fastq   -t $numCores_g      -d 40    >> $output2_g/$temp.ParDRe.runLog  2>&1");                                                   
-        system( "rm   $output_g/clumpify.* " );                  
+        system("trim_galore  --quality 20   --phred33  --length 20       --output_dir  $output2_g/trim_galore       $input_g/$temp.fastq      >> $output2_g/trim_galore/$temp.runLog  2>&1");   
+        my $end1a = $temp."_trimmed.fq";
+        move("$output2_g/trim_galore/$end1a",  "$output_g/$temp.fastq");
 }
+ 
+
+say    "\n\n\n\n\n\n##################################################################################################";
+say    "Filtering the reads by using fastp ......"; 
+&myMakeDir("$output_g/fastp");          
+for (my $i=0; $i<=$#pairedEnd_g; $i=$i+2) {
+        $pairedEnd_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])_1\.fastq$/   or  die;
+        $pairedEnd_g[$i] =~ m/^(\S+)_1.fastq$/ or die;
+        my $temp = $1;   
+        my $end1 = $temp."_1.fastq";
+        my $end2 = $temp."_2.fastq";
+        say   "\t......$end1";
+        say   "\t......$end2";
+        ($end2 eq $pairedEnd_g[$i+1])  or  die;
+        &myMakeDir("$output_g/fastp/$temp");          
+        system( "fastp    --in1 $output_g/$end1  --in2 $output_g/$end2  --out1 $output_g/fastp/$end1  --out2  $output_g/fastp/$end2   -p  --report_title $temp  --thread $numCores_g     --json $output_g/fastp/$temp/$temp.json   --html $output_g/fastp/$temp/$temp.html   >> $output_g/fastp/$temp/$temp.runLog   2>&1" );                                           
 }
+for (my $i=0; $i<=$#singleEnd_g; $i++) {   
+        say   "\t......$singleEnd_g[$i]" ;
+        $singleEnd_g[$i] =~ m/^((\d+)_($pattern_g)_(Rep[1-9]))\.fastq$/   or  die; 
+        my $temp = $1; 
+        &myMakeDir("$output_g/fastp/$temp");          
+        system( "fastp    --in1 $output_g/$temp.fastq  --out1 $output_g/fastp/$temp.fastq   -p  --report_title $temp  --thread $numCores_g     --json $output_g/fastp/$temp/$temp.json   --html $output_g/fastp/$temp/$temp.html   >> $output_g/fastp/$temp/$temp.runLog   2>&1" );                                           
+}
+
+}
+
+print("\n\n\n\n\n#########################################\n");
+print("Now, you can start the next step!\n\n\n\n");
 ###################################################################################################################################################################################################
 
 
@@ -305,14 +342,18 @@ sub  myQC_FASTQ_1  {
     my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
     my $FastQC    = "$QCresults/1_FastQC";
-    my $MultiQC   = "$QCresults/MultiQC/FastQC";
+    my $fastp     = "$QCresults/2_fastp";
+    my $MultiQC1  = "$QCresults/MultiQC/FastQC";
+    my $MultiQC2  = "$QCresults/MultiQC/fastp";
     &myMakeDir($QCresults);
     &myMakeDir($FastQC);
-    &myMakeDir($MultiQC);
-    opendir(my $FH_Files, $dir1) || die;     
+    &myMakeDir($fastp);
+    &myMakeDir($MultiQC1);
+    &myMakeDir($MultiQC2);  
+    opendir(my $FH_Files, $dir1) || die;       
     my @Files = readdir($FH_Files);
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all FASTQ files by using FastQC and MultiQC ......";
+    say   "Detecting the quality of all FASTQ files by using FastQC, fastp and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.fastq$/;
         next unless $Files[$i] !~ m/^[.]/;
@@ -321,8 +362,11 @@ sub  myQC_FASTQ_1  {
         say    "\t......$temp";
         $temp =~ s/\.fastq$//  ||  die;
         system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format fastq   --kmers 7    $dir1/$temp.fastq       >> $FastQC/$temp.runLog     2>&1" );
+        &myMakeDir("$fastp/$temp");        
+        system( "fastp    --in1 $dir1/$temp.fastq  -p  --report_title $temp  --thread $numCores_g     --json $fastp/$temp/$temp.json   --html $fastp/$temp/$temp.html   >> $fastp/$temp/$temp.runLog   2>&1" );                                           
     }
-    system( "multiqc  --title FastQC   --verbose  --export  --outdir $MultiQC          $FastQC      >> $MultiQC/MultiQC.FastQC.runLog   2>&1" );
+    system( "multiqc  --title FastQC   --filename  FastQC  --module  fastqc  --verbose  --export  --outdir $MultiQC1    $FastQC  >> $MultiQC1/MultiQC.FastQC.runLog   2>&1" );
+    system( "multiqc  --title fastp    --filename  fastp                     --verbose  --export  --outdir $MultiQC2    $fastp   >> $MultiQC2/MultiQC.fastp.runLog    2>&1" );
 }
 ###################################################################################################################################################################################################
 
@@ -334,7 +378,7 @@ sub  myQC_FASTQ_1  {
 sub  myQC_FASTQ_2  {
     my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $FastQ_Screen   = "$QCresults/2_FastQ_Screen";
+    my $FastQ_Screen   = "$QCresults/3_FastQ_Screen";
     my $MultiQC        = "$QCresults/MultiQC/FastQ_Screen";
     &myMakeDir($QCresults);
     &myMakeDir($FastQ_Screen);
@@ -350,9 +394,9 @@ sub  myQC_FASTQ_2  {
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.fastq$//  ||  die;
-        system( "fastq_screen  --aligner  bowtie2  --outdir $FastQ_Screen/$temp  --threads $numCores_g    --subset 1000000   $dir1/$temp.fastq      >> $FastQ_Screen/$temp.runLog      2>&1" );
+        system( "fastq_screen    --aligner  bowtie2  --outdir $FastQ_Screen/$temp  --threads $numCores_g    --subset 100000   $dir1/$temp.fastq      >> $FastQ_Screen/$temp.runLog      2>&1" );
     }
-    system( "multiqc  --title FastQ_Screen   --verbose  --export  --outdir $MultiQC     $FastQ_Screen     >> $MultiQC/MultiQC.FastQ_Screen.runLog   2>&1" );
+    system( "multiqc  --title FastQ_Screen  --filename  FastQ_Screen  --module  fastq_screen   --verbose  --export  --outdir $MultiQC     $FastQ_Screen     >> $MultiQC/MultiQC.FastQ_Screen.runLog   2>&1" );
 }
 ###################################################################################################################################################################################################
 
@@ -362,10 +406,66 @@ sub  myQC_FASTQ_2  {
 
 ###################################################################################################################################################################################################
 sub  myQC_FASTQ_3  {
+    my $dir1        =  $_[0];   ## All the fastq files must be in this folder.
+    my $QCresults   = "$dir1/QC_Results";
+    my $FastqTools  = "$QCresults/4_fastq_tools";
+    &myMakeDir($QCresults);
+    &myMakeDir($FastqTools);
+    opendir(my $FH_Files, $dir1) || die;     
+    my @Files = readdir($FH_Files);
+    say   "\n\n\n\n\n\n##################################################################################################";
+    say   "Detecting the quality of all FASTQ files by using fastq_tools and fastp ......";
+    for ( my $i=0; $i<=$#Files; $i++ ) {
+        next unless $Files[$i] =~ m/\.fastq$/;
+        next unless $Files[$i] !~ m/^[.]/;
+        next unless $Files[$i] !~ m/[~]$/;
+        my $temp = $Files[$i];
+        say    "\t......$temp";
+        $temp =~ s/\.fastq$//  ||  die;
+        system( "fastq-uniq        $dir1/$temp.fastq          >  $FastqTools/$temp.uniq2 ");
+        system( "head  -n 100000   $FastqTools/$temp.uniq2    >  $FastqTools/$temp.uniq " );
+        system( "rm  $FastqTools/$temp.uniq2" );
+    }
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub  myQC_FASTQ_4  {
     my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $PRINSEQ   = "$QCresults/3_PRINSEQ";
-    my $BBUnique  = "$QCresults/4_BBCountUnique";
+    my $Fastqp    = "$QCresults/5_Fastqp";
+    &myMakeDir($QCresults);
+    &myMakeDir($Fastqp);
+    opendir(my $FH_Files, $dir1) || die;     
+    my @Files = readdir($FH_Files);
+    say   "\n\n\n\n\n\n##################################################################################################";
+    say   "Detecting the quality of all FASTQ files by using fastqp ......";
+    for ( my $i=0; $i<=$#Files; $i++ ) {
+        next unless $Files[$i] =~ m/\.fastq$/;
+        next unless $Files[$i] !~ m/^[.]/;
+        next unless $Files[$i] !~ m/[~]$/;
+        my $temp = $Files[$i];
+        say    "\t......$temp";
+        $temp =~ s/\.fastq$//  ||  die;
+        system( "fastqp    --nreads 200000   --kmer 4    --output $Fastqp/$temp  --type fastq   --median-qual 30   --count-duplicates   $dir1/$temp.fastq     >> $Fastqp/$temp.runLog     2>&1 " );
+    }
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+sub  myQC_FASTQ_5  {
+    my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
+    my $QCresults = "$dir1/QC_Results";
+    my $PRINSEQ   = "$QCresults/6_PRINSEQ";
+    my $BBUnique  = "$QCresults/7_BBCountUnique";
     &myMakeDir($QCresults);
     &myMakeDir($PRINSEQ);
     &myMakeDir($BBUnique);
@@ -396,70 +496,8 @@ sub  myQC_FASTQ_3  {
 
 
 ###################################################################################################################################################################################################
-sub  myQC_FASTQ_4  {
-    my $dir1        =  $_[0];   ## All the fastq files must be in this folder.
-    my $QCresults   = "$dir1/QC_Results";
-    my $FastqTools  = "$QCresults/5_fastq_tools";
-    my $FaQCs       = "$QCresults/6_FaQCs";
-    &myMakeDir($QCresults);
-    &myMakeDir($FastqTools);
-    &myMakeDir($FaQCs);
-    opendir(my $FH_Files, $dir1) || die;     
-    my @Files = readdir($FH_Files);
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all FASTQ files by using fastq_tools and FaQCs ......";
-    for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.fastq$/;
-        next unless $Files[$i] !~ m/^[.]/;
-        next unless $Files[$i] !~ m/[~]$/;
-        my $temp = $Files[$i];
-        say    "\t......$temp";
-        $temp =~ s/\.fastq$//  ||  die;
-        &myMakeDir("$FaQCs/$temp");
-        system( "fastq-uniq        $dir1/$temp.fastq          >  $FastqTools/$temp.uniq2 ");
-        system( "head  -n 100000   $FastqTools/$temp.uniq2    >  $FastqTools/$temp.uniq " );
-        system( "rm  $FastqTools/$temp.uniq2" );
-        system( "FaQCs.pl   -qc_only   -u $dir1/$temp.fastq    -prefix $temp  -t $numCores_g    -subset 1  -debug 1   -d $FaQCs/$temp   >> $FaQCs/$temp.runLog   2>&1" );
-    }
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-sub  myQC_FASTQ_5  {
-    my $dir1      =  $_[0];   ## All the fastq files must be in this folder.
-    my $QCresults = "$dir1/QC_Results";
-    my $Fastqp    = "$QCresults/7_Fastqp";
-    my $AfterQC   = "$QCresults/8_AfterQC";
-    &myMakeDir($QCresults);
-    &myMakeDir($Fastqp);
-    &myMakeDir($AfterQC);
-    opendir(my $FH_Files, $dir1) || die;     
-    my @Files = readdir($FH_Files);
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all FASTQ files by using fastqp and AfterQC ......";
-    for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.fastq$/;
-        next unless $Files[$i] !~ m/^[.]/;
-        next unless $Files[$i] !~ m/[~]$/;
-        my $temp = $Files[$i];
-        say    "\t......$temp";
-        $temp =~ s/\.fastq$//  ||  die;
-        system( "fastqp    --nreads 200000   --kmer 4    --output $Fastqp/$temp  --type fastq   --median-qual 30   --count-duplicates   $dir1/$temp.fastq     >> $Fastqp/$temp.runLog     2>&1 " );
-        system( "after.py  -1 $dir1/$temp.fastq  --qc_only  --qc_sample=200000  -g $AfterQC/$temp -b $AfterQC/$temp  -r $AfterQC/$temp  >> $AfterQC/$temp.runLog     2>&1 " );
-    }
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
 &myQC_FASTQ_1($output_g);
+&myQC_FASTQ_1("$output_g/fastp");
 &myQC_FASTQ_2($output_g);
 &myQC_FASTQ_3($output_g);
 &myQC_FASTQ_4($output_g);
@@ -473,16 +511,12 @@ sub  myQC_FASTQ_5  {
 ###################################################################################################################################################################################################
 {
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting the quality of paired-end FASTQ files by using FaQCs, bbcountunique.sh, prinseq and AfterQC ......";
+say   "Detecting the quality of paired-end FASTQ files by using bbcountunique.sh and fastp ......";
 
-my $FaQCs    = "$output2_g/9_FaQCs_PairedEnd";    
-my $bbunique = "$output2_g/10_bbcountunique_PairedEnd";    
-my $prinseq  = "$output2_g/11_prinseq_PairedEnd";  
-my $AfterQC  = "$output2_g/12_AfterQC_PairedEnd";  
-&myMakeDir($FaQCs); 
+my $bbunique = "$output2_g/8_bbcountunique_PairedEnd"; 
+my $fastp = "$output2_g/9_fastp_PairedEnd";    
 &myMakeDir($bbunique); 
-&myMakeDir($prinseq); 
-&myMakeDir($AfterQC); 
+&myMakeDir($fastp); 
 
 for ( my $j=0; $j<=$#pairedEnd_g; $j=$j+2 ) {
     my $temp1 = $pairedEnd_g[$j];
@@ -495,61 +529,10 @@ for ( my $j=0; $j<=$#pairedEnd_g; $j=$j+2 ) {
     $temp1 =~ s/\.fastq$//    ||  die;
     $temp2 =~ s/\.fastq$//    ||  die;
     $temp  =~ s/_2\.fastq$//  ||  die;
-    &myMakeDir("$FaQCs/$temp"); 
-    &myMakeDir("$prinseq/$temp"); 
-    system( "FaQCs.pl   -qc_only   -p $output_g/$temp1.fastq  $output_g/$temp2.fastq      -subset 1    -prefix $temp  -t $numCores_g   -debug 1   -d $FaQCs/$temp   >> $FaQCs/$temp.runLog    2>&1" );
+    &myMakeDir("$fastp/$temp");    
     system( "bbcountunique.sh  in=$output_g/$temp1.fastq   in2=$output_g/$temp2.fastq     out=$bbunique/$temp.txt    samplerate=0.8  -Xmx20g   interval=100000      >> $bbunique/$temp.runLog 2>&1" );
-    system( "prinseq-lite.pl  -out_format 1   -verbose    -fastq $output_g/$temp1.fastq   -fastq2  $output_g/$temp2.fastq  -graph_data $prinseq/$temp/$temp.gd      >> $prinseq/$temp.runLog  2>&1" );
-    system( "prinseq-graphs.pl   -i $prinseq/$temp/$temp.gd   -png_all    -o $prinseq/$temp/$temp                              >> $prinseq/$temp.runLog      2>&1" );
-    system( "prinseq-graphs.pl   -i $prinseq/$temp/$temp.gd   -html_all   -o $prinseq/$temp/$temp                              >> $prinseq/$temp.runLog      2>&1" );
-    system( "rm   $output_g/*_prinseq_* " );
-    system( "after.py  -1 $output_g/$temp1.fastq  -2 $output_g/$temp2.fastq   --qc_only  --qc_sample=200000  -g $AfterQC/$temp -b $AfterQC/$temp  -r $AfterQC/$temp >> $AfterQC/$temp.runLog  2>&1" );
+    system( "fastp          --in1 $output_g/$temp1.fastq  --in2 $output_g/$temp2.fastq  -p  --report_title $temp  --thread $numCores_g     --json $fastp/$temp/$temp.json   --html $fastp/$temp/$temp.html   >> $fastp/$temp/$temp.runLog   2>&1" );                                           
 }
-
-}
-###################################################################################################################################################################################################
- 
-
-
-
-
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "\n\n\n\n\n \t Now, you can stop this program!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n ";
-
-
-
-
-
-###################################################################################################################################################################################################
-{
-say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting the quality of all FASTQ files by using QC3, Rqc, ShortRead and seqTools ......";
-
-my $R_QC       = "$output2_g/13_R_QC";
-my $ShortRead  = "$output2_g/14_ShortRead";
-my $seqTools   = "$output2_g/15_seqTools"; 
-my $QC3        = "$output2_g/16_QC3";
- 
-&myMakeDir($R_QC); 
-&myMakeDir($ShortRead); 
-&myMakeDir($seqTools);
-&myMakeDir($QC3); 
-
-system( "Rscript  $Rqc_g         $output_g    $R_QC         >> $R_QC/Rqc.runLog              2>&1" );
-system( "Rscript  $ShortRead_g   $output_g    $ShortRead    >> $ShortRead/ShortRead.runLog   2>&1" );
-system( "Rscript  $seqTools_g    $output_g    $seqTools     >> $seqTools/seqTools.runLog     2>&1" );
-
-my @outputFiles_g = @inputFiles_g;
-for ( my $i=0; $i<=$#outputFiles_g; $i++ ) {
-    next unless $outputFiles_g[$i] =~ m/\.fastq$/;
-    next unless $outputFiles_g[$i] !~ m/^[.]/;
-    next unless $outputFiles_g[$i] !~ m/[~]$/;
-    next unless $outputFiles_g[$i] !~ m/^unpaired/;
-    next unless $outputFiles_g[$i] !~ m/^QC_Results$/;
-    system( "echo         '$output_g/$outputFiles_g[$i]'   >> $QC3/fileLists  ");
-}
-
-system( "qc3.pl   -m f    -i $QC3/fileLists   -o $QC3   -t $numCores_g   >> $QC3/qc3.runLog  2>&1" );
 
 }
 ###################################################################################################################################################################################################
