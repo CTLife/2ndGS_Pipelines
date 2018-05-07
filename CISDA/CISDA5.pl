@@ -14,26 +14,45 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "5-rawBAM/1_Trim_BWAmem"
-my $output_g = '';  ## such as "6-MAPQ30/1_Trim_BWAmem"
+my $input_g  = '';  ## such as "5-finalBAM/1_BWAmem"
+my $output_g = '';  ## such as "6-BAMPE/1_BWAmem"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
-
-        Step 5: Only the mapped reads with MAPQ>30 are retained and reads on chr_random, chr_alt, chrUn and chrM, all of them are removed.
+                                                            
+        Step 5: Remove unpaired reads and sort the BAM based on read name by using SAMtools. (Only for paired-end reads)
                 Assess the quality of BAM files to identify possible sequencing errors or biases by using 10 softwares:
-                    SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, PRESEQ, Picard, goleft, deepTools, and phantompeakqualtools.
-                And aggregate the results from FastQC, Picard, Samtools, Preseq, Qualimap, goleft analyses across many samples into a single report by using MultiQC.
+                    SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, deepTools, PRESEQ, Picard, goleft and Bamtools.
+                And aggregate the results from FastQC, Picard, Samtools, Preseq, Qualimap, goleft analyses across many samples 
+                into a single report by using MultiQC.
+
+                If this script works well, you do not need to check the the versions of the softwares or packages whcih are used in this script. 
+                And you do not need to exactly match the versions of the softwares or packages.
+                If some errors or warnings are reported, please check the versions of softwares or packages.
+
+                The versions of softwares or packages are used in this script:  
+                        Perl,      5.22.1 
+                        SAMtools,  1.8   
+                        FASTQC,    0.11.7     
+                        SAMstat,   1.5.1        
+                        qualimap,  2.2.1   
+                        deepTools, 3.0.2    
+                        PRESEQ,    2.0.1    
+                        Picard,    2.17.1    
+                        goleft,    0.1.16
+                        Bamtools,  2.5.1 
+                        MultiQC,   1.5  
+
 
         Usage:
                perl  CISDA5.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  CISDA5.pl   -genome hg38   -in 5-rawBAM/1_Trim_BWAmem   -out 6-MAPQ30/1_Trim_BWAmem    > CISDA5.runLog
+               perl  CISDA5.pl   -genome hg38   -in 5-finalBAM/1_BWAmem   -out 6-BAMPE/1_BWAmem    > CISDA5.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -58,7 +77,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Fifth Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 5th Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -66,9 +85,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                      ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '5-rawBAM/1_Trim_BWAmem';    ## This is only an initialization value or suggesting value, not default value.
-$output_g = '6-MAPQ30/1_Trim_BWAmem';    ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                  ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '5-finalBAM/1_BWAmem';   ## This is only an initialization value or suggesting value, not default value.
+$output_g = '6-BAMPE/1_BWAmem';      ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -158,19 +177,20 @@ sub fullPathApp  {
 }
 
 my  $Picard_g = &fullPathApp("picard.jar");
-my  $phantompeakqualtools_g = &fullPathApp("run_spp.R");
 
-&printVersion("samtools");
+&printVersion("perl -v");
+&printVersion("samtools  --version");
 &printVersion("fastqc    -v");
 &printVersion("samstat   -v");
-&printVersion("Rscript  $phantompeakqualtools_g");
 &printVersion("preseq");
 &printVersion("qualimap  -v");
 &printVersion("multiqc   --version");
 &printVersion("propmapped");     ## in subread
 &printVersion("qualityScores");  ## in subread
-&printVersion("plotFingerprint --version");
 &printVersion("goleft  -v");
+&printVersion("deeptools --version"); 
+&printVersion("plotFingerprint --version"); 
+&printVersion("bamtools --version"); 
 
 &printVersion("java  -jar  $Picard_g   CollectIndependentReplicateMetrics  --version");
 &printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
@@ -267,22 +287,24 @@ say         "\t\t\t\tThere are $num1 BAM files.\n";
 
 ###################################################################################################################################################################################################
 sub  myQC_BAM_1  {
-    my $dir1      =  $_[0];   ## All the SAM files must be in this folder.
+    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
     my $SAMtools  = "$QCresults/1_SAMtools";
     my $FastQC    = "$QCresults/2_FastQC";
     my $qualimap  = "$QCresults/3_qualimap";
     my $samstat   = "$QCresults/4_samstat";
-    my $MultiQC1  = "$QCresults/5_MultiQC_FastQC";
-    my $MultiQC2  = "$QCresults/5_MultiQC_qualimap";
-    my $MultiQC3  = "$QCresults/5_MultiQC_SAMtools";
-    my $MultiQC4  = "$QCresults/5_MultiQC_Bowtie2";
+    my $Bamtools  = "$QCresults/5_Bamtools";
+    my $MultiQC1  = "$QCresults/6_MultiQC1_FastQC";
+    my $MultiQC2  = "$QCresults/6_MultiQC2_qualimap";
+    my $MultiQC3  = "$QCresults/6_MultiQC3_SAMtools";
+    my $MultiQC4  = "$QCresults/6_MultiQC4_Bamtools";
 
     &myMakeDir($QCresults);
     &myMakeDir($SAMtools);
     &myMakeDir($FastQC);
     &myMakeDir($qualimap);
     &myMakeDir($samstat);
+    &myMakeDir($Bamtools);
     &myMakeDir($MultiQC1);
     &myMakeDir($MultiQC2);
     &myMakeDir($MultiQC3);
@@ -292,31 +314,29 @@ sub  myQC_BAM_1  {
     my @Files = readdir($FH_Files);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat, Bamtools and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.sam$/;
+        next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed/;
-        next unless $Files[$i] =~ m/^[1-9]/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
-        $temp =~ s/\.sam$//  ||  die;
-        system("samtools  sort  -m 2G  -o $dir1/$temp.bam   --output-fmt bam  -T $dir1/yp_$temp   --threads $numCores_g    $dir1/$temp.sam    >>$SAMtools/$temp.runLog    2>&1");
+        $temp =~ s/\.bam$//  ||  die;
         system("samtools  index           $dir1/$temp.bam      >>$SAMtools/$temp.index.runLog  2>&1");
         system("samtools  flagstat        $dir1/$temp.bam      >>$SAMtools/$temp.flagstat      2>&1");
         system(`samtools  idxstats        $dir1/$temp.bam      >>$SAMtools/$temp.idxstats      2>&1`);
         system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam                   >> $FastQC/$temp.runLog      2>&1" );
         system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=16G   >> $qualimap/$temp.runLog    2>&1" );
         system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");
-        system( "rm   $dir1/$temp.sam" );
+        system( "bamtools   count    -in  $dir1/$temp.bam      > $Bamtools/bamtools_count.$temp.txt  ");
+        system( "bamtools   stats    -in  $dir1/$temp.bam      > $Bamtools/bamtools_stats.$temp.txt  ");   
     }
 
     system( "multiqc    --title FastQC     --verbose  --export   --outdir $MultiQC1          $FastQC            >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
     system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC2          $qualimap          >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
     system( "multiqc    --title SAMtools   --verbose  --export   --outdir $MultiQC3          $SAMtools          >> $MultiQC3/MultiQC.SAMtools.runLog   2>&1" );
-    system( "multiqc    --title Bowtie2    --verbose  --export   --outdir $MultiQC4          $dir1/*.runLog     >> $MultiQC4/MultiQC.Bowtie2.runLog    2>&1" );
-
+    system( "multiqc    --title BAMtools   --verbose  --export   --outdir $MultiQC4          $Bamtools          >> $MultiQC4/MultiQC.BAMtools.runLog   2>&1" );
 }
 ###################################################################################################################################################################################################
 
@@ -328,30 +348,27 @@ sub  myQC_BAM_1  {
 sub  myQC_BAM_2  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
-    my $Fingerprint    = "$QCresults/6_Fingerprint";
-    my $Fingerprint2   = "$QCresults/7_Fingerprint2";
-    my $goleft         = "$QCresults/8_goleft";
-    my $phantompeak    = "$QCresults/9_phantompeakqualtools";
+    my $Fingerprint    = "$QCresults/7_Fingerprint";
+    my $Fingerprint2   = "$QCresults/8_Fingerprint2";
+    my $goleft         = "$QCresults/9_goleft";
     my $MultiQC1       = "$QCresults/10_MultiQC_goleft";
 
     &myMakeDir($QCresults);
     &myMakeDir($Fingerprint);
     &myMakeDir($Fingerprint2);
     &myMakeDir($goleft);
-    &myMakeDir($phantompeak);
     &myMakeDir($MultiQC1);
 
     opendir(my $FH_Files, $dir1) || die;
     my @Files = readdir($FH_Files);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft , phantompeakqualtools and MultiQC ......";
+    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed/;
-        next unless $Files[$i] =~ m/^[1-9]/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.bam$//  ||  die;
@@ -359,8 +376,6 @@ sub  myQC_BAM_2  {
         system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint2/$temp.pdf   --plotTitle $temp   --outRawCounts  $Fingerprint2/$temp.cov  --outQualityMetrics $Fingerprint2/$temp.Metrics.txt  --numberOfProcessors $numCores_g   --binSize 5000   >> $Fingerprint2/$temp.runLog   2>&1");                                   
         system("goleft   covstats    $dir1/$temp.bam  > $goleft/$temp.covstats " );
         system("goleft   indexcov  --sex chrX,chrY  -d $goleft/$temp  $dir1/$temp.bam  > $goleft/$temp.indexcov.runLog      2>&1" );
-        &myMakeDir("$phantompeak/$temp");
-        system("Rscript    $phantompeakqualtools_g    -c=$dir1/$temp.bam   -p=$numCores_g   -odir=$phantompeak/$temp    -savd=$phantompeak/$temp/rdatafile.RData     -savp=$phantompeak/$temp/plotdatafile.pdf   -out=$phantompeak/$temp/resultfile.txt   >> $phantompeak/$temp.runLog   2>&1");
     }
     system("sleep 5s");
     system( "multiqc    --title goleft    --verbose  --export   --outdir $MultiQC1          $goleft     >> $MultiQC1/MultiQC.goleft.runLog    2>&1" );
@@ -396,8 +411,7 @@ sub  myQC_BAM_3  {
         next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed/;
-        next unless $Files[$i] =~ m/^[1-9]/;
+        next unless $Files[$i] !~ m/^removed_/;
         my $temp = $Files[$i];
         say    "\t......$temp";
         $temp =~ s/\.bam$//  ||  die;
@@ -437,21 +451,18 @@ sub  myQC_BAM_4  {
     my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
     my $QCresults = "$dir1/QC_Results";
     my $SubreadUti= "$QCresults/14_SubreadUti";
-
     &myMakeDir("$QCresults");
     &myMakeDir("$SubreadUti");
-
-    opendir(my $DH_map, $dir1) || die;
+    opendir(my $DH_map, $dir1) || die;  
     my @mapFiles = readdir($DH_map);
 
     say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of bam files by using Subreads utilities and goleft ......";
+    say   "Detecting the quality of bam files by using Subreads utilities ......";
     for (my $i=0; $i<=$#mapFiles; $i++) {
            next unless $mapFiles[$i] =~ m/\.bam$/;
            next unless $mapFiles[$i] !~ m/^[.]/;
            next unless $mapFiles[$i] !~ m/[~]$/;
-           next unless $mapFiles[$i] !~ m/^removed/;
-           next unless $mapFiles[$i] =~ m/^[1-9]/;
+           next unless $mapFiles[$i] !~ m/^removed_/;
            my $temp = $mapFiles[$i];
            $temp =~ s/\.bam$//  ||  die;
            say   "\t......$mapFiles[$i]";
@@ -470,50 +481,17 @@ sub  myQC_BAM_4  {
 
 
 ###################################################################################################################################################################################################
-sub myFilterSAM  {
-    my $folder  = $_[0];  ## input and output dir
-    my $filePre = $_[1];  ## prefix of name of input and out file
-    open(FILE1, "<", "$folder/$filePre.t.sam")          or die "$!";                    
-    open(FILE2, ">", "$folder/$filePre.sam")            or die "$!";  
-    open(FILE3, ">", "$folder/removed_$filePre.sam")    or die "$!";  
-    my $n1 = 0; ## all reads
-    my $n2 = 0; ## kept reads
-    my $n3 = 0; ## removed reads
-    while (my $line1=<FILE1>) {
-        if ($line1 =~ m/^@/) {
-            print  FILE2  $line1   ;  
-            print  FILE3  $line1   ;  
-        }else{
-            $line1 =~ m/^(\S+)\s+(\S+)\s+(\S+)\s+/  or die;
-            my $chr = $3;
-            $n1++;
-            if( $chr =~ m/(chrM)|(chrUn_)|(chr\S+_random)|(chr\S+_alt)/ ) {
-                 print  FILE3  $line1;  $n3++; 
-            }else{
-                 print  FILE2  $line1;  $n2++; 
-            } 
-        }
-    }
-    print      "\t\tall reads in $filePre: $n1\n";
-    print     "\t\tkept reads in $filePre: $n2\n";
-    print  "\t\tremoved reads in $filePre: $n3\n\n\n";
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Removing some reads ......";
+say   "Sort all the reads based on read name ......";
 for (my $i=0; $i<=$#BAMfiles_g; $i++) {
     my $temp = $BAMfiles_g[$i]; 
     $temp =~ s/\.bam$//  ||  die; 
     say   "\t......$BAMfiles_g[$i]";
-    system(`samtools  view   -h   -F 4    --threads $numCores_g    -q 30     -o $output_g/$temp.t.sam   $input_g/$temp.bam    >> $output2_g/$temp.runLog     2>&1  `);  
-    &myFilterSAM($output_g, $temp); 
-    system("rm   $output_g/$temp.t.sam"); 
+    #system("samtools  view  -hb    -q 3  -f 2   -o $output_g/$temp.t1.sam   --output-fmt sam                          --threads $numCores_g     $input_g/$temp.bam        >>$output2_g/$temp.runLog    2>&1");
+    system("samtools  sort  -m 8G  -n    -o $output_g/$temp.bam   --output-fmt bam  -T $output_g/yp_sort.$temp   --threads $numCores_g     $input_g/$temp.bam    >  $output2_g/$temp.runLog    2>&1");
+    #system("samtools fixmate  $output_g/$temp.t2.bam     $output_g/$temp.bam     >> $output2_g/$temp.runLog    2>&1");   
+    #system("rm  $output_g/$temp.t1.sam");
+    #system("rm  $output_g/$temp.t2.bam");
 }
 ###################################################################################################################################################################################################
 
@@ -524,8 +502,8 @@ for (my $i=0; $i<=$#BAMfiles_g; $i++) {
 ###################################################################################################################################################################################################
 &myQC_BAM_1($output_g);
 &myQC_BAM_2($output_g);
-&myQC_BAM_3($output_g); 
-&myQC_BAM_4($output_g); 
+&myQC_BAM_3($output_g);
+&myQC_BAM_4($output_g);  
 ###################################################################################################################################################################################################
 
 
