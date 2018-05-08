@@ -515,7 +515,9 @@ for (my $i=0; $i<=$#BAMfiles_g; $i++) {
     my $temp = $BAMfiles_g[$i]; 
     $temp =~ s/\.bam$//  ||  die; 
     say   "\t......$BAMfiles_g[$i]";
-    system(`samtools  view   -h    --threads $numCores_g    -q 20    -o $output_g/$temp.t.sam   $input_g/$temp.bam    >> $output2_g/$temp.runLog     2>&1  `);  
+    system(`samtools  view   -h    --threads $numCores_g    -q 20    -o $output_g/$temp.t1.sam   $input_g/$temp.bam    >> $output2_g/$temp.runLog     2>&1  `);  
+    system("java  -jar   $Picard_g   MarkDuplicates    REMOVE_DUPLICATES=true   INPUT=$output_g/$temp.t1.sam    OUTPUT=$output_g/$temp.t.sam    METRICS_FILE=$output2_g/$temp.marked_dup_metrics.txt   >> $output2_g/$temp.REMOVE_DUPLICATES.runLog     2>&1 ");
+    system("rm   $output_g/$temp.t1.sam"); 
     &myFilterSAM($output_g, $temp); 
     system("rm   $output_g/$temp.t.sam"); 
 }
