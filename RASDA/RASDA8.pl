@@ -2,7 +2,6 @@
 use  strict;
 use  warnings;
 use  v5.22;
-
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
 ## Suffixes of all self-defined global variables must be "_g".
@@ -14,23 +13,23 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "7-finalBAM/3A_STAR"
-my $output_g = '';  ## such as "9-BED/3A_STAR"
+my $input_g  = '';  ## such as "6-BAMPE/3A_STAR"
+my $output_g = '';  ## such as "9-rawCounts/3A_STAR"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         RASDA is a Pipeline for Single-end and Paired-end RNA-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 8: Convert BAM to BED format by using BEDTools.   
+        Step 8: Calculate raw reads number of each gene by using featureCounts and htseq-count.     
 
         Usage:
                perl  RASDA8.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  RASDA8.pl   -genome hg38   -in 7-finalBAM/3A_STAR   -out 9-BED/3A_STAR    > RASDA8.runLog
+               perl  RASDA8.pl   -genome hg38   -in 6-BAMPE/3A_STAR   -out 9-rawCounts/3A_STAR    > RASDA8.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -43,7 +42,7 @@ my $HELP = '
 
         -in inputDir        "inputDir" is the name of input path that contains your BAM files.  (no default)
 
-        -out outDir         "outDir" is the name of output path that contains your running results (BED files) of this step.  (no default)
+        -out outDir         "outDir" is the name of output path that contains your running results (raw counts) of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines, please visit https://github.com/CTLife/2ndGS_Pipelines
@@ -55,7 +54,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Eighth Step of RASDA (RNA-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 8th Step of RASDA (RNA-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -63,9 +62,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                 ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '7-finalBAM/3A_STAR';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '9-BED/3A_STAR';        ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '6-BAMPE/3A_STAR';     ## This is only an initialization value or suggesting value, not default value.
+$output_g = '9-rawCounts/3A_STAR'; ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -117,13 +116,8 @@ sub myMakeDir  {
 }
 
 my $output2_g = "$output_g/QC_Results";
-my $BED6_g    = "$output_g/BED6-sortCoord";
-my $BEDPE_g   = "$output_g/BEDPE-sortName";
-
 &myMakeDir($output_g);
 &myMakeDir($output2_g);
-&myMakeDir($BED6_g);    
-&myMakeDir($BEDPE_g);
 
 opendir(my $DH_input_g, $input_g)  ||  die;
 my @inputFiles_g = readdir($DH_input_g);
@@ -159,8 +153,8 @@ sub fullPathApp  {
     return($fullPath1[0]);
 }
 
-&printVersion("bedtools  --version");
-
+&printVersion("featureCounts   -v");
+&printVersion("htseq-count     -h");
 ###################################################################################################################################################################################################
 
 
@@ -210,47 +204,67 @@ say  "\n\t\tThere are $numGroup groups.";
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting BAM files in input folder ......";
-my @BAMfiles_g = ();
-{
-open(seqFiles_FH, ">", "$output2_g/BAM-Files.txt")  or  die; 
+say   "Detecting bam files in input folder ......";
+my @bamfiles_g = ();
+open(seqFiles_FH, ">", "$output2_g/bam-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
     next unless $inputFiles_g[$i] =~ m/\.bam$/;
     next unless $inputFiles_g[$i] !~ m/^[.]/;
     next unless $inputFiles_g[$i] !~ m/[~]$/;
     next unless $inputFiles_g[$i] !~ m/^unpaired/;
+    next unless $inputFiles_g[$i] !~ m/^removed_/;
     say    "\t......$inputFiles_g[$i]"; 
     $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
-    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
-    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
-    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
+    $bamfiles_g[$#bamfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tbam file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "bam file:  $inputFiles_g[$i]\n";
 }
 
 say   seqFiles_FH  "\n\n\n\n\n";  
-say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
-say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
-my $num1 = $#BAMfiles_g + 1;
-say seqFiles_FH   "\nThere are $num1 BAM files.\n";
-say         "\t\t\t\tThere are $num1 BAM files.\n";
-}
+say   seqFiles_FH  "All bam files:@bamfiles_g\n\n\n";
+say        "\t\t\t\tAll bam files:@bamfiles_g\n\n";
+my $num1 = $#bamfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 bam files.\n";
+say         "\t\t\t\tThere are $num1 bam files.\n";
+
 ###################################################################################################################################################################################################
 
 
 
 
+my $GTF_file_g = "0-Other/Shortcuts/$genome_g/$genome_g.RefSeq.GTF";
+&myMakeDir("$output_g/featureCounts");
+&myMakeDir("$output_g/featureCounts_formatted");
+&myMakeDir("$output_g/htseq-count");  
+###################################################################################################################################################################################################
+{
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Calculating raw counts of each gene/transcript by featureCounts ......";
+for (my $i=0; $i<=$#bamfiles_g; $i++) {
+    my $temp = $bamfiles_g[$i]; 
+    $temp =~ s/\.bam$//  ||  die; 
+    say   "\t......$bamfiles_g[$i]";
+    system("featureCounts   -p  -T $numCores_g  -a $GTF_file_g    -o $output_g/featureCounts/$temp.featureCounts  $input_g/$bamfiles_g[$i]    > $output_g/$temp.featureCounts.runLog  2>&1 ");
+    sleep(3);
+    my $myCommand_1 = " sed  1,2d $output_g/featureCounts/$temp.featureCounts   |   awk '{print \$1,\$7}'  >    $output_g/featureCounts_formatted/$temp.featureCounts  " ;  
+    system( $myCommand_1 );
+}
+}
+###################################################################################################################################################################################################
+
+
+
+ 
 
 ###################################################################################################################################################################################################
 {
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Convert BAM to BED ......";
-my $sortName = "$input_g";
-$sortName =~ s/^7-finalBAM/8-BAMPE/  or  die;
-for (my $i=0; $i<=$#BAMfiles_g; $i++) {
-    my $temp = $BAMfiles_g[$i]; 
+say   "Calculating raw counts of each gene/transcript by htseq-count ......";
+for (my $i=0; $i<=$#bamfiles_g; $i++) {
+    my $temp = $bamfiles_g[$i]; 
     $temp =~ s/\.bam$//  ||  die; 
-    say   "\t......$BAMfiles_g[$i]";
-    system("bedtools   bamtobed  -cigar          -i $input_g/$temp.bam      > $BED6_g/$temp.bed");
-    system("bedtools   bamtobed  -cigar  -bedpe  -i $sortName/$temp.bam     > $BEDPE_g/$temp.bedpe");
+    say   "\t......$bamfiles_g[$i]";
+    system("htseq-count  --format bam  --order name   $input_g/$bamfiles_g[$i]  $GTF_file_g     > $output_g/htseq-count/$temp.htseq-count");
 }
 }
 ###################################################################################################################################################################################################
