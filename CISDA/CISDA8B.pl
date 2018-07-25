@@ -2,6 +2,7 @@
 use  strict;
 use  warnings;
 use  v5.22;
+use  String::Similarity;
 
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
@@ -14,23 +15,23 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "7-finalBAM/1_Trim_BWAmem/callPeaks"
-my $output_g = '';  ## such as "12B-Q/1_Trim_BWAmem"
+my $input_g  = '';  ## such as "6-BAMPE/1_BWAmem"
+my $output_g = '';  ## such as "9B-Q/1_BWAmem"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 11: Call peaks for BAM or BAMPE by using Q (http://charite.github.io/Q/).  
+        Step 8: Call peaks for BAM or BAMPE by using Q (http://charite.github.io/Q/).  
 
         Usage:
-               perl  CISDA11B.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
+               perl  CISDA8B.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  CISDA11B.pl   -genome hg38   -in 7-finalBAM/1_Trim_BWAmem/callPeaks   -out 12B-Q/1_Trim_BWAmem    > CISDA11B.runLog
+               perl  CISDA8B.pl   -genome hg38   -in 6-BAMPE/1_BWAmem   -out 9B-Q/1_BWAmem    > CISDA8B.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -55,7 +56,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Eleventh Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 8th Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -63,9 +64,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                                 ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '7-finalBAM/1_Trim_BWAmem/callPeaks';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '12B-Q/1_Trim_BWAmem';                  ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';               ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '6-BAMPE/1_BWAmem';   ## This is only an initialization value or suggesting value, not default value.
+$output_g = '9B-Q/1_BWAmem';      ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -75,7 +76,7 @@ while( my ($key, $value) = each %args ) {
 }
 if($boole == 1) {
     say  "\tThe Command Line Arguments are wrong!";
-    say  "\tPlease see help message by using 'perl  CISDA11B.pl  -help' \n";
+    say  "\tPlease see help message by using 'perl  CISDA8B.pl  -help' \n";
     exit 0;
 }
 
@@ -154,7 +155,7 @@ sub fullPathApp  {
     return($fullPath1[0]);
 }
 
-&printVersion("macs2  --version");
+&printVersion("Q  --version");
 
 ###################################################################################################################################################################################################
 
@@ -264,7 +265,7 @@ for ( my $i=0; $i<=$#groupFiles_g; $i++ ) {
     $noteGroup = $n1; 
 }
 
-($#input_group_g == $numGroup-1)   or  die  "\n\n##$#input_group_g,\t$numGroup##\n\n";
+## ($#input_group_g == $numGroup-1)   or  die  "\n\n##$#input_group_g,\t$numGroup##\n\n";
 open(runFH, ">", "$output2_g/chip_input.txt")  or die;
 
 for ( my $i=0; $i<=$#input_group_g; $i++ ) { 
@@ -273,6 +274,46 @@ for ( my $i=0; $i<=$#input_group_g; $i++ ) {
     print          "chip input for $group_n: $input_group_g[$i]\n";
 }
 
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+my $genome_size_g = '';  
+if($genome_g eq 'hg38')  {$genome_size_g = 'hs'; }
+if($genome_g eq 'dm6' )  {$genome_size_g = 'dm'; }
+if($genome_g eq 'mm10')  {$genome_size_g = 'mm'; }
+print("\n\ngenome_size: $genome_size_g\n\n");
+
+my $format_g = "BAMPE";   ## --format {AUTO,BAM,SAM,BED,ELAND,ELANDMULTI,ELANDEXPORT,BOWTIE,BAMPE,BEDPE}
+
+
+
+sub whichNearestString  {
+    my @list = @_;
+    my $ref_string = $list[0];
+    my @string_array = @list; 
+    my $similarity_temp = 0;
+    my $target_string;
+    #say($ref_string);
+    #say(@string_array); 
+    #say( $#string_array );  
+    for(my $i=1; $i<=$#string_array; $i++) {
+        my $similarity_1 = String::Similarity::similarity($ref_string, $string_array[$i]);
+        if($similarity_1 > $similarity_temp) {$target_string = $string_array[$i]; $similarity_temp = $similarity_1; }
+    }
+
+    return($target_string);   
+}
+
+say("\n\nInput of each sample:");
+for ( my $i=0; $i<=$#groupFiles_g; $i++ ) { 
+    $groupFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;
+    my $input_1 = &whichNearestString($groupFiles_g[$i], @input_group_g ); 
+    print  "\t$groupFiles_g[$i],\t$input_1 ......\n";  
 }
 ###################################################################################################################################################################################################
 
@@ -310,10 +351,8 @@ my $outputDir10 = "$output_g/1-Peaks/run10";
 
 for ( my $i=0; $i<=$#groupFiles_g; $i++ ) { 
     $groupFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;
-    my $n1 = $1;
-    $n1>=1  or  die;
-    $n1--;
-    print  "\t$groupFiles_g[$i],\t$input_group_g[$n1] ......\n";
+    my $input_1 = &whichNearestString($groupFiles_g[$i], @input_group_g ); 
+    print  "\t$groupFiles_g[$i],\t$input_1 ......\n";  
     my $temp = $groupFiles_g[$i];
     $temp =~ s/\.bam$//  or  die;
     &myMakeDir("$outputDir1/$temp");
@@ -327,16 +366,16 @@ for ( my $i=0; $i<=$#groupFiles_g; $i++ ) {
     &myMakeDir("$outputDir9/$temp");
     &myMakeDir("$outputDir10/$temp");
 
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 1        --out-prefix  $outputDir1/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir1/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 2        --out-prefix  $outputDir2/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir2/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 3        --out-prefix  $outputDir3/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir3/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 4        --out-prefix  $outputDir4/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir4/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 5        --out-prefix  $outputDir5/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir5/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 6        --out-prefix  $outputDir6/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir6/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 7        --out-prefix  $outputDir7/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir7/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 8        --out-prefix  $outputDir8/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir8/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 9        --out-prefix  $outputDir9/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir9/$temp.runLog    2>&1 `);                    
-    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_group_g[$n1]    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 10       --out-prefix  $outputDir10/$temp/$temp      --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir10/$temp.runLog   2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 1        --out-prefix  $outputDir1/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir1/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 2        --out-prefix  $outputDir2/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir2/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 3        --out-prefix  $outputDir3/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir3/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 4        --out-prefix  $outputDir4/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir4/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 5        --out-prefix  $outputDir5/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir5/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 6        --out-prefix  $outputDir6/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir6/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 7        --out-prefix  $outputDir7/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir7/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 8        --out-prefix  $outputDir8/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir8/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 9        --out-prefix  $outputDir9/$temp/$temp       --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir9/$temp.runLog    2>&1 `);                    
+    system(`Q   --treatment-sample  $input_g/$temp.bam     --control-sample $input_g/$input_1    --fragment-length-average -1     --fragment-length-deviation 50    --p-value-cutoff 10       --out-prefix  $outputDir10/$temp/$temp      --thread-num $numCores_g   --verbose  --step-num 1000       >> $outputDir10/$temp.runLog   2>&1 `);                    
      
     system("Rscript  $outputDir1/$temp/$temp-Q-binding-characteristics.R");
     system("Rscript  $outputDir2/$temp/$temp-Q-binding-characteristics.R");
