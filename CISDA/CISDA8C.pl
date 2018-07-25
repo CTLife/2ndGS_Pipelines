@@ -2,6 +2,7 @@
 use  strict;
 use  warnings;
 use  v5.22;
+use  String::Similarity;
 
 ## Perl5 version >= 5.22
 ## You can create a symbolic link for perl5 by using "sudo  ln  /usr/bin/perl   /usr/bin/perl5" in Ubuntu.
@@ -14,23 +15,23 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "7-finalBAM/1_Trim_BWAmem/callPeaks"
-my $output_g = '';  ## such as "12C-GEM/1_Trim_BWAmem"
+my $input_g  = '';  ## such as "6-BAMPE/1_BWAmem"
+my $output_g = '';  ## such as "9C-GEM/1_BWAmem"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 11: Call peaks for BAM or BAMPE by using GEM (https://groups.csail.mit.edu/cgs/gem/).   
+        Step 8: Call peaks for BAM or BAMPE by using GEM (https://groups.csail.mit.edu/cgs/gem/).   
 
         Usage:
-               perl  CISDA11C.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
+               perl  CISDA8C.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  CISDA11C.pl   -genome hg38   -in 7-finalBAM/1_Trim_BWAmem/callPeaks   -out 12C-GEM/1_Trim_BWAmem    > CISDA11C.runLog
+               perl  CISDA8C.pl   -genome hg38   -in 6-BAMPE/1_BWAmem   -out 9C-GEM/1_BWAmem    > CISDA8C.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -55,7 +56,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Eleventh Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The 8th Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -63,9 +64,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                                 ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '7-finalBAM/1_Trim_BWAmem/callPeaks';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '12C-GEM/1_Trim_BWAmem';                ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';               ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '6-BAMPE/1_BWAmem';   ## This is only an initialization value or suggesting value, not default value.
+$output_g = '9C-GEM/1_BWAmem';    ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -75,7 +76,7 @@ while( my ($key, $value) = each %args ) {
 }
 if($boole == 1) {
     say  "\tThe Command Line Arguments are wrong!";
-    say  "\tPlease see help message by using 'perl  CISDA11C.pl  -help' \n";
+    say  "\tPlease see help message by using 'perl  CISDA8C.pl  -help' \n";
     exit 0;
 }
 
@@ -265,7 +266,7 @@ for ( my $i=0; $i<=$#groupFiles_g; $i++ ) {
     $noteGroup = $n1; 
 }
 
-($#input_group_g == $numGroup-1)   or  die  "\n\n##$#input_group_g,\t$numGroup##\n\n";
+## ($#input_group_g == $numGroup-1)   or  die  "\n\n##$#input_group_g,\t$numGroup##\n\n";
 open(runFH, ">", "$output2_g/chip_input.txt")  or die;
 
 for ( my $i=0; $i<=$#input_group_g; $i++ ) { 
@@ -274,6 +275,44 @@ for ( my $i=0; $i<=$#input_group_g; $i++ ) {
     print          "chip input for $group_n: $input_group_g[$i]\n";
 }
 
+}
+###################################################################################################################################################################################################
+
+
+
+
+
+###################################################################################################################################################################################################
+my $genome_size_g = '';  
+if($genome_g eq 'hg38')  {$genome_size_g = 'hs'; }
+if($genome_g eq 'dm6' )  {$genome_size_g = 'dm'; }
+if($genome_g eq 'mm10')  {$genome_size_g = 'mm'; }
+print("\n\ngenome_size: $genome_size_g\n\n");
+
+my $format_g = "BAMPE";   ## --format {AUTO,BAM,SAM,BED,ELAND,ELANDMULTI,ELANDEXPORT,BOWTIE,BAMPE,BEDPE}
+
+sub whichNearestString  {
+    my @list = @_;
+    my $ref_string = $list[0];
+    my @string_array = @list; 
+    my $similarity_temp = 0;
+    my $target_string;
+    #say($ref_string);
+    #say(@string_array); 
+    #say( $#string_array );  
+    for(my $i=1; $i<=$#string_array; $i++) {
+        my $similarity_1 = String::Similarity::similarity($ref_string, $string_array[$i]);
+        if($similarity_1 > $similarity_temp) {$target_string = $string_array[$i]; $similarity_temp = $similarity_1; }
+    }
+
+    return($target_string);   
+}
+
+say("\n\nInput of each sample:");
+for ( my $i=0; $i<=$#groupFiles_g; $i++ ) { 
+    $groupFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;
+    my $input_1 = &whichNearestString($groupFiles_g[$i], @input_group_g ); 
+    print  "\t$groupFiles_g[$i],\t$input_1 ......\n";  
 }
 ###################################################################################################################################################################################################
 
@@ -299,17 +338,15 @@ system("gt  splitfasta   -splitdesc $temp_dir_g    0-Other/Shortcuts/$genome_g/$
 
 for ( my $i=0; $i<=$#groupFiles_g; $i++ ) { 
     $groupFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/  or  die;
-    my $n1 = $1;
-    $n1>=1  or  die;
-    $n1--;
-    print  "\t$groupFiles_g[$i],\t$input_group_g[$n1] ......\n";
+    my $input_1 = &whichNearestString($groupFiles_g[$i], @input_group_g ); 
+    print  "\t$groupFiles_g[$i],\t$input_1 ......\n";
     my $temp = $groupFiles_g[$i];
     $temp =~ s/\.bam$//  or  die;
     &myMakeDir("$outputDir1/$temp");
     &myMakeDir("$outputDir2/$temp");
 
-    system(`java  -Xmx10G  -jar   $GEM_g   --d 0-Other/TXT_Files/ChIPeq_Read_Distribution_default.txt    --g 0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes     --genome  $temp_dir_g   --t $numCores_g    --expt $input_g/$temp.bam    --ctrl $input_g/$input_group_g[$n1]   --f SAM   --out $outputDir1/$temp/$temp    --k_min 6    --k_max 13   --q 2    --k_seqs 5000     >> $outputDir1/$temp.runLog    2>&1 `);                    
-    system(`java  -Xmx10G  -jar   $GEM_g   --d 0-Other/TXT_Files/ChIPeq_Read_Distribution_default.txt    --g 0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes     --genome  $temp_dir_g   --t $numCores_g    --expt $input_g/$temp.bam    --ctrl $input_g/$input_group_g[$n1]   --f SAM   --out $outputDir2/$temp/$temp    --k_min 6    --k_max 13   --q 3    --k_seqs 2000     >> $outputDir2/$temp.runLog    2>&1 `);                    
+    system(`java  -Xmx10G  -jar   $GEM_g   --d /home/yp/AnnotationBED/GEM_ReadDistributionFile/Read_Distribution_default_ChIP-seq.txt    --g 0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes     --genome  $temp_dir_g   --t $numCores_g    --expt $input_g/$temp.bam    --ctrl $input_g/$input_1   --f SAM   --out $outputDir1/$temp/$temp    --k_min 6    --k_max 13   --q 2    --k_seqs 5000     >> $outputDir1/$temp.runLog    2>&1 `);                    
+    system(`java  -Xmx10G  -jar   $GEM_g   --d /home/yp/AnnotationBED/GEM_ReadDistributionFile/Read_Distribution_default_ChIP-seq.txt    --g 0-Other/Shortcuts/$genome_g/$genome_g.chrom.sizes     --genome  $temp_dir_g   --t $numCores_g    --expt $input_g/$temp.bam    --ctrl $input_g/$input_1   --f SAM   --out $outputDir2/$temp/$temp    --k_min 6    --k_max 13   --q 3    --k_seqs 2000     >> $outputDir2/$temp.runLog    2>&1 `);                    
 
  }
 
