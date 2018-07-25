@@ -14,26 +14,23 @@ use  v5.22;
 
 ###################################################################################################################################################################################################
 my $genome_g = '';  ## such as "mm10", "ce11", "hg38".
-my $input_g  = '';  ## such as "7-finalBAM/1_Trim_BWAmem"
-my $output_g = '';  ## such as "8-BAMPE/1_Trim_BWAmem"
+my $input_g  = '';  ## such as "7-BigWig/1_BWAmem"
+my $output_g = '';  ## such as "8-DeepTools/1_BWAmem"
 
 {
 ## Help Infromation
 my $HELP = '
         ------------------------------------------------------------------------------------------------------------------------------------------------------
         ------------------------------------------------------------------------------------------------------------------------------------------------------
-        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.
+        Welcome to use CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.
         CISDA is a Pipeline for Single-end and Paired-end ChIP-Seq Data Analysis by Integrating Lots of Softwares.
                                                             
-        Step 7: Remove unpaired reads and sort the BAM based on read name by using SAMtools. (Only for paired-end reads)
-                Assess the quality of BAM files to identify possible sequencing errors or biases by using 10 softwares:
-                    SAMtools, Subread utilities, FASTQC, SAMstat, qualimap, PRESEQ, Picard, goleft, deepTools, and phantompeakqualtools.
-                And aggregate the results from FastQC, Picard, Samtools, Preseq, Qualimap, goleft analyses across many samples into a single report by using MultiQC.
+        Step 7: Analyze all the bigwig and BAM files by using deepTools.  
 
         Usage:
                perl  CISDA7.pl    [-version]    [-help]   [-genome RefGenome]    [-in inputDir]    [-out outDir]
         For instance:
-               perl  CISDA7.pl   -genome hg38   -in 7-finalBAM/1_Trim_BWAmem   -out 8-BAMPE/1_Trim_BWAmem    > CISDA7.runLog
+               perl  CISDA7.pl   -genome hg38   -in 7-BigWig/1_BWAmem   -out 8-DeepTools/1_BWAmem    > CISDA7.runLog
 
         ----------------------------------------------------------------------------------------------------------
         Optional arguments:
@@ -44,9 +41,9 @@ my $HELP = '
         Required arguments:
         -genome RefGenome   "RefGenome" is the short name of your reference genome, such as "mm10", "ce11", "hg38".    (no default)
 
-        -in inputDir        "inputDir" is the name of input path that contains your BAM files.  (no default)
+        -in inputDir        "inputDir" is the name of input path that contains your BigWig files.  (no default)
 
-        -out outDir         "outDir" is the name of output path that contains your running results (BAM files) of this step.  (no default)
+        -out outDir         "outDir" is the name of output path that contains your running results of this step.  (no default)
         -----------------------------------------------------------------------------------------------------------
 
         For more details about this pipeline and other NGS data analysis piplines, please visit https://github.com/CTLife/2ndGS_Pipelines
@@ -58,7 +55,7 @@ my $HELP = '
 ';
 
 ## Version Infromation
-my $version = "    The Seventh Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.0, 2017-10-01.";
+my $version = "    The Seventh Step of CISDA (ChIP-Seq Data Analyzer), version 0.9.4,  2018-02-01.";
 
 ## Keys and Values
 if ($#ARGV   == -1)   { say  "\n$HELP\n";  exit 0;  }       ## when there are no any command argumants.
@@ -66,9 +63,9 @@ if ($#ARGV%2 ==  0)   { @ARGV = (@ARGV, "-help") ;  }       ## when the number o
 my %args = @ARGV;
 
 ## Initialize  Variables
-$genome_g = 'hg38';                       ## This is only an initialization value or suggesting value, not default value.
-$input_g  = '7-finalBAM/1_Trim_BWAmem';   ## This is only an initialization value or suggesting value, not default value.
-$output_g = '8-BAMPE/1_Trim_BWAmem';      ## This is only an initialization value or suggesting value, not default value.
+$genome_g = 'hg38';                  ## This is only an initialization value or suggesting value, not default value.
+$input_g  = '7-BigWig/1_BWAmem';     ## This is only an initialization value or suggesting value, not default value.
+$output_g = '8-DeepTools/1_BWAmem';  ## This is only an initialization value or suggesting value, not default value.
 
 ## Available Arguments
 my $available = "   -version    -help   -genome   -in   -out  ";
@@ -119,7 +116,7 @@ sub myMakeDir  {
     if ( !( -e $path) )  { mkdir $path  ||  die; }
 }
 
-my $output2_g = "$output_g/QC_Results";
+my $output2_g = "$output_g/QC_Results";   
 &myMakeDir($output_g);
 &myMakeDir($output2_g);
 
@@ -136,7 +133,6 @@ my $numCores_g   = 4;
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
 say   "Checking all the necessary softwares in this step......" ;
-
 sub printVersion  {
     my $software = $_[0];
     system("echo    '##############################################################################'  >> $output2_g/VersionsOfSoftwares.txt   2>&1");
@@ -144,49 +140,7 @@ sub printVersion  {
     system("$software                                                                                 >> $output2_g/VersionsOfSoftwares.txt   2>&1");
     system("echo    '\n\n\n\n\n\n'                                                                    >> $output2_g/VersionsOfSoftwares.txt   2>&1");
 }
-
-sub fullPathApp  {
-    my $software = $_[0];
-    say($software);
-    system("which   $software  > yp_my_temp_1.$software.txt");
-    open(tempFH, "<", "yp_my_temp_1.$software.txt")  or  die;
-    my @fullPath1 = <tempFH>;
-    ($#fullPath1 == 0)  or  die;
-    system("rm  yp_my_temp_1.$software.txt");
-    $fullPath1[0] =~ s/\n$//  or  die;
-    return($fullPath1[0]);
-}
-
-my  $Picard_g = &fullPathApp("picard.jar");
-my  $phantompeakqualtools_g = &fullPathApp("run_spp.R");
-
-&printVersion("samtools");
-&printVersion("fastqc    -v");
-&printVersion("samstat   -v");
-&printVersion("Rscript  $phantompeakqualtools_g");
-&printVersion("preseq");
-&printVersion("qualimap  -v");
-&printVersion("multiqc   --version");
-&printVersion("propmapped");     ## in subread
-&printVersion("qualityScores");  ## in subread
-&printVersion("plotFingerprint --version");
-&printVersion("goleft  -v");
-
-&printVersion("java  -jar  $Picard_g   CollectIndependentReplicateMetrics  --version");
-&printVersion("java  -jar  $Picard_g   CollectAlignmentSummaryMetrics      --version");
-&printVersion("java  -jar  $Picard_g   CollectBaseDistributionByCycle      --version");
-&printVersion("java  -jar  $Picard_g   CollectGcBiasMetrics                --version");
-&printVersion("java  -jar  $Picard_g   CollectInsertSizeMetrics            --version");
-&printVersion("java  -jar  $Picard_g   CollectJumpingLibraryMetrics        --version");
-&printVersion("java  -jar  $Picard_g   CollectMultipleMetrics              --version");
-&printVersion("java  -jar  $Picard_g   CollectOxoGMetrics                  --version");
-&printVersion("java  -jar  $Picard_g   CollectQualityYieldMetrics          --version");
-&printVersion("java  -jar  $Picard_g   CollectSequencingArtifactMetrics    --version");
-&printVersion("java  -jar  $Picard_g   CollectTargetedPcrMetrics           --version");
-&printVersion("java  -jar  $Picard_g   CollectWgsMetrics                   --version");
-&printVersion("java  -jar  $Picard_g   EstimateLibraryComplexity           --version");
-&printVersion("java  -jar  $Picard_g   MeanQualityByCycle                  --version");
-&printVersion("java  -jar  $Picard_g   QualityScoreDistribution            --version");
+&printVersion("deeptools --version");
 ###################################################################################################################################################################################################
 
 
@@ -200,7 +154,7 @@ say   "Checking all the input file names ......";
 my @groupFiles = ();
 my $fileNameBool = 1;
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
-        next unless $inputFiles_g[$i] =~ m/\.bam$/;
+        next unless $inputFiles_g[$i] =~ m/\.bw$/;
         next unless $inputFiles_g[$i] !~ m/^[.]/;
         next unless $inputFiles_g[$i] !~ m/[~]$/;
         next unless $inputFiles_g[$i] !~ m/^QC_Results$/;
@@ -209,8 +163,8 @@ for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {
         my $temp = $inputFiles_g[$i];
         $groupFiles[++$#groupFiles] = $inputFiles_g[$i];
         $temp =~ m/^(\d+)_($pattern_g)_(Rep[1-9])/   or  die   "wrong-1: ## $temp ##";
-        $temp =~ m/_(Rep[1-9])\.bam$/   or  die   "wrong-2: ## $temp ##";
-        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.bam$/) {
+        $temp =~ m/_(Rep[1-9])\.bw$/   or  die   "wrong-2: ## $temp ##";
+        if($temp !~ m/^((\d+)_($pattern_g)_(Rep[1-9]))(_[1-2])?\.bw$/) {
              $fileNameBool = 0;
         }
 }
@@ -236,225 +190,37 @@ say  "\n\t\tThere are $numGroup groups.";
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Detecting BAM files in input folder ......";
-my @BAMfiles_g = ();
+say   "Detecting BigWig files in input folder ......";
+my @BigWigfiles_g = ();
 {
-open(seqFiles_FH, ">", "$output2_g/BAM-Files.txt")  or  die; 
+open(seqFiles_FH, ">", "$output2_g/BigWig-Files.txt")  or  die; 
 for ( my $i=0; $i<=$#inputFiles_g; $i++ ) {     
-    next unless $inputFiles_g[$i] =~ m/\.bam$/;
+    next unless $inputFiles_g[$i] =~ m/\.bw$/;
     next unless $inputFiles_g[$i] !~ m/^[.]/;
     next unless $inputFiles_g[$i] !~ m/[~]$/;
     next unless $inputFiles_g[$i] !~ m/^unpaired/;
     say    "\t......$inputFiles_g[$i]"; 
-    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bam$/  or  die;  
-    $BAMfiles_g[$#BAMfiles_g+1] =  $inputFiles_g[$i];
-    say        "\t\t\t\tBAM file:  $inputFiles_g[$i]\n";
-    say   seqFiles_FH  "BAM file:  $inputFiles_g[$i]\n";
+    $inputFiles_g[$i] =~ m/^(\d+)_($pattern_g)_(Rep[1-9])\.bw$/  or  die;  
+    $BigWigfiles_g[$#BigWigfiles_g+1] =  $inputFiles_g[$i];
+    say        "\t\t\t\tBigWig file:  $inputFiles_g[$i]\n";
+    say   seqFiles_FH  "BigWig file:  $inputFiles_g[$i]\n";
 }
 
 say   seqFiles_FH  "\n\n\n\n\n";  
-say   seqFiles_FH  "All BAM files:@BAMfiles_g\n\n\n";
-say        "\t\t\t\tAll BAM files:@BAMfiles_g\n\n";
-my $num1 = $#BAMfiles_g + 1;
-say seqFiles_FH   "\nThere are $num1 BAM files.\n";
-say         "\t\t\t\tThere are $num1 BAM files.\n";
+say   seqFiles_FH  "All BigWig files:@BigWigfiles_g\n\n\n";
+say        "\t\t\t\tAll BigWig files:@BigWigfiles_g\n\n";
+my $num1 = $#BigWigfiles_g + 1;
+say seqFiles_FH   "\nThere are $num1 BigWig files.\n";
+say         "\t\t\t\tThere are $num1 BigWig files.\n";
 }
-###################################################################################################################################################################################################
 
-
-
-
-
-###################################################################################################################################################################################################
-sub  myQC_BAM_1  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
-    my $QCresults = "$dir1/QC_Results";
-    my $SAMtools  = "$QCresults/1_SAMtools";
-    my $FastQC    = "$QCresults/2_FastQC";
-    my $qualimap  = "$QCresults/3_qualimap";
-    my $samstat   = "$QCresults/4_samstat";
-    my $MultiQC1  = "$QCresults/5_MultiQC_FastQC";
-    my $MultiQC2  = "$QCresults/5_MultiQC_qualimap";
-    my $MultiQC3  = "$QCresults/5_MultiQC_SAMtools";
-
-    &myMakeDir($QCresults);
-    &myMakeDir($SAMtools);
-    &myMakeDir($FastQC);
-    &myMakeDir($qualimap);
-    &myMakeDir($samstat);
-    &myMakeDir($MultiQC1);
-    &myMakeDir($MultiQC2);
-    &myMakeDir($MultiQC3);
-
-    opendir(my $FH_Files, $dir1) || die;
-    my @Files = readdir($FH_Files);
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat and MultiQC ......";
-    for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.bam$/;
-        next unless $Files[$i] !~ m/^[.]/;
-        next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed_/;
-        my $temp = $Files[$i];
-        say    "\t......$temp";
-        $temp =~ s/\.bam$//  ||  die;
-        system("samtools  index           $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
-        system("samtools  flagstat        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1");
-        system(`samtools  idxstats        $dir1/$temp.bam      >>$SAMtools/$temp.runLog  2>&1`);
-        system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam                   >> $FastQC/$temp.runLog      2>&1" );
-        system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=16G   >> $qualimap/$temp.runLog    2>&1" );
-        system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");
-    }
-
-    system( "multiqc    --title FastQC     --verbose  --export   --outdir $MultiQC1          $FastQC            >> $MultiQC1/MultiQC.FastQC.runLog     2>&1" );
-    system( "multiqc    --title qualimap   --verbose  --export   --outdir $MultiQC2          $qualimap          >> $MultiQC2/MultiQC.qualimap.runLog   2>&1" );
-    system( "multiqc    --title SAMtools   --verbose  --export   --outdir $MultiQC3          $SAMtools          >> $MultiQC3/MultiQC.SAMtools.runLog   2>&1" );
-
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-sub  myQC_BAM_2  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
-    my $QCresults = "$dir1/QC_Results";
-    my $Fingerprint    = "$QCresults/6_Fingerprint";
-    my $Fingerprint2   = "$QCresults/7_Fingerprint2";
-    my $goleft         = "$QCresults/8_goleft";
-    my $phantompeak    = "$QCresults/9_phantompeakqualtools";
-    my $MultiQC1       = "$QCresults/10_MultiQC_goleft";
-
-    &myMakeDir($QCresults);
-    &myMakeDir($Fingerprint);
-    &myMakeDir($Fingerprint2);
-    &myMakeDir($goleft);
-    &myMakeDir($phantompeak);
-    &myMakeDir($MultiQC1);
-
-    opendir(my $FH_Files, $dir1) || die;
-    my @Files = readdir($FH_Files);
-
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using plotFingerprint in deepTools, goleft , phantompeakqualtools and MultiQC ......";
-    for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.bam$/;
-        next unless $Files[$i] !~ m/^[.]/;
-        next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed/;
-        next unless $Files[$i] =~ m/^[1-9]/;
-        my $temp = $Files[$i];
-        say    "\t......$temp";
-        $temp =~ s/\.bam$//  ||  die;
-        system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint/$temp.pdf    --plotTitle $temp   --outRawCounts  $Fingerprint/$temp.cov   --outQualityMetrics $Fingerprint/$temp.Metrics.txt   --numberOfProcessors $numCores_g   --binSize 500    >> $Fingerprint/$temp.runLog    2>&1");                           
-        system("plotFingerprint --bamfiles $dir1/$temp.bam   --extendReads 220  --numberOfSamples 1000000    --plotFile $Fingerprint2/$temp.pdf   --plotTitle $temp   --outRawCounts  $Fingerprint2/$temp.cov  --outQualityMetrics $Fingerprint2/$temp.Metrics.txt  --numberOfProcessors $numCores_g   --binSize 5000   >> $Fingerprint2/$temp.runLog   2>&1");                                   
-        system("goleft   covstats    $dir1/$temp.bam  > $goleft/$temp.covstats " );
-        system("goleft   indexcov  --sex chrX,chrY  -d $goleft/$temp  $dir1/$temp.bam  > $goleft/$temp.indexcov.runLog      2>&1" );
-        &myMakeDir("$phantompeak/$temp");
-        system("Rscript    $phantompeakqualtools_g    -c=$dir1/$temp.bam   -p=$numCores_g   -odir=$phantompeak/$temp    -savd=$phantompeak/$temp/rdatafile.RData     -savp=$phantompeak/$temp/plotdatafile.pdf   -out=$phantompeak/$temp/resultfile.txt   >> $phantompeak/$temp.runLog   2>&1");
-    }
-    system("sleep 5s");
-    system( "multiqc    --title goleft    --verbose  --export   --outdir $MultiQC1          $goleft     >> $MultiQC1/MultiQC.goleft.runLog    2>&1" );
-
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-sub  myQC_BAM_3  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
-    my $QCresults = "$dir1/QC_Results";
-    my $PRESEQ    = "$QCresults/11_PRESEQ";
-    my $PicardDir = "$QCresults/12_Picard";
-    my $MultiQC1  = "$QCresults/13_MultiQC_PRESEQ";
-    my $MultiQC2  = "$QCresults/13_MultiQC_Picard";
-
-    &myMakeDir($QCresults);
-    &myMakeDir($PRESEQ);
-    &myMakeDir($PicardDir);
-    &myMakeDir($MultiQC1);
-    &myMakeDir($MultiQC2);
-
-    opendir(my $FH_Files, $dir1) || die;
-    my @Files = readdir($FH_Files);
-
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of all BAM files by using PRESEQ, Picard and MultiQC ......";
-    for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.bam$/;
-        next unless $Files[$i] !~ m/^[.]/;
-        next unless $Files[$i] !~ m/[~]$/;
-        next unless $Files[$i] !~ m/^removed/;
-        next unless $Files[$i] =~ m/^[1-9]/;
-        my $temp = $Files[$i];
-        say    "\t......$temp";
-        $temp =~ s/\.bam$//  ||  die;
-        system("preseq  c_curve     -output  $PRESEQ/$temp.c_curve.pe.PRESEQ       -step 1000000    -verbose   -pe  -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.c_curve.pe.runLog   2>&1");
-        system("preseq  c_curve     -output  $PRESEQ/$temp.c_curve.se.PRESEQ       -step 1000000    -verbose        -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.c_curve.se.runLog   2>&1");
-        system("preseq  lc_extrap   -output  $PRESEQ/$temp.lc_extrap.pe.PRESEQ     -step 1000000    -verbose   -pe  -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.lc_extrap.pe.runLog   2>&1");
-        system("preseq  lc_extrap   -output  $PRESEQ/$temp.lc_extrap.se.PRESEQ     -step 1000000    -verbose        -bam  $dir1/$temp.bam    >> $PRESEQ/$temp.lc_extrap.se.runLog   2>&1");
-
-        &myMakeDir("$PicardDir/$temp");
-        #system("java  -jar   $Picard_g   CollectIndependentReplicateMetrics      INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/0_CollectIndependentReplicateMetrics     VCF=null    MINIMUM_MQ=20                                    >> $PicardDir/$temp/0.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectAlignmentSummaryMetrics          INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/1_CollectAlignmentSummaryMetrics                                                                      >> $PicardDir/$temp/1.runLog   2>&1" );
-        system("java  -jar   $Picard_g   EstimateLibraryComplexity               INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/2_EstimateLibraryComplexity                                                                           >> $PicardDir/$temp/2.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectInsertSizeMetrics                INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/3_CollectInsertSizeMetrics               HISTOGRAM_FILE=$PicardDir/$temp/3.pdf  MINIMUM_PCT=0.05      >> $PicardDir/$temp/3.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectJumpingLibraryMetrics            INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/4_CollectJumpingLibraryMetrics                                                                        >> $PicardDir/$temp/4.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectMultipleMetrics                  INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/5_CollectMultipleMetrics                                                                              >> $PicardDir/$temp/5.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectBaseDistributionByCycle          INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/6_CollectBaseDistributionByCycle         CHART_OUTPUT=$PicardDir/$temp/6.pdf                          >> $PicardDir/$temp/6.runLog   2>&1" );
-        system("java  -jar   $Picard_g   CollectQualityYieldMetrics              INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/7_CollectQualityYieldMetrics                                                                          >> $PicardDir/$temp/7.runLog   2>&1" );
-        #system("java  -jar   $Picard_g   CollectWgsMetrics                       INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/8_CollectWgsMetricsFromQuerySorted       REFERENCE_SEQUENCE=null                                      >> $PicardDir/$temp/8.runLog   2>&1" );
-        system("java  -jar   $Picard_g   MeanQualityByCycle                      INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/9_MeanQualityByCycle                     CHART_OUTPUT=$PicardDir/$temp/9.pdf                          >> $PicardDir/$temp/9.runLog   2>&1" );
-        system("java  -jar   $Picard_g   QualityScoreDistribution                INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/10_QualityScoreDistribution              CHART_OUTPUT=$PicardDir/$temp/10.pdf                         >> $PicardDir/$temp/10.runLog  2>&1" );
-        #system("java  -jar   $Picard_g   CollectGcBiasMetrics                    INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/11_CollectGcBiasMetrics                  CHART_OUTPUT=$PicardDir/$temp/11.pdf   SUMMARY_OUTPUT=$PicardDir/$temp/11.summary.output                  >> $PicardDir/$temp/11.runLog  2>&1" );
-        #system("java  -jar   $Picard_g   CollectOxoGMetrics                      INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/12_CollectOxoGMetrics                    REFERENCE_SEQUENCE=null                                      >> $PicardDir/$temp/12.runLog  2>&1" );
-        #system("java  -jar   $Picard_g   CollectSequencingArtifactMetrics        INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/13_CollectSequencingArtifactMetrics                                       >> $PicardDir/$temp/13.runLog  2>&1" );
-        #system("java  -jar   $Picard_g   CollectTargetedPcrMetrics               INPUT=$dir1/$temp.bam     OUTPUT=$PicardDir/$temp/14_CollectTargetedPcrMetrics                                        >> $PicardDir/$temp/14.runLog  2>&1" );
-    }
-    system( "multiqc  --title PRESEQ    --verbose  --export  --outdir $MultiQC1          $PRESEQ                 >> $MultiQC1/MultiQC.PRESEQ.runLog   2>&1" );
-    system( "multiqc  --title Picard    --verbose  --export  --outdir $MultiQC2          $PicardDir              >> $MultiQC2/MultiQC.Picard.runLog   2>&1" );
-}
-###################################################################################################################################################################################################
-
-
-
-
-
-###################################################################################################################################################################################################
-sub  myQC_BAM_4  {
-    my $dir1      =  $_[0];   ## All the BAM files must be in this folder.
-    my $QCresults = "$dir1/QC_Results";
-    my $SubreadUti= "$QCresults/14_SubreadUti";
-
-    &myMakeDir("$QCresults");
-    &myMakeDir("$SubreadUti");
-
-    opendir(my $DH_map, $dir1) || die;
-    my @mapFiles = readdir($DH_map);
-
-    say   "\n\n\n\n\n\n##################################################################################################";
-    say   "Detecting the quality of bam files by using Subreads utilities and goleft ......";
-    for (my $i=0; $i<=$#mapFiles; $i++) {
-           next unless $mapFiles[$i] =~ m/\.bam$/;
-           next unless $mapFiles[$i] !~ m/^[.]/;
-           next unless $mapFiles[$i] !~ m/[~]$/;
-           next unless $mapFiles[$i] !~ m/^removed/;
-           next unless $mapFiles[$i] =~ m/^[1-9]/;
-           my $temp = $mapFiles[$i];
-           $temp =~ s/\.bam$//  ||  die;
-           say   "\t......$mapFiles[$i]";
-           system("propmapped   -i $dir1/$temp.bam                    -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1");
-           system("echo      '\n\n\n\n\n'                                                                  >> $SubreadUti/$temp.prommapped      2>&1");
-           system("propmapped   -i $dir1/$temp.bam       -f           -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1");
-           system("echo      '\n\n\n\n\n'                                                                  >> $SubreadUti/$temp.prommapped      2>&1");
-           system("propmapped   -i $dir1/$temp.bam       -f   -p      -o $SubreadUti/$temp.prommapped      >> $SubreadUti/$temp.prommapped      2>&1");
-           system("qualityScores   --BAMinput   -i $dir1/$temp.bam    -o $SubreadUti/$temp.qualityScores   >> $SubreadUti/$temp.qualityScores   2>&1");
-     }
+my @BigWigfiles_g2 =  @BigWigfiles_g;    
+my @BigWigfiles_g3 =  @BigWigfiles_g;    ## for BAM files
+for ( my $i=0; $i<=$#BigWigfiles_g2; $i++ ) { 
+   $BigWigfiles_g2[$i] = "$input_g/$BigWigfiles_g2[$i]";   ## add path
+   $BigWigfiles_g3[$i] = "$input_g/$BigWigfiles_g3[$i]";   ## add path
+   $BigWigfiles_g3[$i] =~ s/7-BigWig/5-finalBAM/ or  die;  
+   $BigWigfiles_g3[$i] =~ s/\.bw$/.bam/ or  die;  
 }
 ###################################################################################################################################################################################################
 
@@ -464,28 +230,104 @@ sub  myQC_BAM_4  {
 
 ###################################################################################################################################################################################################
 say   "\n\n\n\n\n\n##################################################################################################";
-say   "Sort all the reads based on read name ......";
-for (my $i=0; $i<=$#BAMfiles_g; $i++) {
-    my $temp = $BAMfiles_g[$i]; 
-    $temp =~ s/\.bam$//  ||  die; 
-    say   "\t......$BAMfiles_g[$i]";
-    system("samtools  view  -hb   -f 2   -o $output_g/$temp.t1.sam   --output-fmt sam                          --threads $numCores_g     $input_g/$temp.bam        >>$output2_g/$temp.runLog    2>&1");
-    system("samtools  sort  -m 2G  -n    -o $output_g/$temp.t2.bam   --output-fmt bam  -T $output_g/yp_$temp   --threads $numCores_g     $output_g/$temp.t1.sam    >>$output2_g/$temp.runLog    2>&1");
-    system("samtools fixmate  $output_g/$temp.t2.bam     $output_g/$temp.bam     >> $output2_g/$temp.runLog    2>&1");   
-    system("rm  $output_g/$temp.t1.sam");
-    system("rm  $output_g/$temp.t2.bam");
+say   "Using multiBigwigSummary bin, plotCorrelation and plotPCA ......";
+my $output_sub1 = "$output_g/1_multiBigwigSummary_bin";   
+&myMakeDir($output_sub1);
+{
+    system("multiBigwigSummary bins   --bwfiles @BigWigfiles_g2    --smartLabels    --binSize 5000   --numberOfProcessors $numCores_g    --outRawCounts  $output_sub1/1-RawCounts.5000bpBin.txt   --outFileName $output_sub1/1-results.npz    >> $output_sub1/1-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/1-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_sub1/2-heatmap_pearson.pdf       --outFileCorMatrix $output_sub1/2-heatmap_pearson.txt         --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_sub1/2-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/1-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_sub1/3-heatmap_spearman.pdf      --outFileCorMatrix $output_sub1/3-heatmap_spearman.txt        --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_sub1/3-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/1-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_sub1/4-scatterplot_pearson.pdf   --outFileCorMatrix $output_sub1/4-scatterplot_pearson.txt     --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_sub1/4-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/1-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_sub1/5-scatterplot_spearman.pdf  --outFileCorMatrix $output_sub1/5-scatterplot_spearman.txt    --plotHeight 20   --plotWidth 20   --plotNumbers   --skipZeros  --removeOutliers     >> $output_sub1/5-runLog.txt   2>&1");                               
+    system("plotPCA         -in $output_sub1/1-results.npz    -o $output_sub1/6-plotPCA.pdf  --outFileNameData $output_sub1/6-plotPCA.txt    --plotHeight 20   --plotWidth 20      >> $output_sub1/6-plotPCA-runLog.txt   2>&1");                               
+
+    system("multiBigwigSummary bins   --bwfiles @BigWigfiles_g2    --smartLabels    --binSize 1000   --numberOfProcessors $numCores_g    --outRawCounts  $output_sub1/6-RawCounts.1000bpBin.txt   --outFileName $output_sub1/6-results.npz    >> $output_sub1/6-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/6-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_sub1/7-heatmap_pearson.pdf        --outFileCorMatrix $output_sub1/7-heatmap_pearson.txt          --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/7-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/6-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_sub1/8-heatmap_spearman.pdf       --outFileCorMatrix $output_sub1/8-heatmap_spearman.txt         --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/8-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/6-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_sub1/9-scatterplot_pearson.pdf    --outFileCorMatrix $output_sub1/9-scatterplot_pearson.txt      --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/9-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/6-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_sub1/10-scatterplot_spearman.pdf  --outFileCorMatrix $output_sub1/10-scatterplot_spearman.txt    --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/10-runLog.txt  2>&1");                               
+    system("plotPCA         -in $output_sub1/6-results.npz    -o $output_sub1/11-plotPCA.pdf  --outFileNameData $output_sub1/11-plotPCA.txt    --plotHeight 20   --plotWidth 20      >> $output_sub1/11-plotPCA-runLog.txt   2>&1");                               
+
+    system("multiBigwigSummary bins   --bwfiles @BigWigfiles_g2    --smartLabels    --binSize 200   --numberOfProcessors $numCores_g    --outRawCounts  $output_sub1/11-RawCounts.200bpBin.txt   --outFileName $output_sub1/11-results.npz    >> $output_sub1/11-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/11-results.npz    --whatToPlot heatmap        --corMethod pearson     -o $output_sub1/12-heatmap_pearson.pdf        --outFileCorMatrix $output_sub1/12-heatmap_pearson.txt          --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/12-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/11-results.npz    --whatToPlot heatmap        --corMethod spearman    -o $output_sub1/13-heatmap_spearman.pdf       --outFileCorMatrix $output_sub1/13-heatmap_spearman.txt         --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/13-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/11-results.npz    --whatToPlot scatterplot    --corMethod pearson     -o $output_sub1/14-scatterplot_pearson.pdf    --outFileCorMatrix $output_sub1/14-scatterplot_pearson.txt      --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/14-runLog.txt   2>&1");                               
+    system("plotCorrelation -in $output_sub1/11-results.npz    --whatToPlot scatterplot    --corMethod spearman    -o $output_sub1/15-scatterplot_spearman.pdf   --outFileCorMatrix $output_sub1/15-scatterplot_spearman.txt     --plotHeight 20   --plotWidth 20   --skipZeros  --removeOutliers     >> $output_sub1/15-runLog.txt   2>&1");                               
+    system("plotPCA         -in $output_sub1/11-results.npz    -o $output_sub1/17-plotPCA.pdf  --outFileNameData $output_sub1/17-plotPCA.txt    --plotHeight 20   --plotWidth 20      >> $output_sub1/17-plotPCA-runLog.txt   2>&1");                               
+
 }
-###################################################################################################################################################################################################
+###################################################################################################################################################################################################    
 
 
 
 
 
 ###################################################################################################################################################################################################
-&myQC_BAM_1($output_g);
-&myQC_BAM_2($output_g);
-&myQC_BAM_3($output_g);
-&myQC_BAM_4($output_g);  
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Using bigwigCompare ......";
+my $output_sub2 = "$output_g/2_bigwigCompare";   
+&myMakeDir($output_sub2);
+{
+
+for (my $i=0; $i<=$#BigWigfiles_g-1;  $i++) {
+    for (my $j=$i+1; $j<=$#BigWigfiles_g;  $j++) {
+        my $file1 = $BigWigfiles_g[$i];   
+        my $file2 = $BigWigfiles_g[$j];
+        system( "bigwigCompare  -b1 $input_g/$file1   -b2 $input_g/$file2  --operation log2      --binSize 20  --numberOfProcessors $numCores_g  -o $output_sub2/$file1....$file2.log2.bw          >> $output_sub2/1-runLog.txt   2>&1  " );   
+        system( "bigwigCompare  -b1 $input_g/$file1   -b2 $input_g/$file2  --operation subtract  --binSize 20  --numberOfProcessors $numCores_g  -o $output_sub2/$file1....$file2.subtract.bw      >> $output_sub2/2-runLog.txt   2>&1  " ); 
+   }
+}
+
+}
+###################################################################################################################################################################################################    
+
+
+
+
+
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Using bamCoverage to generate bigwig files ......";
+my $genome_size_g = 0;
+if($genome_g eq 'hg38') {$genome_size_g = 2451960000; }
+if($genome_g eq 'mm10') {$genome_size_g = 2150570000; }
+if($genome_g eq 'dm6')  {$genome_size_g = 121400000;  }
+print("\n\ngenome_size: $genome_g, $genome_size_g\n\n");
+my  $input_g2 = $input_g; 
+$input_g2 =~ s/7-BigWig/5-finalBAM/ or die;
+my $output_sub3 = "$output_g/3_bigwig_byDeepTools";   
+&myMakeDir($output_sub3);
+{
+
+for (my $i=0; $i<=$#BigWigfiles_g-1;  $i++) {
+    my $temp = $BigWigfiles_g[$i]; 
+    $temp =~ s/\.bw$//  ||  die;    
+    system("bamCoverage     --bam $input_g2/$temp.bam  --binSize 20   --normalizeUsing RPKM   --effectiveGenomeSize $genome_size_g      --numberOfProcessors $numCores_g    --outFileName  $output_sub3/$temp.RPKM.bw      --extendReads   --ignoreDuplicates       >> $output_sub3/1-runLog.txt  2>&1 ");
+    system("bamCoverage     --bam $input_g2/$temp.bam  --binSize 20   --normalizeUsing BPM    --effectiveGenomeSize $genome_size_g      --numberOfProcessors $numCores_g    --outFileName  $output_sub3/$temp.BPM.bw       --extendReads   --ignoreDuplicates       >> $output_sub3/2-runLog.txt  2>&1 ");
+}
+
+}
+###################################################################################################################################################################################################    
+
+
+
+
+
+###################################################################################################################################################################################################
+say   "\n\n\n\n\n\n##################################################################################################";
+say   "Using some other commands in deepTools ......";
+my $output_sub4 = "$output_g/4_DeepTools_Other";   
+&myMakeDir($output_sub4);
+
+system("plotCoverage       --bamfiles   @BigWigfiles_g3    --plotFile    $output_sub4/1-Coverage-check.pdf   --outRawCounts $output_sub4/1-RawCounts.txt    --plotHeight 12   --plotWidth 30  --numberOfProcessors $numCores_g    --ignoreDuplicates   >> $output_sub4/1-runLog.txt  2>&1");   
+system("bamPEFragmentSize  --bamfiles   @BigWigfiles_g3    --histogram   $output_sub4/2-FragmentSize.pdf    --plotFileFormat pdf  --numberOfProcessors $numCores_g    >> $output_sub4/2-runLog.txt  2>&1");  
+
+for (my $i=0; $i<=$#BigWigfiles_g; $i++) {
+    my $temp = $BigWigfiles_g[$i]; 
+    $temp =~ s/\.bw$//  ||  die; 
+    say   "\t......$BigWigfiles_g[$i]";
+    system("computeGCBias   --bamfile $input_g2/$temp.bam     --effectiveGenomeSize $genome_size_g     --genome /media/yp/biox1/.RefGenomes/3-FASTA-2bit/$genome_g.2bit    --numberOfProcessors $numCores_g    --GCbiasFrequenciesFile  $output_sub4/$temp.GCBias.txt    --biasPlot  $output_sub4/$temp.GCBias.png    --fragmentLength 220        >> $output_sub4/$temp.GCBias.runLog.txt  2>&1 ");                 
+}
 ###################################################################################################################################################################################################
 
 
@@ -497,7 +339,13 @@ say   "\n\n\n\n\n\n#############################################################
 say   "\tJob Done! Cheers! \n\n\n\n\n";
 
 
+ 
 
-
-
+  
 ## END
+
+
+
+
+
+
