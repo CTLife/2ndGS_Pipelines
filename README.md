@@ -26,12 +26,7 @@ Comprehensive and flexible pipelines for various NGS data analysis
 [Download](https://github.com/CTLife/2ndGS_Pipelines/releases)               
                                                                                                                           
 ---------------------------------------------------------------------------------------------  
-          
-To use all the above pipelines, the recent versions of some softwares and packages must be available in your Linux OS:           
-https://github.com/CTLife/Top10                       
-The required softwares and packages of each script are also available in its help message.        
-
----------------------------------------------------------------------------------------------
+               
                                            
 ##### License: The GNU General Public License v3.0                    
                                                                          
