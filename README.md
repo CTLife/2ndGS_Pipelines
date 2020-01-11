@@ -1,6 +1,6 @@
 2ndGS_Pipelines
 ---------------     
-Comprehensive and flexible pipelines for various NGS data analysis
+Comprehensive and flexible pipelines for various NGS data analysis.
 ---------------                                                                  
 
 + `CISDA`: ChIP-Seq Data Analyzer (also contains MNase-Seq, DNase-Seq, ChIP-exo and all ChIPseq-like data).              
@@ -18,13 +18,7 @@ Comprehensive and flexible pipelines for various NGS data analysis
 + `long_RASDA` : long non-coding RNA-seq Data Analyzer.                                     
                                                                                                                    
 + `HISDA`: Hi-C Data Analyzer.                        
-                               
-   
-                                                               
-                                                                                    
-#####  All the scripts have been fully tested and passed my quality inspection in Ubuntu Linux.                                                                                              
-[Download](https://github.com/CTLife/2ndGS_Pipelines/releases)               
-                                                                                                                          
+                                                                                                                                                                    
 ---------------------------------------------------------------------------------------------  
                
                                            
