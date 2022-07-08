@@ -229,12 +229,12 @@ sub  myQC_BAM_1  {
     say   "\n\n\n\n\n\n##################################################################################################";
     say   "Detecting the quality of all BAM files by using SAMtools, FastQC, qualimap, samstat, Bamtools and MultiQC ......";
     for ( my $i=0; $i<=$#Files; $i++ ) {
-        next unless $Files[$i] =~ m/\.sam$/;
+        next unless $Files[$i] =~ m/\.bam$/;
         next unless $Files[$i] !~ m/^[.]/;
         next unless $Files[$i] !~ m/[~]$/;
         my $temp = $Files[$i];
         say    "\t......$temp";
-        $temp =~ s/\.sam$//  ||  die;
+        $temp =~ s/\.bam$//  ||  die;
         ##system( "samtools  sort  -o $dir1/$temp.bam   --output-fmt bam  -T $dir1/Temp...$temp   --threads $numCores_g    $dir1/$temp.sam    >> $SAMtools/$temp.sort.runLog    2>&1");
         system( "samtools  index           $dir1/$temp.bam      >> $SAMtools/$temp.index.runLog         2>&1");
         system( "samtools  flagstat        $dir1/$temp.bam      >> $SAMtools/$temp.flagstat.runLog      2>&1");
