@@ -242,7 +242,7 @@ sub  myQC_BAM_1  {
         system( "fastqc    --outdir $FastQC    --threads $numCores_g  --format bam   --kmers 7    $dir1/$temp.bam                   >> $FastQC/$temp.runLog      2>&1" );
         system( "qualimap  bamqc  -bam $dir1/$temp.bam   -c  -ip  -nt $numCores_g   -outdir $qualimap/$temp   --java-mem-size=16G   >> $qualimap/$temp.runLog    2>&1" );
         system( "samstat   $dir1/$temp.bam      >> $samstat/$temp.runLog         2>&1");
-        system( "rm   $dir1/$temp.sam" );
+        ##system( "rm   $dir1/$temp.sam" );
         system( "bamtools   count    -in  $dir1/$temp.bam      > $Bamtools/bamtools_count.$temp.txt  ");
         system( "bamtools   stats    -in  $dir1/$temp.bam      > $Bamtools/bamtools_stats.$temp.txt  ");   
     }
